@@ -20,7 +20,6 @@
         .tab-content.active { display: block; }
         button, summary { user-select: none; -webkit-user-select: none; }
         
-        /* Kalender Farben - abgesichert */
         .holiday-bg { background-color: #fef08a !important; border-color: #eab308 !important; } 
         .vacation-bg { background-color: #dcfce7 !important; border-color: #4ade80 !important; } 
         .weekend-bg { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; } 
@@ -31,7 +30,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased pb-[80px]">
 
-    <!-- Header (Kompakter) -->
+    <!-- Header -->
     <header class="bg-blue-600 text-white p-3 shadow-md sticky top-0 z-20 flex justify-between items-center">
         <h1 class="text-lg font-bold">Zeiterfassung</h1>
         <button id="btn-sync" onclick="handleAuthClick()" class="bg-blue-700 hover:bg-blue-800 text-[10px] px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors">
@@ -213,7 +212,6 @@
         <!-- ==================== TAB 4: EINSTELLUNGEN ==================== -->
         <section id="view-settings" class="tab-content space-y-4">
             
-            <!-- NEU: Arbeitszeit-Modell -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
                 <div>
                     <h3 class="font-bold text-gray-800 text-sm">Arbeitszeit-Modell</h3>
@@ -231,7 +229,6 @@
                 <div class="space-y-1.5 pt-1">
                     <p class="text-[10px] font-bold text-gray-500 uppercase">Reguläre Arbeitstage</p>
                     <div class="flex justify-between gap-1">
-                        <!-- Checkboxes Mo-So -->
                         <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-1" class="peer hidden" value="1" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Mo</div></label>
                         <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-2" class="peer hidden" value="2" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Di</div></label>
                         <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-3" class="peer hidden" value="3" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Mi</div></label>
@@ -383,11 +380,10 @@
         let holidays = JSON.parse(localStorage.getItem('az_holidays')) || {};
         let schoolHolidays = JSON.parse(localStorage.getItem('az_schoolHolidays')) || {};
         
-        // Neues Arbeitszeitmodell (Fallback für alte Nutzer)
         let workModel = JSON.parse(localStorage.getItem('az_workModel')) || null;
         if (!workModel) {
             let oldTarget = parseFloat(localStorage.getItem('az_globalTarget'));
-            workModel = { hours: oldTarget ? oldTarget * 5 : 40, days: [1,2,3,4,5] }; // Mo-Fr Standard
+            workModel = { hours: oldTarget ? oldTarget * 5 : 40, days: [1,2,3,4,5] };
         }
 
         function saveToLocalStorage() {
@@ -493,14 +489,13 @@
             loadDayData();
         }
 
-        // --- NEU: Logik für Arbeitszeitmodell ---
         function getDailyTarget(dateObj, dateStr) {
             if (holidays[dateStr]) return 0;
             const dayOfWeek = dateObj.getDay();
             if (workModel.days.includes(dayOfWeek) && workModel.days.length > 0) {
                 return workModel.hours / workModel.days.length;
             }
-            return 0; // z.B. Wochenende
+            return 0; // Wochenende oder nicht ausgewählter Tag
         }
 
         function loadDayData() {
@@ -725,7 +720,6 @@
             document.getElementById('total-saldo').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + ' h';
         }
 
-        // --- Setup Logik ---
         function formatDate(date) { return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0'); }
         
         function renderSettingsUI() {
@@ -752,34 +746,32 @@
             
             workModel = { hours: newHours, days: newDays };
 
-            // Migration & Heilung alter Daten
+            // Migration & schlaue Heilung alter Daten
             for (let dateStr in workData) {
                 const dObj = new Date(dateStr);
                 const dayOfWeek = dObj.getDay();
                 const isNowWorkday = newDays.includes(dayOfWeek);
                 const isHoliday = !!holidays[dateStr];
+                
+                let data = workData[dateStr];
 
-                // Heile Wochenenden, die fälschlicherweise ein Soll > 0 haben
-                if (!isNowWorkday && !isHoliday) {
-                    if (workData[dateStr].target > 0) workData[dateStr].target = 0;
-                } else if (isHoliday) {
-                    workData[dateStr].target = 0;
+                if (isHoliday) {
+                    // Feiertage heilen, außer sie wurden manuell verändert
+                    if (data.target === oldTarget || data.target === 8.0) data.target = 0;
+                } else if (!isNowWorkday) {
+                    // Wochenende heilen, ABER NUR wenn der Nutzer nicht bewusst manuell etwas eingetragen hat!
+                    if (data.target === oldTarget || data.target === 8.0) data.target = 0;
                 } else {
-                    // Arbeitstag: Aktualisiere das Soll, wenn es noch das alte Standard-Soll war
-                    if (workData[dateStr].target === oldTarget || workData[dateStr].target === 8.0) { // 8.0 als harter Fallback alter Versionen
-                        workData[dateStr].target = newTarget;
-                    }
+                    // Arbeitstag an neues Soll anpassen (oder heilen, falls es vorher ein freies Wochenende war)
+                    if (data.target === oldTarget || data.target === 8.0 || data.target === 0) data.target = newTarget;
                 }
             }
 
-            saveToLocalStorage(); 
-            loadDayData(); 
-            renderMonthViews(); 
+            saveToLocalStorage(); loadDayData(); renderMonthViews(); 
             
             const btn = document.getElementById('btn-save-model');
             btn.innerText = "Gespeichert!";
-            btn.classList.add('bg-green-600', 'text-white');
-            btn.classList.remove('bg-gray-800');
+            btn.classList.add('bg-green-600', 'text-white'); btn.classList.remove('bg-gray-800');
             setTimeout(() => { btn.innerText = "Modell speichern & Rückwirkend anwenden"; btn.classList.add('bg-gray-800'); btn.classList.remove('bg-green-600'); }, 1500);
         }
 
