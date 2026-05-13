@@ -25,7 +25,7 @@
         button { user-select: none; -webkit-user-select: none; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased pb-20">
+<body class="bg-gray-50 text-gray-800 font-sans antialiased pb-24">
 
     <!-- Header -->
     <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
@@ -40,7 +40,7 @@
         
         <!-- ==================== ANSICHT: TAGESERFASSUNG ==================== -->
         <section id="view-daily" class="tab-content active space-y-4">
-            <!-- ... (Tagesansicht bleibt unverändert) ... -->
+            
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                 <button onclick="changeDate(-1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -94,7 +94,7 @@
         </section>
 
 
-        <!-- ==================== ANSICHT: MONATSÜBERSICHT & ABGLEICH ==================== -->
+        <!-- ==================== ANSICHT: MONATSÜBERSICHT & KALENDER ==================== -->
         <section id="view-month" class="tab-content space-y-4">
             
             <!-- Monatsauswahl -->
@@ -104,9 +104,22 @@
                 <button onclick="changeMonth(1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
+            <!-- Kalender Grid (NEU) -->
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+                <div id="month-calendar-grid" class="grid grid-cols-7 gap-1">
+                    <!-- Wird per JS gefüllt -->
+                </div>
+            </div>
+
             <!-- Dashboard: Abgleich -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                <h3 class="font-bold text-gray-800 border-b pb-2">Monats-Abgleich</h3>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="font-bold text-gray-800">Monats-Abgleich</h3>
+                    <div class="text-right text-xs">
+                        <span class="text-gray-500">Ist: <span id="month-ist-sum" class="font-bold text-gray-800">0.00</span>h</span><br>
+                        <span class="text-gray-500">Soll: <span id="month-soll-sum" class="font-bold text-gray-800">0.00</span>h</span>
+                    </div>
+                </div>
                 
                 <!-- Offizielles Saldo Eingabe -->
                 <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-200">
@@ -123,13 +136,12 @@
                 <!-- Vergleich App vs AG -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="p-3 bg-blue-50 rounded-xl">
-                        <p class="text-xs text-blue-600 font-semibold mb-1">App-Saldo (nur dieser Monat)</p>
+                        <p class="text-[11px] text-blue-600 font-semibold mb-1">App-Saldo (nur dieser Monat)</p>
                         <p class="font-black text-xl text-blue-800" id="month-app-saldo">0.00</p>
                     </div>
                     <div class="p-3 bg-white border border-gray-200 rounded-xl relative">
-                        <p class="text-xs text-gray-500 font-semibold mb-1">Differenz (App vs. AG)</p>
+                        <p class="text-[11px] text-gray-500 font-semibold mb-1">Differenz (App vs. AG)</p>
                         <p class="font-black text-xl" id="month-diff">0.00</p>
-                        <!-- Hinweis Tooltip (simpel) -->
                         <p class="text-[9px] text-gray-400 absolute bottom-1 right-2">Sollte 0 sein</p>
                     </div>
                 </div>
@@ -144,23 +156,11 @@
                      <span class="text-gray-400 pb-1">h</span>
                  </div>
             </div>
-
-            <!-- Statistik & Liste der Einträge -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-4 border-b border-gray-100 flex justify-between text-sm">
-                    <span class="text-gray-500">Ist: <span id="month-ist-sum" class="font-bold text-gray-800">0.00</span>h</span>
-                    <span class="text-gray-500">Soll: <span id="month-soll-sum" class="font-bold text-gray-800">0.00</span>h</span>
-                </div>
-                <ul id="month-list" class="divide-y divide-gray-100">
-                    <!-- Wird per JS gefüllt -->
-                </ul>
-            </div>
         </section>
 
 
         <!-- ==================== ANSICHT: EINSTELLUNGEN / VORLAGEN ==================== -->
         <section id="view-templates" class="tab-content space-y-4">
-             <!-- Globale Einstellungen (Hierhin verschoben, passt besser) -->
              <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
                 <div>
                     <h3 class="font-bold text-gray-800">Standard-Sollzeit</h3>
@@ -173,7 +173,6 @@
             </div>
 
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                <!-- ... (Vorlagen erstellen bleibt unverändert) ... -->
                 <h3 class="font-bold text-gray-800">Neue Vorlage erstellen</h3>
                 <input type="text" id="tpl-name" placeholder="Name (z.B. Frühschicht)" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500">
                 <div class="grid grid-cols-2 gap-4">
@@ -231,7 +230,7 @@
 
     <!-- App Logik -->
     <script>
-        // --- Service Worker & GAPI (wie zuvor) ---
+        // --- Service Worker & GAPI ---
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Fehler:', err)); }); }
         
         const CLIENT_ID = 'IHRE_CLIENT_ID_HIER_EINTRAGEN.apps.googleusercontent.com'; 
@@ -300,7 +299,6 @@
         let workData = JSON.parse(localStorage.getItem('az_workData')) || {};
         let templates = JSON.parse(localStorage.getItem('az_templates')) || [];
         let globalTarget = parseFloat(localStorage.getItem('az_globalTarget')) || 8.0;
-        // NEU: Speichert das offizielle Saldo pro Monat (z.B. {"2024-05": 12.5})
         let monthlyOfficialSaldo = JSON.parse(localStorage.getItem('az_monthlyOfficial')) || {};
 
         document.getElementById('global-target').value = globalTarget;
@@ -453,7 +451,7 @@
             });
         }
 
-        // --- Monatsübersicht & Abgleich ---
+        // --- Monatsübersicht & Kalender ---
         function changeMonth(delta) {
             viewMonthDate.setMonth(viewMonthDate.getMonth() + delta);
             renderMonthView();
@@ -468,7 +466,7 @@
                 monthlyOfficialSaldo[currentMonthKey] = parseFloat(val);
             }
             saveToLocalStorage();
-            renderMonthView(); // Update Berechnungen
+            renderMonthView();
         }
 
         function calculateAppSaldoForMonth(monthPrefix) {
@@ -484,93 +482,43 @@
 
         function renderMonthView() {
             const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
-            document.getElementById('month-display').innerText = `${monthNames[viewMonthDate.getMonth()]} ${viewMonthDate.getFullYear()}`;
+            const year = viewMonthDate.getFullYear();
+            const month = viewMonthDate.getMonth();
+            document.getElementById('month-display').innerText = `${monthNames[month]} ${year}`;
 
             const currentMonthKey = getMonthKey(viewMonthDate);
-            
-            // 1. Daten für die Liste (und Summen) aufbereiten
-            const listEl = document.getElementById('month-list');
-            listEl.innerHTML = '';
-            let entries = [];
-            for (let dateStr in workData) {
-                if (dateStr.startsWith(currentMonthKey)) { entries.push({ date: dateStr, data: workData[dateStr] }); }
-            }
-            entries.sort((a, b) => a.date.localeCompare(b.date));
-
-            if(entries.length === 0) { listEl.innerHTML = '<li class="p-4 text-center text-gray-400 text-sm">Keine Einträge in diesem Monat.</li>'; }
-
-            entries.forEach(entry => {
-                const dateObj = new Date(entry.date);
-                const dayName = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"][dateObj.getDay()];
-                const dayNum = dateObj.getDate();
-                const diff = (entry.data.net || 0) - (entry.data.target || 0);
-                const diffClass = diff > 0 ? "text-green-500" : (diff < 0 ? "text-red-500" : "text-gray-400");
-                const diffStr = (diff > 0 ? '+' : '') + diff.toFixed(2);
-
-                const li = document.createElement('li');
-                li.className = "p-3 flex justify-between items-center hover:bg-gray-50 cursor-pointer";
-                li.onclick = () => { document.getElementById('date-picker').value = entry.date; switchTab('daily'); loadDayData(); };
-                li.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="bg-gray-100 rounded-lg w-10 h-10 flex flex-col justify-center items-center">
-                            <span class="text-[10px] text-gray-500 uppercase leading-none">${dayName}</span><span class="font-bold text-gray-800 leading-tight">${dayNum}</span>
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-gray-700">${entry.data.start || '?'} - ${entry.data.end || '?'} <span class="text-xs font-normal text-gray-400">(${entry.data.pause}m)</span></p>
-                            <p class="text-[10px] text-gray-500">Soll: ${entry.data.target?.toFixed(2)}h</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-bold text-gray-800">${entry.data.net?.toFixed(2)} h</p><p class="text-[10px] font-bold ${diffClass}">${diffStr}</p>
-                    </div>`;
-                listEl.appendChild(li);
-            });
-
-            // 2. Berechnungen für das Dashboard
             const appData = calculateAppSaldoForMonth(currentMonthKey);
             
-            // Offizielles Saldo laden/anzeigen
-            const offSaldoInput = document.getElementById('official-saldo');
-            const storedOffSaldo = monthlyOfficialSaldo[currentMonthKey];
-            if(storedOffSaldo !== undefined) {
-                offSaldoInput.value = storedOffSaldo;
-            } else {
-                offSaldoInput.value = '';
-            }
-
-            // App Saldo anzeigen
-            document.getElementById('month-app-saldo').innerText = (appData.saldo > 0 ? '+' : '') + appData.saldo.toFixed(2);
+            // 1. Dashboard Summen aktualisieren
             document.getElementById('month-ist-sum').innerText = appData.net.toFixed(2);
             document.getElementById('month-soll-sum').innerText = appData.target.toFixed(2);
+            document.getElementById('month-app-saldo').innerText = (appData.saldo > 0 ? '+' : '') + appData.saldo.toFixed(2);
 
-            // Differenz berechnen (App vs AG)
+            const offSaldoInput = document.getElementById('official-saldo');
+            const storedOffSaldo = monthlyOfficialSaldo[currentMonthKey];
+            offSaldoInput.value = storedOffSaldo !== undefined ? storedOffSaldo : '';
+
             const diffEl = document.getElementById('month-diff');
             if (storedOffSaldo !== undefined) {
                 const diffAppVsAg = appData.saldo - storedOffSaldo;
                 diffEl.innerText = (diffAppVsAg > 0 ? '+' : '') + diffAppVsAg.toFixed(2);
-                if (Math.abs(diffAppVsAg) > 0.05) diffEl.className = "font-black text-xl text-red-500"; // Toleranz 3 Minuten
-                else diffEl.className = "font-black text-xl text-green-500";
+                diffEl.className = Math.abs(diffAppVsAg) > 0.05 ? "font-black text-xl text-red-500" : "font-black text-xl text-green-500";
             } else {
                 diffEl.innerText = "-";
                 diffEl.className = "font-black text-xl text-gray-300";
             }
 
-            // 3. Gesamtsaldo berechnen (Vormonat Offiziell + Dieser Monat App)
-            // Finde den Vormonat
             let prevMonthDate = new Date(viewMonthDate);
             prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
             const prevMonthKey = getMonthKey(prevMonthDate);
             
             let totalSaldo = 0;
-            // Wenn es ein offizielles Saldo für den Vormonat gibt, nutze dieses als Basis
             if (monthlyOfficialSaldo[prevMonthKey] !== undefined) {
                  totalSaldo = monthlyOfficialSaldo[prevMonthKey] + appData.saldo;
             } else {
-                 // Fallback: Wenn kein Vormonats-Saldo vom AG existiert, summiere einfach alle App-Salden bis inkl. diesem Monat
                  for(let dateStr in workData) {
                      let entryDate = new Date(dateStr);
-                     // Addiere alles was vor oder im aktuell angezeigten Monat liegt
-                     if(entryDate <= new Date(viewMonthDate.getFullYear(), viewMonthDate.getMonth() + 1, 0)) {
+                     if(entryDate <= new Date(year, month + 1, 0)) {
                          totalSaldo += (workData[dateStr].net || 0) - (workData[dateStr].target || 0);
                      }
                  }
@@ -581,6 +529,68 @@
             if(totalSaldo > 0) totalSaldoEl.className = "text-4xl font-black text-green-400";
             else if(totalSaldo < 0) totalSaldoEl.className = "text-4xl font-black text-red-400";
             else totalSaldoEl.className = "text-4xl font-black text-white";
+
+            // 2. KALENDER GRID AUFBAUEN
+            const calendarEl = document.getElementById('month-calendar-grid');
+            calendarEl.innerHTML = '';
+
+            const weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+            weekdays.forEach(day => {
+                const el = document.createElement('div');
+                el.className = "text-center text-[10px] font-bold text-gray-400 pb-1";
+                el.innerText = day;
+                calendarEl.appendChild(el);
+            });
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let firstDay = new Date(year, month, 1).getDay();
+            firstDay = firstDay === 0 ? 6 : firstDay - 1; // 0 = Montag
+
+            // Leere Zellen für Vormonat
+            for (let i = 0; i < firstDay; i++) {
+                calendarEl.appendChild(document.createElement('div'));
+            }
+
+            const todayStr = formatDate(new Date());
+
+            // Tage rendern
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dayData = workData[dateStr];
+                
+                const isToday = dateStr === todayStr;
+                const isWeekend = (new Date(year, month, d).getDay() === 0 || new Date(year, month, d).getDay() === 6);
+                
+                let bgClass = "bg-white border-gray-100";
+                if (isToday) bgClass = "bg-blue-50 border-blue-400 shadow-sm z-10";
+                else if (isWeekend) bgClass = "bg-gray-50 border-gray-100";
+
+                const cell = document.createElement('div');
+                cell.className = `border rounded-lg p-1 min-h-[64px] flex flex-col justify-between cursor-pointer transition-colors hover:bg-gray-100 active:scale-95 ${bgClass}`;
+                cell.onclick = () => {
+                    document.getElementById('date-picker').value = dateStr;
+                    switchTab('daily');
+                    loadDayData();
+                };
+
+                let contentHTML = `<div class="text-right text-[10px] ${isToday ? 'font-black text-blue-600' : 'text-gray-500 font-medium'}">${d}</div>`;
+                
+                if (dayData && dayData.start && dayData.end) {
+                    const diff = (dayData.net || 0) - (dayData.target || 0);
+                    let hoursColor = 'text-gray-600';
+                    if (Math.abs(diff) > 0.01) hoursColor = diff > 0 ? 'text-green-600' : 'text-red-500';
+
+                    contentHTML += `
+                        <div class="mt-auto pt-1">
+                            <div class="text-[9px] leading-tight text-gray-500 text-center">${dayData.start}<br>${dayData.end}</div>
+                            <div class="text-[10px] font-bold text-center ${hoursColor} bg-white bg-opacity-70 rounded mt-0.5">${dayData.net.toFixed(2)}h</div>
+                        </div>
+                    `;
+                }
+
+                cell.innerHTML = contentHTML;
+                calendarEl.appendChild(cell);
+            }
         }
 
         // Init beim Laden
