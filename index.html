@@ -25,7 +25,6 @@
         .vacation-bg { background-color: #dcfce7 !important; border-color: #4ade80 !important; } 
         .weekend-bg { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; } 
         
-        /* Damit das einklappbare Menü schick aussieht */
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
     </style>
@@ -43,10 +42,9 @@
 
     <main class="p-3 max-w-md mx-auto">
         
-        <!-- ==================== TAB 1: TAGESERFASSUNG (Vergrößert!) ==================== -->
+        <!-- ==================== TAB 1: TAGESERFASSUNG ==================== -->
         <section id="view-daily" class="tab-content active space-y-4">
             
-            <!-- Datumsauswahl (Groß) -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden">
                 <button onclick="changeDate(-1)" class="p-3 text-gray-500 hover:bg-gray-100 rounded-full z-10 active:scale-95 transition-transform">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
@@ -63,10 +61,8 @@
                 </button>
             </div>
 
-            <!-- Vorlagen Schnellzugriff (Größere Buttons) -->
             <div id="quick-templates" class="flex gap-2 overflow-x-auto pb-2"></div>
 
-            <!-- Haupt-Eingabefelder (Vergrößert) -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-6">
                 
                 <div class="grid grid-cols-2 gap-4">
@@ -91,7 +87,6 @@
                     </div>
                 </div>
 
-                <!-- Ergebnisse (Riesig) -->
                 <div class="pt-5 border-t-2 border-gray-100 flex justify-between items-end">
                     <div>
                         <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mb-1">Netto-Arbeitszeit</p>
@@ -103,14 +98,13 @@
                     </div>
                 </div>
 
-                <!-- Großer Speichern Button -->
                 <button onclick="saveDay()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg transition-all active:scale-95 text-lg mt-2">
                     Tag speichern
                 </button>
             </div>
         </section>
 
-        <!-- ==================== TAB 2: KALENDER (Übersicht) ==================== -->
+        <!-- ==================== TAB 2: KALENDER ==================== -->
         <section id="view-month" class="tab-content space-y-2">
             
             <div class="bg-blue-600 text-white py-1.5 px-3 rounded-xl shadow-md flex justify-between items-center">
@@ -119,7 +113,6 @@
                 <button onclick="changeMonth(1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
-            <!-- Kalender Grid -->
             <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
                 <div class="grid grid-cols-8 gap-1 mb-1">
                     <div class="text-center text-[9px] font-bold text-blue-400">KW</div>
@@ -131,7 +124,6 @@
                     <div class="text-center text-[9px] font-bold text-gray-600">Sa</div>
                     <div class="text-center text-[9px] font-bold text-red-500">So</div>
                 </div>
-                <!-- Normales Grid (Größer, für Übersicht) -->
                 <div id="month-calendar-grid" class="grid grid-cols-8 gap-1"></div>
                 
                 <div class="flex justify-center gap-3 mt-2 pt-2 border-t border-gray-100 text-[9px] text-gray-500">
@@ -141,7 +133,6 @@
                 </div>
             </div>
 
-            <!-- Dashboard Abrechnung -->
             <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 space-y-2.5">
                 <div class="grid grid-cols-3 gap-2 text-center">
                     <div class="bg-gray-50 p-1.5 rounded-xl border border-gray-100">
@@ -167,7 +158,7 @@
             </div>
         </section>
 
-        <!-- ==================== TAB 3: PLANER (Kompakt & Interaktiv) ==================== -->
+        <!-- ==================== TAB 3: PLANER ==================== -->
         <section id="view-planner" class="tab-content space-y-2">
             
             <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-sm flex justify-between items-center">
@@ -176,16 +167,14 @@
                 <button onclick="changeMonth(1)" class="p-1 hover:bg-indigo-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
-            <!-- Tool 1: Pinsel -->
             <div class="flex items-center gap-2 bg-indigo-50 p-2 rounded-xl border border-indigo-200 shadow-sm">
                 <span class="text-[11px] font-black text-indigo-800 whitespace-nowrap pl-1">🖌️ Pinsel:</span>
                 <select id="paint-template" class="flex-grow p-2 text-sm font-bold text-indigo-900 rounded-lg border border-indigo-300 bg-white focus:outline-none shadow-inner"></select>
             </div>
 
-            <!-- Tool 2: Muster-Woche -->
             <details class="bg-white border border-gray-200 rounded-xl shadow-sm group">
                 <summary class="p-3 text-xs font-bold text-gray-700 cursor-pointer outline-none flex justify-between items-center bg-gray-50 rounded-xl group-open:rounded-b-none transition-all">
-                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Feste Muster-Woche (Mo-Fr)</span>
+                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Feste Muster-Woche</span>
                     <span class="text-[10px] text-gray-400 font-bold uppercase">Ausklappen ▼</span>
                 </summary>
                 <div class="p-3 border-t border-gray-200 bg-white space-y-3">
@@ -206,7 +195,6 @@
                 </div>
             </details>
 
-            <!-- Kalender Grid (Kompakt für den Planer) -->
             <div class="bg-indigo-50/30 p-1.5 rounded-xl border border-indigo-100 shadow-inner">
                 <div class="grid grid-cols-8 gap-0.5 mb-1">
                     <div class="text-center text-[8px] font-bold text-indigo-400">KW</div>
@@ -218,7 +206,6 @@
                     <div class="text-center text-[8px] font-bold text-gray-400">Sa</div>
                     <div class="text-center text-[8px] font-bold text-red-400">So</div>
                 </div>
-                <!-- Kompaktes Grid (Tippen zum Zuweisen) -->
                 <div id="planner-calendar-grid" class="grid grid-cols-8 gap-0.5"></div>
             </div>
         </section>
@@ -226,12 +213,43 @@
         <!-- ==================== TAB 4: EINSTELLUNGEN ==================== -->
         <section id="view-settings" class="tab-content space-y-4">
             
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <!-- NEU: Arbeitszeit-Modell -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
                 <div>
-                    <h3 class="font-bold text-gray-800 text-sm">Standard-Sollzeit</h3>
-                    <p class="text-[10px] text-gray-500 leading-tight">Gilt automatisch für normale Tage<br>Update wirkt sich auf geplanten Kalender aus.</p>
+                    <h3 class="font-bold text-gray-800 text-sm">Arbeitszeit-Modell</h3>
+                    <p class="text-[10px] text-gray-500 leading-tight">Wochenstunden und reguläre Arbeitstage</p>
                 </div>
-                <input type="number" step="0.1" id="global-target" class="w-20 p-2.5 text-center bg-gray-50 rounded-xl border-2 border-gray-100 font-black text-blue-700 text-base focus:outline-none focus:border-blue-500 transition-colors shadow-inner" onchange="saveGlobalTarget()">
+                
+                <div class="flex items-center justify-between bg-blue-50 p-2.5 rounded-xl shadow-inner border border-blue-100">
+                    <span class="text-xs font-bold text-blue-800">Wochenstunden</span>
+                    <div class="flex items-center gap-1">
+                        <input type="number" step="0.5" id="wm-hours" class="w-16 p-1.5 text-center bg-white rounded-lg font-black text-blue-700 text-sm focus:outline-none border border-blue-200" onchange="updateWorkModelPreview()">
+                        <span class="text-xs text-blue-600 font-bold">h</span>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <p class="text-[10px] font-bold text-gray-500 uppercase">Reguläre Arbeitstage</p>
+                    <div class="flex justify-between gap-1">
+                        <!-- Checkboxes Mo-So -->
+                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-1" class="peer hidden" value="1" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Mo</div></label>
+                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-2" class="peer hidden" value="2" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Di</div></label>
+                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-3" class="peer hidden" value="3" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Mi</div></label>
+                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-4" class="peer hidden" value="4" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Do</div></label>
+                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-5" class="peer hidden" value="5" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Fr</div></label>
+                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-6" class="peer hidden" value="6" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Sa</div></label>
+                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-0" class="peer hidden" value="0" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">So</div></label>
+                    </div>
+                </div>
+                
+                <div class="pt-3 pb-1 flex justify-between items-center border-b border-gray-100">
+                    <p class="text-xs text-gray-500 font-bold">Daraus berechnetes Tages-Soll:</p>
+                    <p id="wm-daily-preview" class="font-black text-blue-600 text-sm">0.00 h</p>
+                </div>
+
+                <button id="btn-save-model" onclick="saveWorkModel()" class="w-full bg-gray-800 text-white font-bold py-3 rounded-xl text-sm shadow-md active:scale-95 transition-transform mt-2">
+                    Modell speichern & Rückwirkend anwenden
+                </button>
             </div>
 
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
@@ -271,7 +289,7 @@
 
     </main>
 
-    <!-- Bottom Navigation (4 Tabs) -->
+    <!-- Bottom Navigation -->
     <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 pb-safe z-30 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
         <div class="grid grid-cols-4 h-[68px] max-w-md mx-auto">
             <button onclick="switchTab('daily')" class="nav-btn active flex flex-col items-center justify-center w-full h-full text-blue-600 transition-colors">
@@ -329,20 +347,18 @@
                     let data = fileData.result;
                     if(data.workData) workData = data.workData;
                     if(data.templates) templates = data.templates;
-                    if(data.globalTarget !== undefined) globalTarget = data.globalTarget;
+                    if(data.workModel) workModel = data.workModel;
                     if(data.monthlyOfficialSaldo) monthlyOfficialSaldo = data.monthlyOfficialSaldo;
                     if(data.holidays) holidays = data.holidays;
                     if(data.schoolHolidays) schoolHolidays = data.schoolHolidays;
                     
-                    document.getElementById('global-target').value = globalTarget;
-                    saveToLocalStorage(); loadDayData(); renderTemplates(); 
-                    renderMonthViews();
+                    renderSettingsUI(); loadDayData(); renderTemplates(); renderMonthViews();
                 } else { await saveToDrive(); }
             } catch (err) { console.log("Sync Fehler"); }
         }
         async function saveToDrive() {
             if(!isDriveReady) return;
-            const fileContent = JSON.stringify({ workData, templates, globalTarget, monthlyOfficialSaldo, holidays, schoolHolidays });
+            const fileContent = JSON.stringify({ workData, templates, workModel, monthlyOfficialSaldo, holidays, schoolHolidays });
             const file = new Blob([fileContent], {type: 'application/json'});
             const metadata = { 'name': FILENAME, 'mimeType': 'application/json' };
             const form = new FormData();
@@ -363,17 +379,21 @@
         let viewMonthDate = new Date();
         let workData = JSON.parse(localStorage.getItem('az_workData')) || {};
         let templates = JSON.parse(localStorage.getItem('az_templates')) || [];
-        let globalTarget = parseFloat(localStorage.getItem('az_globalTarget')) || 8.0;
         let monthlyOfficialSaldo = JSON.parse(localStorage.getItem('az_monthlyOfficial')) || {};
         let holidays = JSON.parse(localStorage.getItem('az_holidays')) || {};
         let schoolHolidays = JSON.parse(localStorage.getItem('az_schoolHolidays')) || {};
-
-        document.getElementById('global-target').value = globalTarget;
+        
+        // Neues Arbeitszeitmodell (Fallback für alte Nutzer)
+        let workModel = JSON.parse(localStorage.getItem('az_workModel')) || null;
+        if (!workModel) {
+            let oldTarget = parseFloat(localStorage.getItem('az_globalTarget'));
+            workModel = { hours: oldTarget ? oldTarget * 5 : 40, days: [1,2,3,4,5] }; // Mo-Fr Standard
+        }
 
         function saveToLocalStorage() {
             localStorage.setItem('az_workData', JSON.stringify(workData));
             localStorage.setItem('az_templates', JSON.stringify(templates));
-            localStorage.setItem('az_globalTarget', globalTarget);
+            localStorage.setItem('az_workModel', JSON.stringify(workModel));
             localStorage.setItem('az_monthlyOfficial', JSON.stringify(monthlyOfficialSaldo));
             localStorage.setItem('az_holidays', JSON.stringify(holidays));
             localStorage.setItem('az_schoolHolidays', JSON.stringify(schoolHolidays));
@@ -383,7 +403,7 @@
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('text-blue-600', 'active');
+                el.classList.remove('text-blue-600', 'active', 'text-indigo-600');
                 if(tabId === 'planner') {
                    if(el.getAttribute('onclick').includes(tabId)) el.classList.add('text-indigo-600', 'active');
                    else el.classList.add('text-gray-400');
@@ -473,6 +493,16 @@
             loadDayData();
         }
 
+        // --- NEU: Logik für Arbeitszeitmodell ---
+        function getDailyTarget(dateObj, dateStr) {
+            if (holidays[dateStr]) return 0;
+            const dayOfWeek = dateObj.getDay();
+            if (workModel.days.includes(dayOfWeek) && workModel.days.length > 0) {
+                return workModel.hours / workModel.days.length;
+            }
+            return 0; // z.B. Wochenende
+        }
+
         function loadDayData() {
             const dateStr = document.getElementById('date-picker').value;
             currentDate = new Date(dateStr);
@@ -487,11 +517,12 @@
             if(holidays[dateStr]) { holEl.innerText = holidays[dateStr]; holEl.classList.remove('hidden'); } else { holEl.classList.add('hidden'); }
             if(schoolHolidays[dateStr]) { vacEl.innerText = "Ferien"; vacEl.classList.remove('hidden'); } else { vacEl.classList.add('hidden'); }
 
-            if (holidays[dateStr] && (!workData[dateStr] || data.target === undefined)) {
-                document.getElementById('time-target').value = 0;
+            if (data.target !== undefined) {
+                document.getElementById('time-target').value = data.target;
             } else {
-                document.getElementById('time-target').value = data.target !== undefined ? data.target : globalTarget;
+                document.getElementById('time-target').value = getDailyTarget(currentDate, dateStr);
             }
+            
             calculateNet(); renderTemplates();
         }
 
@@ -511,16 +542,15 @@
             renderMonthViews(); 
         }
 
-        // --- Dienstplaner Funktionen ---
         function applyTemplateToDate(dateStr, tplId) {
             if (!tplId || tplId === "") return;
             if (tplId === "delete") { delete workData[dateStr]; saveToLocalStorage(); return; }
             
             const t = templates.find(x => x.id.toString() === tplId.toString());
             if (t) {
-                const isHoliday = !!holidays[dateStr];
+                const dateObj = new Date(dateStr);
                 const existingData = workData[dateStr] || {};
-                let target = existingData.target !== undefined ? existingData.target : (isHoliday ? 0 : globalTarget);
+                let target = existingData.target !== undefined ? existingData.target : getDailyTarget(dateObj, dateStr);
                 let net = calculateNetForValues(t.start, t.end, t.pause);
                 workData[dateStr] = { start: t.start || '', end: t.end || '', pause: t.pause !== undefined ? t.pause : 30, target: target, net: net };
                 saveToLocalStorage();
@@ -558,7 +588,6 @@
             }
         }
 
-        // --- Kalender Rendering ---
         function changeMonth(delta) {
             viewMonthDate.setMonth(viewMonthDate.getMonth() + delta);
             renderMonthViews();
@@ -651,14 +680,12 @@
 
                 if (data && data.start) { monthAppNet += data.net || 0; monthAppTarget += data.target || 0; }
 
-                // Monat Zelle 
                 let cellM = document.createElement('div');
                 cellM.className = `border rounded-xl p-1 min-h-[65px] flex flex-col cursor-pointer transition-transform hover:scale-105 active:scale-95 shadow-sm ${baseClass}`;
                 cellM.onclick = () => { document.getElementById('date-picker').value = dateStr; switchTab('daily'); loadDayData(); };
                 cellM.innerHTML = createCellHtml(d, dayOfWeek, holiday, vacation, data, false);
                 gridMonth.appendChild(cellM);
 
-                // Planer Zelle
                 let cellP = document.createElement('div');
                 cellP.className = `border rounded p-0.5 min-h-[42px] flex flex-col cursor-pointer active:scale-90 active:bg-indigo-100 transition-all shadow-sm ${baseClass} hover:border-indigo-300`;
                 cellP.onclick = () => { 
@@ -676,7 +703,6 @@
                 gridMonth.appendChild(emM); gridPlanner.appendChild(emP);
             }
 
-            // Dashboard berechnen
             const appSaldo = monthAppNet - monthAppTarget;
             document.getElementById('month-app-saldo').innerText = (appSaldo > 0 ? '+' : '') + appSaldo.toFixed(2) + ' h';
             
@@ -702,17 +728,47 @@
         // --- Setup Logik ---
         function formatDate(date) { return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0'); }
         
-        function saveGlobalTarget() { 
-            const newTarget = parseFloat(document.getElementById('global-target').value);
-            if(isNaN(newTarget)) return;
-            const oldTarget = globalTarget;
-            globalTarget = newTarget; 
+        function renderSettingsUI() {
+            document.getElementById('wm-hours').value = workModel.hours;
+            for(let i=0; i<=6; i++) { document.getElementById('wm-day-'+i).checked = workModel.days.includes(i); }
+            updateWorkModelPreview();
+        }
 
-            let updatedCount = 0;
+        function updateWorkModelPreview() {
+            const h = parseFloat(document.getElementById('wm-hours').value) || 0;
+            let dCount = 0;
+            for(let i=0; i<=6; i++) { if(document.getElementById('wm-day-'+i).checked) dCount++; }
+            const target = dCount > 0 ? (h / dCount) : 0;
+            document.getElementById('wm-daily-preview').innerText = target.toFixed(2) + ' h';
+        }
+
+        function saveWorkModel() {
+            const newHours = parseFloat(document.getElementById('wm-hours').value) || 0;
+            let newDays = [];
+            for(let i=0; i<=6; i++) { if(document.getElementById('wm-day-'+i).checked) newDays.push(i); }
+            
+            const oldTarget = workModel.days.length > 0 ? (workModel.hours / workModel.days.length) : 0;
+            const newTarget = newDays.length > 0 ? (newHours / newDays.length) : 0;
+            
+            workModel = { hours: newHours, days: newDays };
+
+            // Migration & Heilung alter Daten
             for (let dateStr in workData) {
-                if (workData[dateStr].target === oldTarget) {
-                    workData[dateStr].target = globalTarget;
-                    updatedCount++;
+                const dObj = new Date(dateStr);
+                const dayOfWeek = dObj.getDay();
+                const isNowWorkday = newDays.includes(dayOfWeek);
+                const isHoliday = !!holidays[dateStr];
+
+                // Heile Wochenenden, die fälschlicherweise ein Soll > 0 haben
+                if (!isNowWorkday && !isHoliday) {
+                    if (workData[dateStr].target > 0) workData[dateStr].target = 0;
+                } else if (isHoliday) {
+                    workData[dateStr].target = 0;
+                } else {
+                    // Arbeitstag: Aktualisiere das Soll, wenn es noch das alte Standard-Soll war
+                    if (workData[dateStr].target === oldTarget || workData[dateStr].target === 8.0) { // 8.0 als harter Fallback alter Versionen
+                        workData[dateStr].target = newTarget;
+                    }
                 }
             }
 
@@ -720,10 +776,11 @@
             loadDayData(); 
             renderMonthViews(); 
             
-            const inputField = document.getElementById('global-target');
-            const oldBg = inputField.style.backgroundColor;
-            inputField.style.backgroundColor = '#dcfce7';
-            setTimeout(() => { inputField.style.backgroundColor = oldBg; }, 600);
+            const btn = document.getElementById('btn-save-model');
+            btn.innerText = "Gespeichert!";
+            btn.classList.add('bg-green-600', 'text-white');
+            btn.classList.remove('bg-gray-800');
+            setTimeout(() => { btn.innerText = "Modell speichern & Rückwirkend anwenden"; btn.classList.add('bg-gray-800'); btn.classList.remove('bg-green-600'); }, 1500);
         }
 
         function saveOfficialSaldo() { 
@@ -766,6 +823,7 @@
             updatePlannerDropdowns();
         }
 
+        renderSettingsUI();
         initDailyView();
         function initDailyView() { document.getElementById('date-picker').value = formatDate(currentDate); loadDayData(); }
     </script>
