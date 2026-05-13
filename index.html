@@ -43,64 +43,67 @@
     <main class="p-3 max-w-md mx-auto">
         
         <!-- ==================== TAB 1: TAGESERFASSUNG ==================== -->
-        <section id="view-daily" class="tab-content active space-y-4">
+        <section id="view-daily" class="tab-content active space-y-3">
             
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden">
-                <button onclick="changeDate(-1)" class="p-3 text-gray-500 hover:bg-gray-100 rounded-full z-10 active:scale-95 transition-transform">
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden">
+                <button onclick="changeDate(-1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full z-10 active:scale-95 transition-transform">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
                 <div class="text-center z-10 flex flex-col items-center">
-                    <input type="date" id="date-picker" class="font-black text-2xl text-gray-800 bg-transparent border-none text-center focus:ring-0 p-0" onchange="loadDayData()">
-                    <div class="flex gap-2 mt-1">
-                        <span id="holiday-info" class="text-xs text-yellow-600 font-bold uppercase tracking-wider hidden"></span>
-                        <span id="vacation-info" class="text-xs text-green-600 font-bold uppercase tracking-wider hidden"></span>
+                    <input type="date" id="date-picker" class="font-black text-xl text-gray-800 bg-transparent border-none text-center focus:ring-0 p-0" onchange="loadDayData()">
+                    <div class="flex gap-2 mt-0.5">
+                        <span id="holiday-info" class="text-[10px] text-yellow-600 font-bold uppercase tracking-wider hidden"></span>
+                        <span id="vacation-info" class="text-[10px] text-green-600 font-bold uppercase tracking-wider hidden"></span>
                     </div>
                 </div>
-                <button onclick="changeDate(1)" class="p-3 text-gray-500 hover:bg-gray-100 rounded-full z-10 active:scale-95 transition-transform">
+                <button onclick="changeDate(1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full z-10 active:scale-95 transition-transform">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
                 </button>
             </div>
 
-            <div id="quick-templates" class="flex gap-2 overflow-x-auto pb-2"></div>
+            <div id="quick-templates" class="flex gap-2 overflow-x-auto pb-1"></div>
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-bold text-gray-500 mb-1.5 ml-1">Beginn</label>
-                        <input type="time" id="time-start" class="w-full p-3.5 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-xl font-black text-gray-800 shadow-inner" onchange="autoSuggestPause()">
+                        <label class="block text-xs font-bold text-gray-500 mb-1 ml-1">Beginn</label>
+                        <input type="time" id="time-start" class="w-full p-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-lg font-black text-gray-800 shadow-inner" onchange="autoSuggestPause()">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-500 mb-1.5 ml-1">Ende</label>
-                        <input type="time" id="time-end" class="w-full p-3.5 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-xl font-black text-gray-800 shadow-inner" onchange="autoSuggestPause()">
+                        <label class="block text-xs font-bold text-gray-500 mb-1 ml-1">Ende</label>
+                        <input type="time" id="time-end" class="w-full p-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-lg font-black text-gray-800 shadow-inner" onchange="autoSuggestPause()">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-bold text-gray-500 mb-1.5 ml-1">Pause (Min)</label>
-                        <input type="number" id="time-pause" placeholder="z.B. 30" class="w-full p-3.5 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-lg font-bold text-gray-700 shadow-inner" onchange="calculateNet()">
+                        <label class="block text-xs font-bold text-gray-500 mb-1 ml-1">Pause (Min)</label>
+                        <input type="number" id="time-pause" placeholder="z.B. 30" class="w-full p-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-base font-bold text-gray-700 shadow-inner" onchange="calculateNet()">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-500 mb-1.5 ml-1">Soll (Std)</label>
-                        <input type="number" step="0.1" id="time-target" class="w-full p-3.5 bg-blue-50 rounded-xl border-2 border-blue-100 focus:outline-none focus:border-blue-500 text-blue-700 text-lg font-black shadow-inner" onchange="calculateNet()">
+                        <label class="block text-xs font-bold text-gray-500 mb-1 ml-1">Soll (Std)</label>
+                        <input type="number" step="0.1" id="time-target" class="w-full p-3 bg-blue-50 rounded-xl border-2 border-blue-100 focus:outline-none focus:border-blue-500 text-blue-700 text-base font-black shadow-inner" onchange="calculateNet()">
                     </div>
                 </div>
 
-                <div class="pt-5 border-t-2 border-gray-100 flex justify-between items-end">
-                    <div>
-                        <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mb-1">Netto-Arbeitszeit</p>
-                        <p class="text-5xl font-black text-gray-800 leading-none tracking-tight"><span id="net-hours">0.00</span><span class="text-2xl font-medium text-gray-400 ml-1">h</span></p>
-                    </div>
-                    <div class="text-right mb-1">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Tagessaldo</p>
-                        <p id="day-saldo" class="text-2xl font-black text-gray-400 leading-none">0.00 h</p>
-                    </div>
+                <div>
+                    <input type="text" id="time-note" placeholder="Bemerkung (optional)..." class="w-full p-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-sm font-medium text-gray-700 shadow-inner">
                 </div>
 
-                <button onclick="saveDay()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg transition-all active:scale-95 text-lg mt-2">
-                    Tag speichern
-                </button>
+                <!-- Kompakte Zusammenfassung & Speichern auf einer Ebene -->
+                <div class="pt-3 border-t-2 border-gray-100 flex justify-between items-center">
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Netto / Saldo</p>
+                        <div class="flex items-baseline gap-2">
+                            <p class="text-4xl font-black text-gray-800 leading-none tracking-tight"><span id="net-hours">0.00</span><span class="text-lg font-medium text-gray-400 ml-0.5">h</span></p>
+                            <p id="day-saldo" class="text-lg font-black text-gray-400 leading-none">0.00h</p>
+                        </div>
+                    </div>
+                    <button onclick="saveDay()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition-all active:scale-95 text-base">
+                        Speichern
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -129,11 +132,11 @@
                 <div class="flex justify-center gap-3 mt-2 pt-2 border-t border-gray-100 text-[9px] text-gray-500">
                     <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#fef08a]"></div>Feiertag</span>
                     <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#dcfce7]"></div>Ferien</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#f1f5f9]"></div>Wochenende</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#f1f5f9]"></div>Wochende</span>
                 </div>
             </div>
 
-            <!-- NEUE SALDO BERECHNUNG -->
+            <!-- NEUE SALDO BERECHNUNG (Ohne Schwarz) -->
             <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 space-y-2.5">
                 <div class="grid grid-cols-3 gap-2 text-center">
                     <div class="bg-gray-50 p-1.5 rounded-xl border border-gray-100 flex flex-col justify-center">
@@ -144,8 +147,8 @@
                         <p class="text-[9px] text-blue-600 uppercase font-black tracking-wider leading-tight">Übertrag<br>(AG Vormonat)</p>
                         <input type="number" step="0.01" id="official-saldo" class="w-full bg-transparent text-center font-black text-blue-800 focus:outline-none text-sm pt-1" placeholder="0.0" onchange="saveOfficialSaldo()">
                     </div>
-                    <div class="bg-gray-800 p-1.5 rounded-xl border border-gray-900 flex flex-col justify-center shadow-md">
-                        <p class="text-[9px] text-gray-300 uppercase font-bold tracking-wider leading-tight">Stand<br>Ende Monat</p>
+                    <div class="bg-blue-600 p-1.5 rounded-xl border border-blue-700 flex flex-col justify-center shadow-md">
+                        <p class="text-[9px] text-blue-100 uppercase font-bold tracking-wider leading-tight">Stand<br>Ende Monat</p>
                         <p class="font-black text-sm text-white mt-1" id="month-diff">0.00</p>
                     </div>
                 </div>
@@ -185,7 +188,7 @@
                     <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer pt-1">
                         <input type="checkbox" id="pat-overwrite" class="w-4 h-4 rounded text-indigo-600"> Überschreiben erlauben
                     </label>
-                    <button onclick="applyPattern()" class="w-full bg-gray-800 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-transform shadow">Gesamten Monat füllen</button>
+                    <button onclick="applyPattern()" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-transform shadow">Gesamten Monat füllen</button>
                 </div>
             </details>
 
@@ -239,7 +242,7 @@
                     <p id="wm-daily-preview" class="font-black text-blue-600 text-sm">0.00 h</p>
                 </div>
 
-                <button id="btn-save-model" onclick="saveWorkModel()" class="w-full bg-gray-800 text-white font-bold py-3 rounded-xl text-sm shadow-md active:scale-95 transition-transform mt-2">
+                <button id="btn-save-model" onclick="saveWorkModel()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-sm shadow-md active:scale-95 transition-transform mt-2">
                     Modell speichern & Rückwirkend anwenden
                 </button>
             </div>
@@ -270,7 +273,7 @@
                     <div><label class="block text-[10px] font-bold text-gray-500 mb-1 ml-1">Ende</label><input type="time" id="tpl-end" class="w-full p-2 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold shadow-inner"></div>
                     <div><label class="block text-[10px] font-bold text-gray-500 mb-1 ml-1">Pause (Min)</label><input type="number" id="tpl-pause" value="30" class="w-full p-2 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold shadow-inner text-center"></div>
                 </div>
-                <button onclick="saveTemplate()" class="w-full bg-gray-800 text-white font-bold py-3 rounded-xl text-sm shadow-md active:scale-95 transition-transform mt-1">Vorlage speichern</button>
+                <button onclick="saveTemplate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm shadow-md active:scale-95 transition-transform mt-1">Vorlage speichern</button>
                 
                 <div class="pt-3 border-t-2 border-gray-100 mt-4">
                     <p class="text-[10px] font-bold text-gray-400 mb-3 uppercase tracking-wider">Ihre Vorlagen:</p>
@@ -495,7 +498,7 @@
             const saldo = netDecimal - target;
             const el = document.getElementById('day-saldo');
             el.innerText = (saldo > 0 ? '+' : '') + saldo.toFixed(2) + ' h';
-            el.className = saldo > 0 ? "text-2xl font-black text-green-500 leading-none" : (saldo < 0 ? "text-2xl font-black text-red-500 leading-none" : "text-2xl font-black text-gray-400 leading-none");
+            el.className = saldo > 0 ? "text-lg font-black text-green-500 leading-none" : (saldo < 0 ? "text-lg font-black text-red-500 leading-none" : "text-lg font-black text-gray-400 leading-none");
         }
 
         function changeDate(days) {
@@ -516,11 +519,12 @@
         function loadDayData() {
             const dateStr = document.getElementById('date-picker').value;
             currentDate = new Date(dateStr);
-            const data = workData[dateStr] || { start: '', end: '', pause: '', target: undefined };
+            const data = workData[dateStr] || { start: '', end: '', pause: '', target: undefined, note: '' };
             
             document.getElementById('time-start').value = data.start || '';
             document.getElementById('time-end').value = data.end || '';
             document.getElementById('time-pause').value = data.pause !== undefined ? data.pause : '';
+            document.getElementById('time-note').value = data.note || '';
             
             const holEl = document.getElementById('holiday-info');
             const vacEl = document.getElementById('vacation-info');
@@ -543,7 +547,8 @@
                 end: document.getElementById('time-end').value,
                 pause: document.getElementById('time-pause').value,
                 target: parseFloat(document.getElementById('time-target').value) || 0,
-                net: parseFloat(document.getElementById('net-hours').innerText) || 0
+                net: parseFloat(document.getElementById('net-hours').innerText) || 0,
+                note: document.getElementById('time-note').value
             };
             saveToLocalStorage();
             const btn = document.querySelector('#view-daily button.bg-blue-600');
@@ -562,7 +567,7 @@
                 const existingData = workData[dateStr] || {};
                 let target = existingData.target !== undefined ? existingData.target : getDailyTarget(dateObj, dateStr);
                 let net = calculateNetForValues(t.start, t.end, t.pause);
-                workData[dateStr] = { start: t.start || '', end: t.end || '', pause: t.pause !== undefined ? t.pause : 30, target: target, net: net };
+                workData[dateStr] = { start: t.start || '', end: t.end || '', pause: t.pause !== undefined ? t.pause : 30, target: target, net: net, note: existingData.note || '' };
                 saveToLocalStorage();
             }
         }
@@ -605,26 +610,27 @@
 
         function createCellHtml(d, dayOfWeek, holiday, vacation, data, isPlanner) {
             let dayNumColor = dayOfWeek === 0 ? 'text-red-500' : (dayOfWeek === 6 ? 'text-gray-500' : 'text-gray-800');
-            let textSize = isPlanner ? 'text-[9px]' : 'text-xs';
-            let badgeClass = isPlanner ? 'text-[5px] px-[2px] py-[1px] leading-none' : 'text-[7px] px-1 py-[1px] leading-none';
+            let textSize = isPlanner ? 'text-[9px]' : 'text-sm';
+            let badgeClass = isPlanner ? 'text-[5px] px-[2px] py-[1px] leading-none' : 'text-[8px] px-1 py-[2px] leading-none';
+            let noteIcon = (data && data.note) ? `<span class="${isPlanner?'text-[6px]':'text-[10px]'} ml-0.5">💬</span>` : '';
 
             let html = `<div class="flex justify-between items-start w-full mb-0.5">
-                <span class="${textSize} font-bold ${dayNumColor} leading-none">${d}</span>`;
+                <span class="${textSize} font-bold flex items-center ${dayNumColor} leading-none">${d}${noteIcon}</span>`;
             
-            if (holiday) html += `<span class="${badgeClass} font-bold bg-yellow-200 text-yellow-800 rounded truncate max-w-[30px]" title="${holiday}">${isPlanner?'FT':holiday}</span>`;
-            else if (vacation) html += `<span class="${badgeClass} font-bold bg-green-200 text-green-800 rounded truncate max-w-[30px]" title="${vacation}">Ferien</span>`;
+            if (holiday) html += `<span class="${badgeClass} font-bold bg-yellow-200 text-yellow-800 rounded truncate max-w-[40px]" title="${holiday}">${isPlanner?'FT':holiday}</span>`;
+            else if (vacation) html += `<span class="${badgeClass} font-bold bg-green-200 text-green-800 rounded truncate max-w-[40px]" title="${vacation}">Ferien</span>`;
             
             html += `</div>`;
             
             if (data && data.start) {
                 const diff = data.net - data.target;
                 const colorClass = diff > 0 ? 'text-green-600' : (diff < 0 ? 'text-red-500' : 'text-blue-600');
-                let timeSize = isPlanner ? 'text-[7.5px]' : 'text-[11px]';
-                let netSize = isPlanner ? 'text-[8.5px]' : 'text-sm';
+                let timeSize = isPlanner ? 'text-[7.5px]' : 'text-[12px]';
+                let netSize = isPlanner ? 'text-[8.5px]' : 'text-base';
                 
-                html += `<div class="flex-grow flex flex-col justify-end">
-                            <div class="font-bold text-center ${timeSize} text-gray-800 leading-none">${data.start}-${data.end}</div>
-                            <div class="text-center ${colorClass} font-black ${netSize} mt-[1px] leading-none">${data.net.toFixed(1)}h</div>
+                html += `<div class="flex-grow flex flex-col justify-end pb-0.5">
+                            <div class="font-bold text-center ${timeSize} text-gray-800 leading-none mb-0.5">${data.start}-${data.end}</div>
+                            <div class="text-center ${colorClass} font-black ${netSize} leading-none">${data.net.toFixed(1)}h</div>
                          </div>`;
             }
             return html;
@@ -651,7 +657,7 @@
             
             const createKwCell = (kw, isPlanner) => {
                 let kwCell = document.createElement('div');
-                kwCell.className = `flex items-center justify-center bg-blue-50/50 text-blue-400 font-black rounded-lg border border-blue-50 ${isPlanner ? 'text-[8px] min-h-[42px]' : 'text-[10px] min-h-[65px]'}`;
+                kwCell.className = `flex items-center justify-center bg-blue-50/50 text-blue-400 font-black rounded-lg border border-blue-50 ${isPlanner ? 'text-[8px] min-h-[42px]' : 'text-[10px] min-h-[75px]'}`;
                 kwCell.innerText = kw; return kwCell;
             };
 
@@ -659,7 +665,7 @@
             gridPlanner.appendChild(createKwCell(currentKW, true));
 
             for (let i = 0; i < firstDay; i++) {
-                let emM = document.createElement('div'); emM.className = "bg-gray-50/50 rounded-lg min-h-[65px]";
+                let emM = document.createElement('div'); emM.className = "bg-gray-50/50 rounded-lg min-h-[75px]";
                 let emP = document.createElement('div'); emP.className = "bg-gray-50/50 rounded-lg min-h-[42px]";
                 gridMonth.appendChild(emM); gridPlanner.appendChild(emP);
             }
@@ -691,7 +697,7 @@
                 if (data && data.start) { monthAppNet += data.net || 0; monthAppTarget += data.target || 0; }
 
                 let cellM = document.createElement('div');
-                cellM.className = `border rounded-xl p-1 min-h-[65px] flex flex-col cursor-pointer transition-transform hover:scale-105 active:scale-95 shadow-sm ${baseClass}`;
+                cellM.className = `border rounded-xl p-1.5 min-h-[75px] flex flex-col cursor-pointer transition-transform hover:scale-105 active:scale-95 shadow-sm ${baseClass}`;
                 cellM.onclick = () => { document.getElementById('date-picker').value = dateStr; switchTab('daily'); loadDayData(); };
                 cellM.innerHTML = createCellHtml(d, dayOfWeek, holiday, vacation, data, false);
                 gridMonth.appendChild(cellM);
@@ -708,12 +714,11 @@
 
             const lastDayOfWeek = (new Date(year, month, daysInMonth).getDay() + 6) % 7; 
             for(let i = 0; i < 6 - lastDayOfWeek; i++) {
-                let emM = document.createElement('div'); emM.className = "bg-gray-50/50 rounded-lg min-h-[65px]";
+                let emM = document.createElement('div'); emM.className = "bg-gray-50/50 rounded-lg min-h-[75px]";
                 let emP = document.createElement('div'); emP.className = "bg-gray-50/50 rounded-lg min-h-[42px]";
                 gridMonth.appendChild(emM); gridPlanner.appendChild(emP);
             }
 
-            // NEUE SALDO LOGIK (Berechnung Endstand Monat)
             const appSaldo = monthAppNet - monthAppTarget;
             document.getElementById('month-app-saldo').innerText = (appSaldo > 0 ? '+' : '') + appSaldo.toFixed(2) + ' h';
             
@@ -721,13 +726,12 @@
             const offSaldoInput = document.getElementById('official-saldo');
             offSaldoInput.value = monthlyOfficialSaldo[monthKey] || '';
             
-            // Rechnet App-Saldo (dieser Monat) + Übertrag aus Vormonat
             const carryoverVal = parseFloat(offSaldoInput.value) || 0;
             const endOfMonthTotal = appSaldo + carryoverVal;
             
             const diffEl = document.getElementById('month-diff');
             diffEl.innerText = (endOfMonthTotal > 0 ? '+' : '') + endOfMonthTotal.toFixed(2) + ' h';
-            diffEl.className = endOfMonthTotal < 0 ? "font-black text-sm text-red-400 mt-1" : "font-black text-sm text-green-400 mt-1";
+            diffEl.className = endOfMonthTotal < 0 ? "font-black text-sm text-red-200 mt-1" : "font-black text-sm text-white mt-1";
         }
 
         function formatDate(date) { return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0'); }
@@ -756,7 +760,6 @@
             
             workModel = { hours: newHours, days: newDays };
 
-            // Migration & schlaue Heilung alter Daten
             for (let dateStr in workData) {
                 const dObj = new Date(dateStr);
                 const dayOfWeek = dObj.getDay();
@@ -778,14 +781,13 @@
             
             const btn = document.getElementById('btn-save-model');
             btn.innerText = "Gespeichert!";
-            btn.classList.add('bg-green-600', 'text-white'); btn.classList.remove('bg-gray-800');
-            setTimeout(() => { btn.innerText = "Modell speichern & Rückwirkend anwenden"; btn.classList.add('bg-gray-800'); btn.classList.remove('bg-green-600'); }, 1500);
+            btn.classList.add('bg-green-600'); btn.classList.remove('bg-blue-600');
+            setTimeout(() => { btn.innerText = "Modell speichern & Rückwirkend anwenden"; btn.classList.add('bg-blue-600'); btn.classList.remove('bg-green-600'); }, 1500);
         }
 
         function saveOfficialSaldo() { 
             const key = `${viewMonthDate.getFullYear()}-${String(viewMonthDate.getMonth()+1).padStart(2,'0')}`;
             const val = document.getElementById('official-saldo').value;
-            // Erlaube Kommazahlen
             let parsedVal = parseFloat(val.replace(',', '.')); 
             if(isNaN(parsedVal)) delete monthlyOfficialSaldo[key]; else monthlyOfficialSaldo[key] = parsedVal;
             saveToLocalStorage(); renderMonthViews();
@@ -813,7 +815,7 @@
 
             templates.forEach(t => {
                 const b = document.createElement('button'); 
-                b.className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap shadow-sm active:scale-95 transition-transform";
+                b.className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-5 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow-sm active:scale-95 transition-transform";
                 b.innerText = t.name; b.onclick = () => applyTemplate(t.id); q.appendChild(b);
                 
                 const div = document.createElement('div'); 
