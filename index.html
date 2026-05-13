@@ -24,10 +24,10 @@
         .tab-content.active { display: block; }
         button { user-select: none; -webkit-user-select: none; }
         
-        /* Kalender-Spezifisches Design */
-        .holiday-bg { background-color: #fef08a; border-color: #eab308; } 
-        .vacation-bg { background-color: #dcfce7; border-color: #4ade80; } 
-        .weekend-bg { background-color: #f1f5f9; border-color: #cbd5e1; } 
+        /* Kalender-Spezifisches Design (Abgesichert mit !important) */
+        .holiday-bg { background-color: #fef08a !important; border-color: #eab308 !important; } 
+        .vacation-bg { background-color: #dcfce7 !important; border-color: #4ade80 !important; } 
+        .weekend-bg { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; } 
         
         /* Rahmen wenn der Pinsel-Modus aktiv ist */
         .paint-mode-active { border: 2px dashed #6366f1 !important; background-color: #eef2ff !important; }
@@ -117,7 +117,7 @@
                 <button onclick="changeMonth(1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
-            <!-- NEU: Dienstplaner Werkzeuge -->
+            <!-- Dienstplaner Werkzeuge -->
             <div>
                 <button onclick="togglePlanner()" class="w-full bg-indigo-50 text-indigo-700 font-bold py-3 px-4 rounded-xl text-sm flex justify-center items-center gap-2 border border-indigo-100 shadow-sm transition-colors hover:bg-indigo-100">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
@@ -366,7 +366,7 @@
         let holidays = JSON.parse(localStorage.getItem('az_holidays')) || {};
         let schoolHolidays = JSON.parse(localStorage.getItem('az_schoolHolidays')) || {};
         
-        let isPaintMode = false; // Neuer Status für Planer
+        let isPaintMode = false;
 
         document.getElementById('global-target').value = globalTarget;
 
@@ -387,9 +387,7 @@
             const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => btn.getAttribute('onclick').includes(tabId));
             if(activeBtn) activeBtn.classList.add('text-blue-600');
             
-            // Verlasse Paint-Mode wenn Tab gewechselt wird
             if(tabId !== 'month' && isPaintMode) togglePaintMode();
-            
             if(tabId === 'month') renderMonthView();
         }
 
@@ -401,6 +399,9 @@
             return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
         }
 
+        // ===============================================
+        // NEU: ZUVERLÄSSIGE API FÜR FEIERTAGE UND FERIEN
+        // ===============================================
         async function updateHolidays() {
             const state = document.getElementById('state-select').value;
             const year = viewMonthDate.getFullYear(); 
@@ -408,32 +409,33 @@
             btn.innerText = "Lade Daten...";
             
             try {
-                const responseFeiertage = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/DE`);
+                // 1. Offizielle Feiertage laden
+                const responseFeiertage = await fetch(`https://openholidaysapi.org/PublicHolidays?countryIsoCode=DE&languageIsoCode=DE&validFrom=${year}-01-01&validTo=${year}-12-31&subdivisionCode=DE-${state}`);
                 const dataFeiertage = await responseFeiertage.json();
                 
-                dataFeiertage.forEach(h => {
-                    if (!h.counties || h.counties.includes(`DE-${state}`)) {
-                        holidays[h.date] = h.localName;
-                    }
-                });
+                if (Array.isArray(dataFeiertage)) {
+                    dataFeiertage.forEach(h => {
+                        holidays[h.startDate] = h.name[0].text;
+                    });
+                }
 
-                try {
-                    const responseFerien = await fetch(`https://ferien-api.de/api/v1/holidays/${state}/${year}`);
-                    if(responseFerien.ok) {
-                        const dataFerien = await responseFerien.json();
-                        dataFerien.forEach(ferien => {
-                            let startDate = new Date(ferien.start);
-                            let endDate = new Date(ferien.end);
-                            const name = ferien.name.charAt(0).toUpperCase() + ferien.name.slice(1);
-                            
-                            let loopDate = new Date(startDate);
-                            while(loopDate <= endDate) {
-                                schoolHolidays[formatDate(loopDate)] = name;
-                                loopDate.setDate(loopDate.getDate() + 1);
-                            }
-                        });
-                    }
-                } catch(ferienError) { console.log("Ferienfehler", ferienError); }
+                // 2. Offizielle Schulferien laden
+                const responseFerien = await fetch(`https://openholidaysapi.org/SchoolHolidays?countryIsoCode=DE&languageIsoCode=DE&validFrom=${year}-01-01&validTo=${year}-12-31&subdivisionCode=DE-${state}`);
+                const dataFerien = await responseFerien.json();
+                
+                if (Array.isArray(dataFerien)) {
+                    dataFerien.forEach(ferien => {
+                        let startDate = new Date(ferien.startDate);
+                        let endDate = new Date(ferien.endDate);
+                        const name = ferien.name[0].text;
+                        
+                        let loopDate = new Date(startDate);
+                        while(loopDate <= endDate) {
+                            schoolHolidays[formatDate(loopDate)] = name;
+                            loopDate.setDate(loopDate.getDate() + 1);
+                        }
+                    });
+                }
                 
                 saveToLocalStorage();
                 btn.className = "w-full bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-sm transition-colors shadow-sm";
@@ -446,6 +448,7 @@
                 if(document.getElementById('view-month').classList.contains('active')) renderMonthView();
                 loadDayData();
             } catch (e) {
+                console.log(e);
                 btn.className = "w-full bg-red-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition-colors shadow-sm";
                 btn.innerText = "Fehler. Internet prüfen.";
                 setTimeout(() => {
@@ -535,7 +538,7 @@
             renderMonthView(); 
         }
 
-        // --- DIENSTPLANER LOGIK (NEU) ---
+        // --- DIENSTPLANER LOGIK ---
         function togglePlanner() {
             const el = document.getElementById('planner-tools');
             el.classList.toggle('hidden');
@@ -560,7 +563,7 @@
         }
 
         function applyTemplateToDate(dateStr, tplId) {
-            if (!tplId || tplId === "") return; // Nichts tun
+            if (!tplId || tplId === "") return;
             
             if (tplId === "delete") {
                 delete workData[dateStr];
@@ -573,7 +576,6 @@
                 const isHoliday = !!holidays[dateStr];
                 const existingData = workData[dateStr] || {};
                 
-                // Behalte das vorhandene Target, oder nutze 0 an Feiertagen, sonst Global
                 let target = existingData.target !== undefined ? existingData.target : (isHoliday ? 0 : globalTarget);
                 let net = calculateNetForValues(t.start, t.end, t.pause);
                 
@@ -591,7 +593,6 @@
         function applyPattern() {
             const overwrite = document.getElementById('pat-overwrite').checked;
             
-            // Hole Auswahl für Wochentage (0=So, 1=Mo... 6=Sa)
             const pattern = {
                 0: document.getElementById('pat-0').value,
                 1: document.getElementById('pat-1').value,
@@ -616,7 +617,6 @@
                 const selectedTplId = pattern[dayOfWeek];
                 
                 if (selectedTplId && selectedTplId !== "") {
-                    // Check ob überschrieben werden darf
                     const hasEntry = workData[dateStr] && workData[dateStr].start;
                     if (!hasEntry || overwrite) {
                         applyTemplateToDate(dateStr, selectedTplId);
@@ -629,7 +629,7 @@
                 renderMonthView();
                 alert(`${changesMade} Tage erfolgreich geplant!`);
             } else {
-                alert("Keine Änderungen vorgenommen (evtl. Haken bei 'Überschreiben' setzen).");
+                alert("Keine Änderungen vorgenommen.");
             }
         }
 
@@ -639,16 +639,13 @@
                 optionsHTML += `<option value="${t.id}">${t.name} (${t.start}-${t.end})</option>`;
             });
             
-            // Pinsel Dropdown (braucht Löschen-Option)
             document.getElementById('paint-template').innerHTML = optionsHTML + `<option value="delete" class="text-red-500 font-bold">🗑️ Tag löschen</option>`;
             
-            // Wochen-Muster Dropdowns
             for(let i=0; i<=6; i++) {
                 const el = document.getElementById(`pat-${i}`);
                 if(el) el.innerHTML = optionsHTML;
             }
         }
-
 
         // --- Kalender Logik ---
         function changeMonth(delta) {
@@ -707,18 +704,17 @@
                 const cell = document.createElement('div');
                 
                 let baseClass = 'bg-white border-gray-200';
-                if (holiday) baseClass = 'holiday-bg border-yellow-300 shadow-inner';
-                else if (vacation) baseClass = 'vacation-bg border-green-300';
-                else if (isWeekend) baseClass = 'weekend-bg border-gray-300 shadow-inner';
+                if (holiday) baseClass = 'holiday-bg';
+                else if (vacation) baseClass = 'vacation-bg';
+                else if (isWeekend) baseClass = 'weekend-bg shadow-inner';
 
                 cell.className = `border rounded-lg p-1 min-h-[65px] flex flex-col cursor-pointer transition-transform hover:scale-105 active:scale-95 shadow-sm ${baseClass}`;
                 
-                // NEU: Unterscheide Klickverhalten je nach Modus
                 cell.onclick = () => { 
                     if(isPaintMode) {
                         const tplId = document.getElementById('paint-template').value;
                         applyTemplateToDate(dateStr, tplId);
-                        renderMonthView(); // Neuladen
+                        renderMonthView();
                     } else {
                         document.getElementById('date-picker').value = dateStr; 
                         switchTab('daily'); 
@@ -864,7 +860,7 @@
                 l.appendChild(div);
             });
             
-            updatePlannerDropdowns(); // Dropdowns im Planer aktualisieren
+            updatePlannerDropdowns();
         }
 
         initDailyView();
