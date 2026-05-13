@@ -24,10 +24,10 @@
         .tab-content.active { display: block; }
         button { user-select: none; -webkit-user-select: none; }
         
-        /* Kalender-Spezifisches Design */
-        .holiday-bg { background-color: #fef9c3; border-color: #fde047; } 
-        .vacation-bg { background-color: #f0fdf4; border-color: #bbf7d0; } 
-        .weekend-bg { background-color: #f8fafc; } 
+        /* Kalender-Spezifisches Design - Jetzt mit kräftigeren Farben! */
+        .holiday-bg { background-color: #fef08a; border-color: #eab308; } 
+        .vacation-bg { background-color: #dcfce7; border-color: #4ade80; } 
+        .weekend-bg { background-color: #f1f5f9; border-color: #cbd5e1; } 
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased pb-24">
@@ -124,15 +124,16 @@
                     <div class="text-center text-[10px] font-bold text-gray-400">Mi</div>
                     <div class="text-center text-[10px] font-bold text-gray-400">Do</div>
                     <div class="text-center text-[10px] font-bold text-gray-400">Fr</div>
-                    <div class="text-center text-[10px] font-bold text-gray-500">Sa</div>
-                    <div class="text-center text-[10px] font-bold text-red-400">So</div>
+                    <div class="text-center text-[10px] font-bold text-gray-600">Sa</div>
+                    <div class="text-center text-[10px] font-bold text-red-500">So</div>
                 </div>
                 <div id="month-calendar-grid" class="grid grid-cols-8 gap-1"></div>
                 
                 <!-- Legende -->
                 <div class="flex gap-3 justify-center mt-3 pt-2 border-t border-gray-100 text-[10px] text-gray-500">
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#fef9c3] border border-[#fde047]"></div>Feiertag</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#f0fdf4] border border-[#bbf7d0]"></div>Ferien</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#fef08a] border border-[#eab308]"></div>Feiertag</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#dcfce7] border border-[#4ade80]"></div>Ferien</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#f1f5f9] border border-[#cbd5e1]"></div>Wochenende</span>
                 </div>
             </div>
 
@@ -239,7 +240,13 @@
 
     <script>
         // --- Service Worker ---
-        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
+        if ('serviceWorker' in navigator) { 
+            window.addEventListener('load', () => { 
+                navigator.serviceWorker.register('sw.js').catch(err => {
+                    console.log('Hinweis: Service Worker (Offline-Modus) ist in dieser Vorschau deaktiviert.', err);
+                });
+            }); 
+        }
         
         // --- Google Drive Logic ---
         const CLIENT_ID = 'IHRE_CLIENT_ID_HIER_EINTRAGEN.apps.googleusercontent.com'; 
@@ -329,7 +336,6 @@
             if(tabId === 'month') renderMonthView();
         }
 
-        // --- Hilfsfunktion Kalenderwoche ---
         function getISOWeekNumber(d) {
             const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             const dayNum = date.getUTCDay() || 7;
@@ -467,7 +473,7 @@
             setTimeout(() => { btn.innerText = oldText; btn.classList.remove('bg-green-600'); }, 1500);
         }
 
-        // --- Kalender & Dashboard Logik ---
+        // --- Kalender Logik ---
         function changeMonth(delta) {
             viewMonthDate.setMonth(viewMonthDate.getMonth() + delta);
             renderMonthView();
@@ -483,9 +489,8 @@
 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             let firstDay = new Date(year, month, 1).getDay();
-            firstDay = (firstDay === 0) ? 6 : firstDay - 1; // Mo=0, So=6
+            firstDay = (firstDay === 0) ? 6 : firstDay - 1; 
             
-            // 1. Zelle: Kalenderwoche des 1. Tages im Monat
             const firstDateObj = new Date(year, month, 1);
             let currentKW = getISOWeekNumber(firstDateObj);
             
@@ -494,7 +499,6 @@
             kwCell.innerText = currentKW;
             grid.appendChild(kwCell);
 
-            // Leere Felder am Anfang (für die ersten Tage der Woche, die im Vormonat liegen)
             for (let i = 0; i < firstDay; i++) {
                 let empty = document.createElement('div');
                 empty.className = "bg-gray-50 border border-gray-50 rounded-lg min-h-[65px] opacity-50";
@@ -506,11 +510,10 @@
 
             for (let d = 1; d <= daysInMonth; d++) {
                 const dateObj = new Date(year, month, d);
-                const dayOfWeek = dateObj.getDay(); // 0=So, 1=Mo...
+                const dayOfWeek = dateObj.getDay(); 
                 const isMonday = dayOfWeek === 1;
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 
-                // Falls es Montag ist und NICHT der erste Tag (den haben wir oben schon gemacht), neue KW Spalte einfügen
                 if (isMonday && d !== 1) {
                     currentKW = getISOWeekNumber(dateObj);
                     let newKwCell = document.createElement('div');
@@ -528,40 +531,44 @@
                 
                 let baseClass = 'bg-white border-gray-200';
                 if (holiday) baseClass = 'holiday-bg';
-                else if (vacation) baseClass = 'vacation-bg border-green-200';
-                else if (isWeekend) baseClass = 'weekend-bg border-gray-100';
+                else if (vacation) baseClass = 'vacation-bg';
+                else if (isWeekend) baseClass = 'weekend-bg';
 
-                cell.className = `border rounded-lg p-1 min-h-[65px] flex flex-col justify-between cursor-pointer transition-transform hover:scale-105 active:scale-95 shadow-sm ${baseClass}`;
+                cell.className = `border rounded-lg p-1 min-h-[65px] flex flex-col cursor-pointer transition-transform hover:scale-105 active:scale-95 shadow-sm ${baseClass}`;
                 cell.onclick = () => { document.getElementById('date-picker').value = dateStr; switchTab('daily'); loadDayData(); };
                 
-                // Textfarbe des Datums (Sonntag rot, Rest normal)
-                let dayNumColor = dayOfWeek === 0 ? 'text-red-500' : (dayOfWeek === 6 ? 'text-gray-500' : 'text-gray-700');
+                let dayNumColor = dayOfWeek === 0 ? 'text-red-600' : (dayOfWeek === 6 ? 'text-gray-600' : 'text-gray-800');
 
-                let html = `<div class="flex justify-between items-start"><span class="text-[11px] font-bold ${dayNumColor}">${d}</span></div>`;
+                // IMMER Datum und (falls vorhanden) Feiertag/Ferien anzeigen
+                let html = `<div class="flex justify-between items-start w-full">
+                    <span class="text-[11px] font-bold ${dayNumColor}">${d}</span>`;
                 
+                if (holiday) {
+                    html += `<span class="text-[6px] font-bold bg-yellow-200 text-yellow-800 px-1 rounded truncate max-w-[35px]" title="${holiday}">${holiday}</span>`;
+                } else if (vacation) {
+                    html += `<span class="text-[6px] font-bold bg-green-200 text-green-800 px-1 rounded truncate max-w-[35px]" title="${vacation}">Ferien</span>`;
+                }
+                html += `</div>`;
+                
+                // Darunter dann die Arbeitszeiten
                 if (data && data.start) {
                     monthAppNet += data.net || 0; 
                     monthAppTarget += data.target || 0;
                     const diff = data.net - data.target;
                     const colorClass = diff > 0 ? 'text-green-600' : (diff < 0 ? 'text-red-500' : 'text-blue-600');
                     
-                    html += `<div class="font-bold text-center mt-auto text-[10px] text-gray-800 leading-none">${data.start}-${data.end}</div>`;
-                    html += `<div class="text-center ${colorClass} font-black text-[11px] mt-1">${data.net.toFixed(1)}h</div>`;
-                } else {
-                    if (holiday) {
-                        html += `<div class="text-[7px] text-yellow-700 font-medium leading-tight mt-auto text-center truncate px-1">${holiday}</div>`;
-                    } else if (vacation) {
-                        html += `<div class="text-[7px] text-green-700 font-medium leading-tight mt-auto text-center truncate px-1">${vacation}</div>`;
-                    }
+                    html += `<div class="flex-grow flex flex-col justify-end mt-1">
+                                <div class="font-bold text-center text-[10px] text-gray-800 leading-none">${data.start}-${data.end}</div>
+                                <div class="text-center ${colorClass} font-black text-[11px] mt-[2px]">${data.net.toFixed(1)}h</div>
+                             </div>`;
                 }
                 
                 cell.innerHTML = html; grid.appendChild(cell);
             }
 
-            // Fülle die restlichen Tage der Woche am Ende des Monats mit leeren Feldern auf
             const lastDateObj = new Date(year, month, daysInMonth);
             let lastDayOfWeek = lastDateObj.getDay();
-            lastDayOfWeek = (lastDayOfWeek === 0) ? 6 : lastDayOfWeek - 1; // Mo=0, So=6
+            lastDayOfWeek = (lastDayOfWeek === 0) ? 6 : lastDayOfWeek - 1; 
             const remainingEmptyCells = 6 - lastDayOfWeek;
             
             for(let i = 0; i < remainingEmptyCells; i++) {
@@ -570,7 +577,6 @@
                 grid.appendChild(empty);
             }
 
-            // Dashboard Aktualisierung
             const appSaldo = monthAppNet - monthAppTarget;
             document.getElementById('month-app-saldo').innerText = (appSaldo > 0 ? '+' : '') + appSaldo.toFixed(2) + ' h';
             
