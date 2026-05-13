@@ -23,12 +23,17 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         button { user-select: none; -webkit-user-select: none; }
+        
+        /* Kalender-Spezifisches Design */
+        .holiday-bg { background-color: #fef9c3; border-color: #fde047; } /* Hellgelb für Feiertage */
+        .vacation-bg { background-color: #f0fdf4; border-color: #bbf7d0; } /* Hellgrün für Ferien */
+        .weekend-bg { background-color: #f9fafb; color: #9ca3af; } /* Grau für Wochenende */
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased pb-24">
 
     <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-20 flex justify-between items-center">
         <h1 class="text-xl font-bold">Zeiterfassung</h1>
         <button id="btn-sync" onclick="handleAuthClick()" class="bg-blue-700 hover:bg-blue-800 text-xs px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
@@ -41,12 +46,18 @@
         <!-- ==================== ANSICHT: TAGESERFASSUNG ==================== -->
         <section id="view-daily" class="tab-content active space-y-4">
             
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-                <button onclick="changeDate(-1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden">
+                <button onclick="changeDate(-1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full z-10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
-                <input type="date" id="date-picker" class="font-bold text-lg bg-transparent border-none text-center focus:ring-0" onchange="loadDayData()">
-                <button onclick="changeDate(1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+                <div class="text-center z-10 flex flex-col items-center">
+                    <input type="date" id="date-picker" class="font-bold text-lg bg-transparent border-none text-center focus:ring-0 p-0" onchange="loadDayData()">
+                    <div class="flex gap-1 mt-1">
+                        <span id="holiday-info" class="text-[10px] text-yellow-600 font-bold uppercase hidden"></span>
+                        <span id="vacation-info" class="text-[10px] text-green-600 font-bold uppercase hidden"></span>
+                    </div>
+                </div>
+                <button onclick="changeDate(1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full z-10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
             </div>
@@ -57,22 +68,22 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Arbeitsbeginn</label>
-                        <input type="time" id="time-start" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" onchange="calculateNet()">
+                        <input type="time" id="time-start" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500" onchange="calculateNet()">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Arbeitsende</label>
-                        <input type="time" id="time-end" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" onchange="calculateNet()">
+                        <input type="time" id="time-end" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500" onchange="calculateNet()">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Pause (Minuten)</label>
-                        <input type="number" id="time-pause" placeholder="z.B. 30" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" onchange="calculateNet()">
+                        <input type="number" id="time-pause" placeholder="z.B. 30" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500" onchange="calculateNet()">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Tages-Soll (Stunden)</label>
-                        <input type="number" step="0.1" id="time-target" class="w-full p-3 bg-blue-50 rounded-xl border border-blue-200 focus:outline-none focus:border-blue-500 text-blue-700 font-bold" onchange="calculateNet()">
+                        <input type="number" step="0.1" id="time-target" class="w-full p-3 bg-blue-50 rounded-xl border border-blue-200 focus:outline-none text-blue-700 font-bold" onchange="calculateNet()">
                     </div>
                 </div>
 
@@ -87,7 +98,7 @@
                     </div>
                 </div>
 
-                <button onclick="saveDay()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform active:scale-95 mt-4">
+                <button onclick="saveDay()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform active:scale-95">
                     Tag speichern
                 </button>
             </div>
@@ -97,147 +108,142 @@
         <!-- ==================== ANSICHT: MONATSÜBERSICHT & KALENDER ==================== -->
         <section id="view-month" class="tab-content space-y-4">
             
-            <!-- Monatsauswahl -->
-            <div class="bg-blue-600 text-white p-4 rounded-2xl shadow-md flex justify-between items-center relative z-10">
+            <div class="bg-blue-600 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
                 <button onclick="changeMonth(-1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                 <h2 id="month-display" class="font-bold text-xl">Monat Jahr</h2>
                 <button onclick="changeMonth(1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
-            <!-- Kalender Grid (NEU) -->
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-                <div id="month-calendar-grid" class="grid grid-cols-7 gap-1">
-                    <!-- Wird per JS gefüllt -->
+            <!-- Kalender Grid -->
+            <div class="bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+                <div class="grid grid-cols-7 gap-1 mb-1">
+                    <div class="text-center text-[10px] font-bold text-gray-400">Mo</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400">Di</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400">Mi</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400">Do</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400">Fr</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400">Sa</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400">So</div>
                 </div>
-            </div>
-
-            <!-- Dashboard: Abgleich -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                <div class="flex justify-between items-center border-b pb-2">
-                    <h3 class="font-bold text-gray-800">Monats-Abgleich</h3>
-                    <div class="text-right text-xs">
-                        <span class="text-gray-500">Ist: <span id="month-ist-sum" class="font-bold text-gray-800">0.00</span>h</span><br>
-                        <span class="text-gray-500">Soll: <span id="month-soll-sum" class="font-bold text-gray-800">0.00</span>h</span>
-                    </div>
-                </div>
+                <div id="month-calendar-grid" class="grid grid-cols-7 gap-1"></div>
                 
-                <!-- Offizielles Saldo Eingabe -->
-                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-200">
-                    <div>
-                        <p class="text-sm font-bold text-gray-700">Offizielles Saldo (AG)</p>
-                        <p class="text-[10px] text-gray-500">Stand Ende des Monats</p>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <input type="number" step="0.1" id="official-saldo" placeholder="z.B. 12.5" class="w-20 p-2 text-center bg-white rounded-lg border border-gray-300 font-bold focus:border-blue-500 focus:outline-none" onchange="saveOfficialSaldo()">
-                        <span class="text-gray-500 text-sm">h</span>
-                    </div>
-                </div>
-
-                <!-- Vergleich App vs AG -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="p-3 bg-blue-50 rounded-xl">
-                        <p class="text-[11px] text-blue-600 font-semibold mb-1">App-Saldo (nur dieser Monat)</p>
-                        <p class="font-black text-xl text-blue-800" id="month-app-saldo">0.00</p>
-                    </div>
-                    <div class="p-3 bg-white border border-gray-200 rounded-xl relative">
-                        <p class="text-[11px] text-gray-500 font-semibold mb-1">Differenz (App vs. AG)</p>
-                        <p class="font-black text-xl" id="month-diff">0.00</p>
-                        <p class="text-[9px] text-gray-400 absolute bottom-1 right-2">Sollte 0 sein</p>
-                    </div>
+                <!-- Legende -->
+                <div class="flex gap-3 justify-center mt-3 pt-2 border-t border-gray-100 text-[10px] text-gray-500">
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#fef9c3] border border-[#fde047]"></div>Feiertag</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#f0fdf4] border border-[#bbf7d0]"></div>Ferien</span>
                 </div>
             </div>
 
-            <!-- Dashboard: Gesamtsaldo -->
-            <div class="bg-gray-800 text-white p-4 rounded-2xl shadow-md">
-                 <h3 class="font-bold text-sm text-gray-300 mb-1">Aktuelles Gesamtsaldo</h3>
-                 <p class="text-[10px] text-gray-400 mb-3">Berechnet aus: Offizielles Saldo Vormonat + App-Saldo laufender Monat</p>
-                 <div class="flex items-end gap-2">
-                     <span class="text-4xl font-black" id="total-saldo">0.00</span>
-                     <span class="text-gray-400 pb-1">h</span>
-                 </div>
+            <!-- Dashboard / Abrechnung -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h3 class="font-bold text-gray-800 border-b pb-2 text-sm">Monats-Abrechnung & Übertrag</h3>
+                
+                <div class="grid grid-cols-3 gap-2 text-center text-sm">
+                    <div class="bg-gray-50 p-2 rounded-xl">
+                        <p class="text-[10px] text-gray-500 uppercase">App Saldo</p>
+                        <p class="font-bold text-blue-600" id="month-app-saldo">0.00</p>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-xl border border-gray-200">
+                        <p class="text-[10px] text-gray-500 uppercase">Offiziell (AG)</p>
+                        <input type="number" step="0.1" id="official-saldo" class="w-full bg-transparent text-center font-bold text-gray-800 focus:outline-none" placeholder="0.0" onchange="saveOfficialSaldo()">
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-xl">
+                        <p class="text-[10px] text-gray-500 uppercase">Differenz</p>
+                        <p class="font-bold" id="month-diff">0.00</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-blue-50 rounded-xl flex justify-between items-center border border-blue-100">
+                    <div>
+                        <p class="text-xs text-blue-800 font-semibold">Aktuelles Gesamtsaldo</p>
+                        <p class="text-[9px] text-blue-600">Offizieller Vormonat + App aktueller Monat</p>
+                    </div>
+                    <p id="total-saldo" class="text-xl font-black text-blue-700">0.00 h</p>
+                </div>
             </div>
         </section>
 
 
-        <!-- ==================== ANSICHT: EINSTELLUNGEN / VORLAGEN ==================== -->
-        <section id="view-templates" class="tab-content space-y-4">
-             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-gray-800">Standard-Sollzeit</h3>
-                    <p class="text-xs text-gray-500">Wird für neue Tage verwendet</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <input type="number" step="0.1" id="global-target" class="w-20 p-2 text-center bg-gray-50 rounded-lg border border-gray-200 font-bold" onchange="saveGlobalTarget()">
-                    <span class="text-gray-500">Std.</span>
+        <!-- ==================== ANSICHT: EINSTELLUNGEN ==================== -->
+        <section id="view-settings" class="tab-content space-y-4">
+            
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h3 class="font-bold text-gray-800">Standard-Sollzeit</h3>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Stunden pro Tag</span>
+                    <input type="number" step="0.1" id="global-target" class="w-20 p-2 text-center bg-gray-50 rounded-lg border font-bold" onchange="saveGlobalTarget()">
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                <h3 class="font-bold text-gray-800">Neue Vorlage erstellen</h3>
-                <input type="text" id="tpl-name" placeholder="Name (z.B. Frühschicht)" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Beginn</label>
-                        <input type="time" id="tpl-start" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Ende</label>
-                        <input type="time" id="tpl-end" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500 mb-1">Pause (Min)</label>
-                    <input type="number" id="tpl-pause" value="30" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200">
-                </div>
-                <button onclick="saveTemplate()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform active:scale-95">
-                    Vorlage speichern
+            <!-- Feiertage & Ferien Konfiguration -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                <h3 class="font-bold text-gray-800">Feiertage & Ferien laden</h3>
+                <p class="text-[11px] text-gray-500">Wählen Sie Ihr Bundesland. Die App lädt die Daten für das im Kalender ausgewählte Jahr.</p>
+                <select id="state-select" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 text-sm">
+                    <option value="BW">Baden-Württemberg</option>
+                    <option value="BY">Bayern</option>
+                    <option value="BE">Berlin</option>
+                    <option value="BB">Brandenburg</option>
+                    <option value="HB">Bremen</option>
+                    <option value="HH">Hamburg</option>
+                    <option value="HE">Hessen</option>
+                    <option value="MV">Mecklenburg-Vorpommern</option>
+                    <option value="NI">Niedersachsen</option>
+                    <option value="NW" selected>Nordrhein-Westfalen</option>
+                    <option value="RP">Rheinland-Pfalz</option>
+                    <option value="SL">Saarland</option>
+                    <option value="SN">Sachsen</option>
+                    <option value="ST">Sachsen-Anhalt</option>
+                    <option value="SH">Schleswig-Holstein</option>
+                    <option value="TH">Thüringen</option>
+                </select>
+                <button onclick="updateHolidays()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl text-sm transition-colors shadow-sm">
+                    Jetzt aktualisieren
                 </button>
             </div>
 
-            <div>
-                <h3 class="font-bold text-gray-500 text-sm mb-2 px-2">Gespeicherte Vorlagen</h3>
-                <div id="templates-list" class="space-y-2"></div>
-            </div>
-            
-            <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-2xl">
-                <h4 class="font-bold text-yellow-800 text-sm mb-1">Google Drive Einrichtung</h4>
-                <p class="text-xs text-yellow-700 mb-2">Damit Cloud-Speicherung funktioniert, müssen Sie im Code die Client-ID hinterlegen.</p>
-                <div class="text-xs bg-white p-2 rounded border border-yellow-100 overflow-x-auto text-gray-500 font-mono">
-                    const CLIENT_ID = 'HIER_EINTRAGEN';
+            <!-- Vorlagen -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h3 class="font-bold text-gray-800">Neue Vorlage</h3>
+                <input type="text" id="tpl-name" placeholder="Name (z.B. Frühschicht)" class="w-full p-3 bg-gray-50 rounded-xl border text-sm">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="time" id="tpl-start" class="p-2 bg-gray-50 border rounded-lg text-sm">
+                    <input type="time" id="tpl-end" class="p-2 bg-gray-50 border rounded-lg text-sm">
                 </div>
+                <button onclick="saveTemplate()" class="w-full bg-gray-800 text-white font-bold py-2 rounded-xl text-sm">Vorlage speichern</button>
+                <div id="templates-list" class="space-y-2 pt-2"></div>
             </div>
         </section>
 
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 pb-safe">
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 pb-safe z-30">
         <div class="flex justify-around items-center h-16 max-w-md mx-auto">
             <button onclick="switchTab('daily')" class="nav-btn active flex flex-col items-center justify-center w-full h-full text-blue-600">
                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span class="text-[10px] font-medium">Heute</span>
             </button>
-            <button onclick="switchTab('month')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-blue-500 transition-colors">
-                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                <span class="text-[10px] font-medium">Monat</span>
+            <button onclick="switchTab('month')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span class="text-[10px] font-medium">Kalender</span>
             </button>
-            <button onclick="switchTab('templates')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-blue-500 transition-colors">
+            <button onclick="switchTab('settings')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400">
                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span class="text-[10px] font-medium">Einstellungen</span>
+                <span class="text-[10px] font-medium">Setup</span>
             </button>
         </div>
     </nav>
 
-    <!-- App Logik -->
     <script>
-        // --- Service Worker & GAPI ---
-        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Fehler:', err)); }); }
+        // --- Service Worker ---
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
         
+        // --- Google Drive Logic ---
         const CLIENT_ID = 'IHRE_CLIENT_ID_HIER_EINTRAGEN.apps.googleusercontent.com'; 
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         const FILENAME = 'arbeitszeit_daten.json';
-
         let tokenClient; let isDriveReady = false; let driveFileId = null;
 
         function gapiLoaded() { gapi.load('client', initializeGapiClient); }
@@ -245,19 +251,17 @@
             try {
                 await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] });
                 tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: async (resp) => { if (resp.error !== undefined) throw (resp); isDriveReady = true; document.getElementById('sync-status').innerText = "Verbunden"; await syncWithDrive(); },});
-            } catch (err) { console.log("Drive API Init Fehler."); }
+            } catch (err) { console.log("GAPI Init Fehler"); }
         }
         function handleAuthClick() {
-            if (!CLIENT_ID || CLIENT_ID.includes('IHRE_CLIENT_ID')) { alert("Bitte Google Client-ID hinterlegen!"); return; }
-            if (!tokenClient) return;
+            if (!CLIENT_ID || CLIENT_ID.includes('IHRE_CLIENT_ID')) { alert("Bitte Client-ID eintragen!"); return; }
             if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'});
             else tokenClient.requestAccessToken({prompt: ''});
         }
         async function syncWithDrive() {
-             if(!isDriveReady) return;
-            document.getElementById('sync-status').innerText = "Syncing...";
+            if(!isDriveReady) return;
             try {
-                let response = await gapi.client.drive.files.list({ q: `name='${FILENAME}' and trashed=false`, spaces: 'drive', fields: 'files(id, name)' });
+                let response = await gapi.client.drive.files.list({ q: `name='${FILENAME}' and trashed=false`, fields: 'files(id, name)' });
                 let files = response.result.files;
                 if (files && files.length > 0) {
                     driveFileId = files[0].id;
@@ -265,41 +269,42 @@
                     let data = fileData.result;
                     if(data.workData) workData = data.workData;
                     if(data.templates) templates = data.templates;
-                    if(data.globalTarget) globalTarget = data.globalTarget;
+                    if(data.globalTarget !== undefined) globalTarget = data.globalTarget;
                     if(data.monthlyOfficialSaldo) monthlyOfficialSaldo = data.monthlyOfficialSaldo;
-                    saveToLocalStorage(); loadDayData(); renderTemplates(); document.getElementById('sync-status').innerText = "Aktuell";
-                } else { await saveToDrive(); }
-            } catch (err) { document.getElementById('sync-status').innerText = "Fehler"; }
+                    if(data.holidays) holidays = data.holidays;
+                    if(data.schoolHolidays) schoolHolidays = data.schoolHolidays;
+                    saveToLocalStorage(); loadDayData(); renderTemplates(); if(document.getElementById('view-month').classList.contains('active')) renderMonthView();
+                }
+            } catch (err) { console.log("Sync Fehler"); }
         }
         async function saveToDrive() {
-             if(!isDriveReady) return;
-            document.getElementById('sync-status').innerText = "Speichere...";
-            const fileContent = JSON.stringify({ workData, templates, globalTarget, monthlyOfficialSaldo });
+            if(!isDriveReady) return;
+            const fileContent = JSON.stringify({ workData, templates, globalTarget, monthlyOfficialSaldo, holidays, schoolHolidays });
             const file = new Blob([fileContent], {type: 'application/json'});
             const metadata = { 'name': FILENAME, 'mimeType': 'application/json' };
             const form = new FormData();
             form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
             form.append('file', file);
             try {
-                if (driveFileId) { await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`, { method: 'PATCH', headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }), body: form });
-                } else {
+                if (driveFileId) await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`, { method: 'PATCH', headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }), body: form });
+                else {
                     let res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }), body: form });
                     let val = await res.json(); driveFileId = val.id;
                 }
-                document.getElementById('sync-status').innerText = "Gespeichert";
-            } catch (error) { document.getElementById('sync-status').innerText = "Fehler"; }
+            } catch (error) { console.log("Save Fehler"); }
         }
         window.onload = function() { if(window.gapi) gapiLoaded(); };
 
 
-        // --- App Logik ---
+        // --- App Daten ---
         let currentDate = new Date();
         let viewMonthDate = new Date();
-        
         let workData = JSON.parse(localStorage.getItem('az_workData')) || {};
         let templates = JSON.parse(localStorage.getItem('az_templates')) || [];
         let globalTarget = parseFloat(localStorage.getItem('az_globalTarget')) || 8.0;
         let monthlyOfficialSaldo = JSON.parse(localStorage.getItem('az_monthlyOfficial')) || {};
+        let holidays = JSON.parse(localStorage.getItem('az_holidays')) || {};
+        let schoolHolidays = JSON.parse(localStorage.getItem('az_schoolHolidays')) || {}; // NEU: Ferien
 
         document.getElementById('global-target').value = globalTarget;
 
@@ -308,33 +313,83 @@
             localStorage.setItem('az_templates', JSON.stringify(templates));
             localStorage.setItem('az_globalTarget', globalTarget);
             localStorage.setItem('az_monthlyOfficial', JSON.stringify(monthlyOfficialSaldo));
+            localStorage.setItem('az_holidays', JSON.stringify(holidays));
+            localStorage.setItem('az_schoolHolidays', JSON.stringify(schoolHolidays)); // NEU: Ferien
             saveToDrive();
         }
 
-        function saveGlobalTarget() {
-            globalTarget = parseFloat(document.getElementById('global-target').value) || 0;
-            saveToLocalStorage();
-            loadDayData();
-        }
-
-        function formatDate(date) { return date.toISOString().split('T')[0]; }
-        function getMonthKey(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; }
-
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('text-blue-600'); el.classList.add('text-gray-400'); });
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('text-blue-600'));
             document.getElementById('view-' + tabId).classList.add('active');
             const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => btn.getAttribute('onclick').includes(tabId));
-            if(activeBtn) { activeBtn.classList.remove('text-gray-400'); activeBtn.classList.add('text-blue-600'); }
+            if(activeBtn) activeBtn.classList.add('text-blue-600');
             if(tabId === 'month') renderMonthView();
         }
 
-        // --- Tagesansicht ---
-        function initDailyView() {
-            document.getElementById('date-picker').value = formatDate(currentDate);
-            loadDayData(); renderTemplates();
+        // --- Feiertage & Ferien API Logik ---
+        async function updateHolidays() {
+            const state = document.getElementById('state-select').value;
+            const year = viewMonthDate.getFullYear(); // Lädt für das im Kalender gewählte Jahr
+            const btn = document.querySelector('[onclick="updateHolidays()"]');
+            btn.innerText = "Lade Daten...";
+            
+            try {
+                // 1. Feiertage laden (Nager.Date)
+                const responseFeiertage = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/DE`);
+                const dataFeiertage = await responseFeiertage.json();
+                
+                dataFeiertage.forEach(h => {
+                    if (!h.counties || h.counties.includes(`DE-${state}`)) {
+                        holidays[h.date] = h.localName;
+                    }
+                });
+
+                // 2. Schulferien laden (ferien-api.de)
+                try {
+                    const responseFerien = await fetch(`https://ferien-api.de/api/v1/holidays/${state}/${year}`);
+                    if(responseFerien.ok) {
+                        const dataFerien = await responseFerien.json();
+                        dataFerien.forEach(ferien => {
+                            let startDate = new Date(ferien.start);
+                            let endDate = new Date(ferien.end);
+                            // Mache ersten Buchstaben groß ("sommerferien" -> "Sommerferien")
+                            const name = ferien.name.charAt(0).toUpperCase() + ferien.name.slice(1);
+                            
+                            // Alle Tage zwischen Start und Ende eintragen
+                            let loopDate = new Date(startDate);
+                            while(loopDate <= endDate) {
+                                schoolHolidays[formatDate(loopDate)] = name;
+                                loopDate.setDate(loopDate.getDate() + 1);
+                            }
+                        });
+                    }
+                } catch(ferienError) {
+                    console.log("Ferien konnten nicht geladen werden", ferienError);
+                    // Wir werfen hier keinen Fehler, da die Feiertage ja geklappt haben könnten
+                }
+                
+                saveToLocalStorage();
+                btn.className = "w-full bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-sm transition-colors shadow-sm";
+                btn.innerText = "Erfolgreich geladen!";
+                setTimeout(() => {
+                    btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl text-sm transition-colors shadow-sm";
+                    btn.innerText = "Jetzt aktualisieren";
+                }, 2000);
+                
+                if(document.getElementById('view-month').classList.contains('active')) renderMonthView();
+                loadDayData();
+            } catch (e) {
+                btn.className = "w-full bg-red-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition-colors shadow-sm";
+                btn.innerText = "Fehler. Internet prüfen.";
+                setTimeout(() => {
+                    btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl text-sm transition-colors shadow-sm";
+                    btn.innerText = "Erneut versuchen";
+                }, 3000);
+            }
         }
 
+        // --- Tageslogik ---
         function changeDate(days) {
             currentDate.setDate(currentDate.getDate() + days);
             document.getElementById('date-picker').value = formatDate(currentDate);
@@ -345,11 +400,29 @@
             const dateStr = document.getElementById('date-picker').value;
             currentDate = new Date(dateStr);
             const data = workData[dateStr] || { start: '', end: '', pause: '', target: globalTarget };
+            
             document.getElementById('time-start').value = data.start || '';
             document.getElementById('time-end').value = data.end || '';
             document.getElementById('time-pause').value = data.pause || '';
-            document.getElementById('time-target').value = data.target !== undefined ? data.target : globalTarget;
-            calculateNet();
+            
+            // Feiertags/Ferien Anzeige
+            const holidayName = holidays[dateStr];
+            const vacationName = schoolHolidays[dateStr];
+            
+            const holEl = document.getElementById('holiday-info');
+            const vacEl = document.getElementById('vacation-info');
+            
+            if(holidayName) { holEl.innerText = holidayName; holEl.classList.remove('hidden'); } else { holEl.classList.add('hidden'); }
+            if(vacationName) { vacEl.innerText = vacationName; vacEl.classList.remove('hidden'); } else { vacEl.classList.add('hidden'); }
+
+            // Wenn Feiertag (NICHT nur Ferien) und noch keine Daten manuell gespeichert wurden, schlage 0 Soll-Stunden vor
+            if (holidayName && !workData[dateStr]) {
+                document.getElementById('time-target').value = 0;
+            } else {
+                document.getElementById('time-target').value = data.target !== undefined ? data.target : globalTarget;
+            }
+            
+            calculateNet(); renderTemplates();
         }
 
         function timeToDecimal(timeStr) {
@@ -363,239 +436,187 @@
             const end = document.getElementById('time-end').value;
             const pauseMinutes = parseFloat(document.getElementById('time-pause').value) || 0;
             const target = parseFloat(document.getElementById('time-target').value) || 0;
-
             let netDecimal = 0;
             if (start && end) {
                 let startDec = timeToDecimal(start);
                 let endDec = timeToDecimal(end);
                 if (endDec < startDec) endDec += 24;
-                const pauseDec = pauseMinutes / 60;
-                netDecimal = endDec - startDec - pauseDec;
-                if (netDecimal < 0) netDecimal = 0;
+                netDecimal = Math.max(0, endDec - startDec - (pauseMinutes / 60));
             }
-
             document.getElementById('net-hours').innerText = netDecimal.toFixed(2);
             const saldo = netDecimal - target;
-            const saldoEl = document.getElementById('day-saldo');
-            saldoEl.innerText = (saldo > 0 ? '+' : '') + saldo.toFixed(2) + ' h';
-            if (saldo > 0) saldoEl.className = "text-xl font-bold text-green-500";
-            else if (saldo < 0) saldoEl.className = "text-xl font-bold text-red-500";
-            else saldoEl.className = "text-xl font-bold text-gray-400";
+            const el = document.getElementById('day-saldo');
+            el.innerText = (saldo > 0 ? '+' : '') + saldo.toFixed(2) + ' h';
+            el.className = saldo > 0 ? "text-xl font-bold text-green-500" : (saldo < 0 ? "text-xl font-bold text-red-500" : "text-xl font-bold text-gray-400");
         }
 
         function saveDay() {
             const dateStr = document.getElementById('date-picker').value;
-            const target = parseFloat(document.getElementById('time-target').value) || 0;
-            const net = parseFloat(document.getElementById('net-hours').innerText) || 0;
-            
             workData[dateStr] = {
                 start: document.getElementById('time-start').value,
                 end: document.getElementById('time-end').value,
                 pause: document.getElementById('time-pause').value,
-                target: target,
-                net: net,
-                diff: net - target
+                target: parseFloat(document.getElementById('time-target').value) || 0,
+                net: parseFloat(document.getElementById('net-hours').innerText) || 0
             };
             saveToLocalStorage();
-            
             const btn = document.querySelector('#view-daily button.bg-blue-600');
-            const originalText = btn.innerText;
-            btn.innerText = "Gespeichert!";
-            btn.classList.add('bg-green-600');
-            setTimeout(() => { btn.innerText = originalText; btn.classList.remove('bg-green-600'); }, 1500);
+            const oldText = btn.innerText; btn.innerText = "Gespeichert!"; btn.classList.add('bg-green-600');
+            setTimeout(() => { btn.innerText = oldText; btn.classList.remove('bg-green-600'); }, 1500);
         }
 
-        // --- Vorlagen ---
-        function saveTemplate() {
-            const name = document.getElementById('tpl-name').value;
-            if (!name) { alert("Bitte einen Namen vergeben."); return; }
-            templates.push({ 
-                id: Date.now(), name, 
-                start: document.getElementById('tpl-start').value, 
-                end: document.getElementById('tpl-end').value, 
-                pause: document.getElementById('tpl-pause').value 
-            });
-            saveToLocalStorage();
-            document.getElementById('tpl-name').value = ''; document.getElementById('tpl-start').value = ''; document.getElementById('tpl-end').value = ''; document.getElementById('tpl-pause').value = '30';
-            renderTemplates();
-        }
-
-        function deleteTemplate(id) {
-            if(confirm("Vorlage löschen?")) { templates = templates.filter(t => t.id !== id); saveToLocalStorage(); renderTemplates(); }
-        }
-
-        function applyTemplate(id) {
-            const tpl = templates.find(t => t.id === id);
-            if (tpl) {
-                document.getElementById('time-start').value = tpl.start; document.getElementById('time-end').value = tpl.end; document.getElementById('time-pause').value = tpl.pause; calculateNet();
-            }
-        }
-
-        function renderTemplates() {
-            const listEl = document.getElementById('templates-list');
-            listEl.innerHTML = templates.length === 0 ? '<p class="text-sm text-gray-400">Noch keine Vorlagen.</p>' : '';
-            const quickEl = document.getElementById('quick-templates');
-            quickEl.innerHTML = '';
-
-            templates.forEach(tpl => {
-                const div = document.createElement('div');
-                div.className = "bg-gray-50 border border-gray-100 p-3 rounded-xl flex justify-between items-center";
-                div.innerHTML = `<div><p class="font-bold text-gray-700 text-sm">${tpl.name}</p><p class="text-xs text-gray-500">${tpl.start || '-'} bis ${tpl.end || '-'} (${tpl.pause}m Pause)</p></div>
-                    <button onclick="deleteTemplate(${tpl.id})" class="text-red-400 p-2 hover:bg-red-50 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
-                listEl.appendChild(div);
-
-                const btn = document.createElement('button');
-                btn.className = "whitespace-nowrap bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-xl text-sm font-semibold transition-colors";
-                btn.innerText = tpl.name; btn.onclick = () => applyTemplate(tpl.id);
-                quickEl.appendChild(btn);
-            });
-        }
-
-        // --- Monatsübersicht & Kalender ---
+        // --- Kalender & Dashboard Logik ---
         function changeMonth(delta) {
             viewMonthDate.setMonth(viewMonthDate.getMonth() + delta);
             renderMonthView();
         }
 
-        function saveOfficialSaldo() {
-            const currentMonthKey = getMonthKey(viewMonthDate);
-            const val = document.getElementById('official-saldo').value;
-            if(val === "") {
-                delete monthlyOfficialSaldo[currentMonthKey];
-            } else {
-                monthlyOfficialSaldo[currentMonthKey] = parseFloat(val);
-            }
-            saveToLocalStorage();
-            renderMonthView();
-        }
-
-        function calculateAppSaldoForMonth(monthPrefix) {
-            let totalNet = 0; let totalTarget = 0;
-            for (let dateStr in workData) {
-                if (dateStr.startsWith(monthPrefix)) {
-                    totalNet += workData[dateStr].net || 0;
-                    totalTarget += workData[dateStr].target || 0;
-                }
-            }
-            return { net: totalNet, target: totalTarget, saldo: totalNet - totalTarget };
-        }
-
         function renderMonthView() {
             const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
-            const year = viewMonthDate.getFullYear();
-            const month = viewMonthDate.getMonth();
+            const year = viewMonthDate.getFullYear(); const month = viewMonthDate.getMonth();
             document.getElementById('month-display').innerText = `${monthNames[month]} ${year}`;
 
-            const currentMonthKey = getMonthKey(viewMonthDate);
-            const appData = calculateAppSaldoForMonth(currentMonthKey);
-            
-            // 1. Dashboard Summen aktualisieren
-            document.getElementById('month-ist-sum').innerText = appData.net.toFixed(2);
-            document.getElementById('month-soll-sum').innerText = appData.target.toFixed(2);
-            document.getElementById('month-app-saldo').innerText = (appData.saldo > 0 ? '+' : '') + appData.saldo.toFixed(2);
-
-            const offSaldoInput = document.getElementById('official-saldo');
-            const storedOffSaldo = monthlyOfficialSaldo[currentMonthKey];
-            offSaldoInput.value = storedOffSaldo !== undefined ? storedOffSaldo : '';
-
-            const diffEl = document.getElementById('month-diff');
-            if (storedOffSaldo !== undefined) {
-                const diffAppVsAg = appData.saldo - storedOffSaldo;
-                diffEl.innerText = (diffAppVsAg > 0 ? '+' : '') + diffAppVsAg.toFixed(2);
-                diffEl.className = Math.abs(diffAppVsAg) > 0.05 ? "font-black text-xl text-red-500" : "font-black text-xl text-green-500";
-            } else {
-                diffEl.innerText = "-";
-                diffEl.className = "font-black text-xl text-gray-300";
-            }
-
-            let prevMonthDate = new Date(viewMonthDate);
-            prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
-            const prevMonthKey = getMonthKey(prevMonthDate);
-            
-            let totalSaldo = 0;
-            if (monthlyOfficialSaldo[prevMonthKey] !== undefined) {
-                 totalSaldo = monthlyOfficialSaldo[prevMonthKey] + appData.saldo;
-            } else {
-                 for(let dateStr in workData) {
-                     let entryDate = new Date(dateStr);
-                     if(entryDate <= new Date(year, month + 1, 0)) {
-                         totalSaldo += (workData[dateStr].net || 0) - (workData[dateStr].target || 0);
-                     }
-                 }
-            }
-
-            const totalSaldoEl = document.getElementById('total-saldo');
-            totalSaldoEl.innerText = (totalSaldo > 0 ? '+' : '') + totalSaldo.toFixed(2);
-            if(totalSaldo > 0) totalSaldoEl.className = "text-4xl font-black text-green-400";
-            else if(totalSaldo < 0) totalSaldoEl.className = "text-4xl font-black text-red-400";
-            else totalSaldoEl.className = "text-4xl font-black text-white";
-
-            // 2. KALENDER GRID AUFBAUEN
-            const calendarEl = document.getElementById('month-calendar-grid');
-            calendarEl.innerHTML = '';
-
-            const weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-            weekdays.forEach(day => {
-                const el = document.createElement('div');
-                el.className = "text-center text-[10px] font-bold text-gray-400 pb-1";
-                el.innerText = day;
-                calendarEl.appendChild(el);
-            });
+            const grid = document.getElementById('month-calendar-grid');
+            grid.innerHTML = '';
 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             let firstDay = new Date(year, month, 1).getDay();
-            firstDay = firstDay === 0 ? 6 : firstDay - 1; // 0 = Montag
-
-            // Leere Zellen für Vormonat
+            firstDay = (firstDay === 0) ? 6 : firstDay - 1; // Mo=0, So=6
+            
+            // Leere Felder am Anfang
             for (let i = 0; i < firstDay; i++) {
-                calendarEl.appendChild(document.createElement('div'));
+                let empty = document.createElement('div');
+                empty.className = "bg-gray-50 border border-gray-50 rounded-lg min-h-[65px] opacity-50";
+                grid.appendChild(empty);
             }
 
-            const todayStr = formatDate(new Date());
+            let monthAppNet = 0; 
+            let monthAppTarget = 0;
 
-            // Tage rendern
             for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const dayData = workData[dateStr];
-                
-                const isToday = dateStr === todayStr;
-                const isWeekend = (new Date(year, month, d).getDay() === 0 || new Date(year, month, d).getDay() === 6);
-                
-                let bgClass = "bg-white border-gray-100";
-                if (isToday) bgClass = "bg-blue-50 border-blue-400 shadow-sm z-10";
-                else if (isWeekend) bgClass = "bg-gray-50 border-gray-100";
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const data = workData[dateStr];
+                const holiday = holidays[dateStr];
+                const vacation = schoolHolidays[dateStr];
+                const isWeekend = new Date(year, month, d).getDay() === 0 || new Date(year, month, d).getDay() === 6;
 
                 const cell = document.createElement('div');
-                cell.className = `border rounded-lg p-1 min-h-[64px] flex flex-col justify-between cursor-pointer transition-colors hover:bg-gray-100 active:scale-95 ${bgClass}`;
-                cell.onclick = () => {
-                    document.getElementById('date-picker').value = dateStr;
-                    switchTab('daily');
-                    loadDayData();
-                };
-
-                let contentHTML = `<div class="text-right text-[10px] ${isToday ? 'font-black text-blue-600' : 'text-gray-500 font-medium'}">${d}</div>`;
                 
-                if (dayData && dayData.start && dayData.end) {
-                    const diff = (dayData.net || 0) - (dayData.target || 0);
-                    let hoursColor = 'text-gray-600';
-                    if (Math.abs(diff) > 0.01) hoursColor = diff > 0 ? 'text-green-600' : 'text-red-500';
+                // Styling basierend auf Typ (Feiertag überschreibt Ferien, Wochenende überschreibt Ferien visuell nicht)
+                let baseClass = 'bg-white';
+                if (holiday) baseClass = 'holiday-bg';
+                else if (vacation) baseClass = 'vacation-bg';
+                else if (isWeekend) baseClass = 'weekend-bg';
 
-                    contentHTML += `
-                        <div class="mt-auto pt-1">
-                            <div class="text-[9px] leading-tight text-gray-500 text-center">${dayData.start}<br>${dayData.end}</div>
-                            <div class="text-[10px] font-bold text-center ${hoursColor} bg-white bg-opacity-70 rounded mt-0.5">${dayData.net.toFixed(2)}h</div>
-                        </div>
-                    `;
+                cell.className = `border rounded-lg p-1 min-h-[65px] flex flex-col justify-between cursor-pointer transition-transform hover:scale-105 active:scale-95 shadow-sm ${baseClass}`;
+                
+                cell.onclick = () => { document.getElementById('date-picker').value = dateStr; switchTab('daily'); loadDayData(); };
+                
+                let html = `<div class="flex justify-between items-start"><span class="text-[11px] font-bold text-gray-700">${d}</span></div>`;
+                
+                if (data && data.start) {
+                    monthAppNet += data.net || 0; 
+                    monthAppTarget += data.target || 0;
+                    const diff = data.net - data.target;
+                    const colorClass = diff > 0 ? 'text-green-600' : (diff < 0 ? 'text-red-500' : 'text-blue-600');
+                    
+                    html += `<div class="font-bold text-center mt-auto text-[10px] text-gray-800 leading-none">${data.start}-${data.end}</div>`;
+                    html += `<div class="text-center ${colorClass} font-black text-[11px] mt-1">${data.net.toFixed(1)}h</div>`;
+                } else {
+                    // Falls leer, aber Feiertag/Ferien
+                    if (holiday) {
+                        html += `<div class="text-[7px] text-yellow-700 font-medium leading-tight mt-auto text-center truncate px-1">${holiday}</div>`;
+                    } else if (vacation) {
+                        html += `<div class="text-[7px] text-green-700 font-medium leading-tight mt-auto text-center truncate px-1">${vacation}</div>`;
+                    }
                 }
-
-                cell.innerHTML = contentHTML;
-                calendarEl.appendChild(cell);
+                
+                cell.innerHTML = html; grid.appendChild(cell);
             }
+
+            // Dashboard Aktualisierung
+            const appSaldo = monthAppNet - monthAppTarget;
+            document.getElementById('month-app-saldo').innerText = (appSaldo > 0 ? '+' : '') + appSaldo.toFixed(2) + ' h';
+            
+            const monthKey = `${year}-${String(month+1).padStart(2,'0')}`;
+            const offSaldoInput = document.getElementById('official-saldo');
+            offSaldoInput.value = monthlyOfficialSaldo[monthKey] || '';
+            
+            const officialSaldoVal = parseFloat(offSaldoInput.value) || 0;
+            
+            const diff = appSaldo - officialSaldoVal;
+            const diffEl = document.getElementById('month-diff');
+            diffEl.innerText = (diff > 0 ? '+' : '') + diff.toFixed(2) + ' h';
+            if (diff > 0.1 || diff < -0.1) diffEl.className = "font-bold text-red-500";
+            else diffEl.className = "font-bold text-green-500";
+
+            // Gesamtsaldo Berechnung (Komplett)
+            // Regel: Wir nehmen das offiziell eingetragene Saldo des LETZTEN bearbeiteten Monats und addieren die App-Saldos aller FOLGENDEN Monate
+            let total = 0;
+            let lastOfficialMonth = null;
+            let lastOfficialValue = 0;
+
+            // Finde den zeitlich spätesten Monat mit einem offiziellen Eintrag
+            const sortedMonths = Object.keys(monthlyOfficialSaldo).sort();
+            if (sortedMonths.length > 0) {
+                lastOfficialMonth = sortedMonths[sortedMonths.length - 1];
+                lastOfficialValue = monthlyOfficialSaldo[lastOfficialMonth];
+                total = lastOfficialValue;
+            }
+
+            // Addiere App-Saldos für alle Tage NACH dem letzten offiziellen Monat
+            for (let dKey in workData) {
+                // dKey format: YYYY-MM-DD
+                const dMonth = dKey.substring(0, 7); // YYYY-MM
+                
+                // Wenn wir gar keinen offiziellen Eintrag haben, oder der Tag aus einem Monat stammt, der NACH dem letzten offiziellen Eintrag liegt
+                if (!lastOfficialMonth || dMonth > lastOfficialMonth) {
+                    total += (workData[dKey].net || 0) - (workData[dKey].target || 0);
+                }
+            }
+
+            document.getElementById('total-saldo').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + ' h';
         }
 
-        // Init beim Laden
-        initDailyView();
+        // --- Restliche Hilfsfunktionen ---
+        function formatDate(date) { return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0'); }
+        function saveGlobalTarget() { globalTarget = parseFloat(document.getElementById('global-target').value); saveToLocalStorage(); }
+        function saveOfficialSaldo() { 
+            const key = `${viewMonthDate.getFullYear()}-${String(viewMonthDate.getMonth()+1).padStart(2,'0')}`;
+            const val = document.getElementById('official-saldo').value;
+            if(val === '') delete monthlyOfficialSaldo[key];
+            else monthlyOfficialSaldo[key] = parseFloat(val);
+            saveToLocalStorage();
+            renderMonthView(); // Refresh um Differenz und Gesamtsaldo neu zu berechnen
+        }
+        function saveTemplate() {
+            const name = document.getElementById('tpl-name').value;
+            if(!name) return;
+            templates.push({ id: Date.now(), name, start: document.getElementById('tpl-start').value, end: document.getElementById('tpl-end').value, pause: document.getElementById('tpl-pause') ? document.getElementById('tpl-pause').value : 30 });
+            document.getElementById('tpl-name').value = '';
+            saveToLocalStorage(); renderTemplates();
+        }
+        function applyTemplate(id) {
+            const t = templates.find(x => x.id === id);
+            if(t) { document.getElementById('time-start').value=t.start; document.getElementById('time-end').value=t.end; document.getElementById('time-pause').value=t.pause || 30; calculateNet(); }
+        }
+        function renderTemplates() {
+            const q = document.getElementById('quick-templates'); q.innerHTML = '';
+            const l = document.getElementById('templates-list'); l.innerHTML = '';
+            templates.forEach(t => {
+                const b = document.createElement('button'); b.className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap shadow-sm";
+                b.innerText = t.name; b.onclick = () => applyTemplate(t.id); q.appendChild(b);
+                const div = document.createElement('div'); div.className="flex justify-between text-xs bg-gray-50 p-3 rounded-xl border border-gray-100";
+                div.innerHTML = `<div><span class="font-bold block">${t.name}</span><span class="text-gray-500">${t.start}-${t.end}</span></div><button class="text-red-400 hover:bg-red-50 p-2 rounded" onclick="templates=templates.filter(x=>x.id!=${t.id});saveToLocalStorage();renderTemplates();"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
+                l.appendChild(div);
+            });
+        }
 
+        initDailyView();
+        function initDailyView() {
+            document.getElementById('date-picker').value = formatDate(currentDate);
+            loadDayData();
+        }
     </script>
 </body>
 </html>
