@@ -10,8 +10,6 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js" async defer></script>
 
     <style>
         ::-webkit-scrollbar { display: none; }
@@ -20,7 +18,6 @@
         .tab-content.active { display: block; }
         button, summary { user-select: none; -webkit-user-select: none; }
         
-        /* Kräftigere Farben für den Kalender */
         .holiday-bg { background-color: #fef08a !important; border-color: #eab308 !important; } 
         .vacation-bg { background-color: #dcfce7 !important; border-color: #4ade80 !important; } 
         .weekend-bg { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; } 
@@ -32,12 +29,8 @@
 <body class="bg-gray-50 text-gray-800 font-sans antialiased pb-[80px]">
 
     <!-- Header -->
-    <header class="bg-blue-600 text-white p-3 shadow-md sticky top-0 z-20 flex justify-between items-center">
+    <header class="bg-blue-600 text-white p-3 shadow-md sticky top-0 z-20 flex justify-center items-center">
         <h1 class="text-lg font-bold">Zeiterfassung</h1>
-        <button id="btn-sync" onclick="handleAuthClick()" class="bg-blue-700 hover:bg-blue-800 text-[10px] px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
-            <span id="sync-status">Drive Login</span>
-        </button>
     </header>
 
     <main class="p-3 max-w-md mx-auto">
@@ -91,7 +84,6 @@
                     <input type="text" id="time-note" placeholder="Bemerkung (optional)..." class="w-full p-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-sm font-medium text-gray-700 shadow-inner">
                 </div>
 
-                <!-- Kompakte Zusammenfassung & Speichern auf einer Ebene -->
                 <div class="pt-3 border-t-2 border-gray-100 flex justify-between items-center">
                     <div class="flex flex-col">
                         <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Netto / Saldo</p>
@@ -136,7 +128,6 @@
                 </div>
             </div>
 
-            <!-- NEUE SALDO BERECHNUNG (Ohne Schwarz) -->
             <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 space-y-2.5">
                 <div class="grid grid-cols-3 gap-2 text-center">
                     <div class="bg-gray-50 p-1.5 rounded-xl border border-gray-100 flex flex-col justify-center">
@@ -175,7 +166,6 @@
                     <span class="text-[10px] text-gray-400 font-bold uppercase">Ausklappen ▼</span>
                 </summary>
                 <div class="p-3 border-t border-gray-200 bg-white space-y-3">
-                    <p class="text-[10px] text-gray-500 leading-tight">Füllt den gesamten Monat automatisch. Freie Tage auf "Nichts" lassen.</p>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div class="flex items-center gap-2"><span class="w-5 font-bold text-gray-600">Mo</span><select id="pat-1" class="w-full p-1.5 border rounded-lg bg-gray-50 pattern-select font-medium"></select></div>
                         <div class="flex items-center gap-2"><span class="w-5 font-bold text-gray-600">Di</span><select id="pat-2" class="w-full p-1.5 border rounded-lg bg-gray-50 pattern-select font-medium"></select></div>
@@ -236,14 +226,9 @@
                         <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-0" class="peer hidden" value="0" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">So</div></label>
                     </div>
                 </div>
-                
-                <div class="pt-3 pb-1 flex justify-between items-center border-b border-gray-100">
-                    <p class="text-xs text-gray-500 font-bold">Daraus berechnetes Tages-Soll:</p>
-                    <p id="wm-daily-preview" class="font-black text-blue-600 text-sm">0.00 h</p>
-                </div>
 
                 <button id="btn-save-model" onclick="saveWorkModel()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-sm shadow-md active:scale-95 transition-transform mt-2">
-                    Modell speichern & Rückwirkend anwenden
+                    Modell speichern & Anwenden
                 </button>
             </div>
 
@@ -262,6 +247,26 @@
                         <option value="SH">Schleswig-Holstein</option><option value="TH">Thüringen</option>
                     </select>
                     <button onclick="updateHolidays()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-95">Laden</button>
+                </div>
+            </div>
+
+            <!-- LOKALES BACKUP SYSTEM -->
+            <div class="bg-gray-800 p-4 rounded-2xl shadow-md border border-gray-700 space-y-3 text-white">
+                <div>
+                    <h3 class="font-bold text-sm">Lokales Backup & Transfer</h3>
+                    <p class="text-[10px] text-gray-400 leading-tight mt-1">Übertragen Sie Ihre Daten als Code per WhatsApp, Mail oder Notizen auf ein neues Gerät. Keine Cloud nötig!</p>
+                </div>
+                
+                <div class="space-y-2 pt-1">
+                    <button onclick="exportData()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs shadow transition-all flex justify-center items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        Backup-Code kopieren / teilen
+                    </button>
+                    
+                    <div class="relative mt-2">
+                        <textarea id="import-box" rows="2" placeholder="Sicherungscode hier einfügen..." class="w-full p-2 bg-gray-900 rounded-xl border border-gray-600 text-[10px] font-mono text-gray-300 focus:outline-none focus:border-blue-400"></textarea>
+                        <button onclick="importData()" class="absolute bottom-2 right-2 bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] shadow transition-all">Wiederherstellen</button>
+                    </div>
                 </div>
             </div>
 
@@ -309,65 +314,9 @@
     <script>
         if ('serviceWorker' in navigator) { 
             window.addEventListener('load', () => { 
-                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW in Preview ignoriert.'));
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Preview Mode'));
             }); 
         }
-        
-        const CLIENT_ID = 'IHRE_CLIENT_ID_HIER_EINTRAGEN.apps.googleusercontent.com'; 
-        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-        const FILENAME = 'arbeitszeit_daten.json';
-        let tokenClient; let isDriveReady = false; let driveFileId = null;
-
-        function gapiLoaded() { gapi.load('client', initializeGapiClient); }
-        async function initializeGapiClient() {
-            try {
-                await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] });
-                tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: async (resp) => { if (resp.error !== undefined) throw (resp); isDriveReady = true; document.getElementById('sync-status').innerText = "Verbunden"; await syncWithDrive(); },});
-            } catch (err) { console.log("GAPI Init Fehler"); }
-        }
-        function handleAuthClick() {
-            if (!CLIENT_ID || CLIENT_ID.includes('IHRE_CLIENT_ID')) { alert("Bitte Client-ID im Code hinterlegen!"); return; }
-            if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'});
-            else tokenClient.requestAccessToken({prompt: ''});
-        }
-        async function syncWithDrive() {
-            if(!isDriveReady) return;
-            try {
-                let response = await gapi.client.drive.files.list({ q: `name='${FILENAME}' and trashed=false`, fields: 'files(id, name)' });
-                let files = response.result.files;
-                if (files && files.length > 0) {
-                    driveFileId = files[0].id;
-                    let fileData = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
-                    let data = fileData.result;
-                    if(data.workData) workData = data.workData;
-                    if(data.templates) templates = data.templates;
-                    if(data.workModel) workModel = data.workModel;
-                    if(data.monthlyOfficialSaldo) monthlyOfficialSaldo = data.monthlyOfficialSaldo;
-                    if(data.holidays) holidays = data.holidays;
-                    if(data.schoolHolidays) schoolHolidays = data.schoolHolidays;
-                    
-                    renderSettingsUI(); loadDayData(); renderTemplates(); renderMonthViews();
-                } else { await saveToDrive(); }
-            } catch (err) { console.log("Sync Fehler"); }
-        }
-        async function saveToDrive() {
-            if(!isDriveReady) return;
-            const fileContent = JSON.stringify({ workData, templates, workModel, monthlyOfficialSaldo, holidays, schoolHolidays });
-            const file = new Blob([fileContent], {type: 'application/json'});
-            const metadata = { 'name': FILENAME, 'mimeType': 'application/json' };
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
-            form.append('file', file);
-            try {
-                if (driveFileId) await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`, { method: 'PATCH', headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }), body: form });
-                else {
-                    let res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }), body: form });
-                    let val = await res.json(); driveFileId = val.id;
-                }
-            } catch (error) { console.log("Save Fehler"); }
-        }
-        window.onload = function() { if(window.gapi) gapiLoaded(); };
 
         // --- App Daten ---
         let currentDate = new Date();
@@ -391,8 +340,67 @@
             localStorage.setItem('az_monthlyOfficial', JSON.stringify(monthlyOfficialSaldo));
             localStorage.setItem('az_holidays', JSON.stringify(holidays));
             localStorage.setItem('az_schoolHolidays', JSON.stringify(schoolHolidays));
-            saveToDrive();
         }
+
+        // --- BACKUP & TRANSFER SYSTEM ---
+        async function exportData() {
+            const allData = {
+                workData, templates, workModel, monthlyOfficialSaldo, holidays, schoolHolidays
+            };
+            // Daten in einen kompakten Base64 String umwandeln
+            const backupCode = btoa(encodeURIComponent(JSON.stringify(allData)));
+            
+            // Versuchen das native Share-Menü des Handys zu öffnen
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Arbeitszeit Backup',
+                        text: backupCode,
+                    });
+                } catch (err) {
+                    copyToClipboard(backupCode);
+                }
+            } else {
+                copyToClipboard(backupCode);
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Backup-Code in die Zwischenablage kopiert! Fügen Sie ihn z.B. in eine Mail an sich selbst ein.");
+            }).catch(() => {
+                prompt("Bitte diesen Code kopieren:", text);
+            });
+        }
+
+        function importData() {
+            const code = document.getElementById('import-box').value.trim();
+            if(!code) return alert("Bitte fügen Sie einen Backup-Code ein.");
+            
+            try {
+                const decoded = JSON.parse(decodeURIComponent(atob(code)));
+                if(decoded.workData) {
+                    if(confirm("ACHTUNG: Dies überschreibt alle aktuellen Daten auf diesem Gerät. Fortfahren?")) {
+                        workData = decoded.workData || {};
+                        templates = decoded.templates || [];
+                        workModel = decoded.workModel || { hours: 40, days: [1,2,3,4,5] };
+                        monthlyOfficialSaldo = decoded.monthlyOfficialSaldo || {};
+                        holidays = decoded.holidays || {};
+                        schoolHolidays = decoded.schoolHolidays || {};
+                        
+                        saveToLocalStorage();
+                        document.getElementById('import-box').value = '';
+                        alert("Daten erfolgreich wiederhergestellt!");
+                        window.location.reload();
+                    }
+                } else {
+                    alert("Ungültiger Backup-Code.");
+                }
+            } catch(e) {
+                alert("Code konnte nicht gelesen werden. Evtl. unvollständig kopiert?");
+            }
+        }
+
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -747,7 +755,6 @@
             let dCount = 0;
             for(let i=0; i<=6; i++) { if(document.getElementById('wm-day-'+i).checked) dCount++; }
             const target = dCount > 0 ? (h / dCount) : 0;
-            document.getElementById('wm-daily-preview').innerText = target.toFixed(2) + ' h';
         }
 
         function saveWorkModel() {
@@ -782,7 +789,7 @@
             const btn = document.getElementById('btn-save-model');
             btn.innerText = "Gespeichert!";
             btn.classList.add('bg-green-600'); btn.classList.remove('bg-blue-600');
-            setTimeout(() => { btn.innerText = "Modell speichern & Rückwirkend anwenden"; btn.classList.add('bg-blue-600'); btn.classList.remove('bg-green-600'); }, 1500);
+            setTimeout(() => { btn.innerText = "Modell speichern & Anwenden"; btn.classList.add('bg-blue-600'); btn.classList.remove('bg-green-600'); }, 1500);
         }
 
         function saveOfficialSaldo() { 
