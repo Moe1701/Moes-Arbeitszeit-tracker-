@@ -25,9 +25,9 @@
         button { user-select: none; -webkit-user-select: none; }
         
         /* Kalender-Spezifisches Design */
-        .holiday-bg { background-color: #fef9c3; border-color: #fde047; } /* Hellgelb für Feiertage */
-        .vacation-bg { background-color: #f0fdf4; border-color: #bbf7d0; } /* Hellgrün für Ferien */
-        .weekend-bg { background-color: #f9fafb; color: #9ca3af; } /* Grau für Wochenende */
+        .holiday-bg { background-color: #fef9c3; border-color: #fde047; } 
+        .vacation-bg { background-color: #f0fdf4; border-color: #bbf7d0; } 
+        .weekend-bg { background-color: #f8fafc; } 
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased pb-24">
@@ -116,16 +116,18 @@
 
             <!-- Kalender Grid -->
             <div class="bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-                <div class="grid grid-cols-7 gap-1 mb-1">
+                <!-- 8 Spalten: KW + 7 Wochentage -->
+                <div class="grid grid-cols-8 gap-1 mb-1">
+                    <div class="text-center text-[10px] font-bold text-blue-400">KW</div>
                     <div class="text-center text-[10px] font-bold text-gray-400">Mo</div>
                     <div class="text-center text-[10px] font-bold text-gray-400">Di</div>
                     <div class="text-center text-[10px] font-bold text-gray-400">Mi</div>
                     <div class="text-center text-[10px] font-bold text-gray-400">Do</div>
                     <div class="text-center text-[10px] font-bold text-gray-400">Fr</div>
-                    <div class="text-center text-[10px] font-bold text-gray-400">Sa</div>
-                    <div class="text-center text-[10px] font-bold text-gray-400">So</div>
+                    <div class="text-center text-[10px] font-bold text-gray-500">Sa</div>
+                    <div class="text-center text-[10px] font-bold text-red-400">So</div>
                 </div>
-                <div id="month-calendar-grid" class="grid grid-cols-7 gap-1"></div>
+                <div id="month-calendar-grid" class="grid grid-cols-8 gap-1"></div>
                 
                 <!-- Legende -->
                 <div class="flex gap-3 justify-center mt-3 pt-2 border-t border-gray-100 text-[10px] text-gray-500">
@@ -143,7 +145,7 @@
                         <p class="text-[10px] text-gray-500 uppercase">App Saldo</p>
                         <p class="font-bold text-blue-600" id="month-app-saldo">0.00</p>
                     </div>
-                    <div class="bg-gray-50 p-2 rounded-xl border border-gray-200">
+                    <div class="bg-gray-50 p-2 rounded-xl border border-gray-200 shadow-inner">
                         <p class="text-[10px] text-gray-500 uppercase">Offiziell (AG)</p>
                         <input type="number" step="0.1" id="official-saldo" class="w-full bg-transparent text-center font-bold text-gray-800 focus:outline-none" placeholder="0.0" onchange="saveOfficialSaldo()">
                     </div>
@@ -304,7 +306,7 @@
         let globalTarget = parseFloat(localStorage.getItem('az_globalTarget')) || 8.0;
         let monthlyOfficialSaldo = JSON.parse(localStorage.getItem('az_monthlyOfficial')) || {};
         let holidays = JSON.parse(localStorage.getItem('az_holidays')) || {};
-        let schoolHolidays = JSON.parse(localStorage.getItem('az_schoolHolidays')) || {}; // NEU: Ferien
+        let schoolHolidays = JSON.parse(localStorage.getItem('az_schoolHolidays')) || {};
 
         document.getElementById('global-target').value = globalTarget;
 
@@ -314,7 +316,7 @@
             localStorage.setItem('az_globalTarget', globalTarget);
             localStorage.setItem('az_monthlyOfficial', JSON.stringify(monthlyOfficialSaldo));
             localStorage.setItem('az_holidays', JSON.stringify(holidays));
-            localStorage.setItem('az_schoolHolidays', JSON.stringify(schoolHolidays)); // NEU: Ferien
+            localStorage.setItem('az_schoolHolidays', JSON.stringify(schoolHolidays));
             saveToDrive();
         }
 
@@ -327,15 +329,23 @@
             if(tabId === 'month') renderMonthView();
         }
 
+        // --- Hilfsfunktion Kalenderwoche ---
+        function getISOWeekNumber(d) {
+            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            const dayNum = date.getUTCDay() || 7;
+            date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+            return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
+        }
+
         // --- Feiertage & Ferien API Logik ---
         async function updateHolidays() {
             const state = document.getElementById('state-select').value;
-            const year = viewMonthDate.getFullYear(); // Lädt für das im Kalender gewählte Jahr
+            const year = viewMonthDate.getFullYear(); 
             const btn = document.querySelector('[onclick="updateHolidays()"]');
             btn.innerText = "Lade Daten...";
             
             try {
-                // 1. Feiertage laden (Nager.Date)
                 const responseFeiertage = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/DE`);
                 const dataFeiertage = await responseFeiertage.json();
                 
@@ -345,7 +355,6 @@
                     }
                 });
 
-                // 2. Schulferien laden (ferien-api.de)
                 try {
                     const responseFerien = await fetch(`https://ferien-api.de/api/v1/holidays/${state}/${year}`);
                     if(responseFerien.ok) {
@@ -353,10 +362,8 @@
                         dataFerien.forEach(ferien => {
                             let startDate = new Date(ferien.start);
                             let endDate = new Date(ferien.end);
-                            // Mache ersten Buchstaben groß ("sommerferien" -> "Sommerferien")
                             const name = ferien.name.charAt(0).toUpperCase() + ferien.name.slice(1);
                             
-                            // Alle Tage zwischen Start und Ende eintragen
                             let loopDate = new Date(startDate);
                             while(loopDate <= endDate) {
                                 schoolHolidays[formatDate(loopDate)] = name;
@@ -364,10 +371,7 @@
                             }
                         });
                     }
-                } catch(ferienError) {
-                    console.log("Ferien konnten nicht geladen werden", ferienError);
-                    // Wir werfen hier keinen Fehler, da die Feiertage ja geklappt haben könnten
-                }
+                } catch(ferienError) { console.log("Ferienfehler", ferienError); }
                 
                 saveToLocalStorage();
                 btn.className = "w-full bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-sm transition-colors shadow-sm";
@@ -405,7 +409,6 @@
             document.getElementById('time-end').value = data.end || '';
             document.getElementById('time-pause').value = data.pause || '';
             
-            // Feiertags/Ferien Anzeige
             const holidayName = holidays[dateStr];
             const vacationName = schoolHolidays[dateStr];
             
@@ -415,7 +418,6 @@
             if(holidayName) { holEl.innerText = holidayName; holEl.classList.remove('hidden'); } else { holEl.classList.add('hidden'); }
             if(vacationName) { vacEl.innerText = vacationName; vacEl.classList.remove('hidden'); } else { vacEl.classList.add('hidden'); }
 
-            // Wenn Feiertag (NICHT nur Ferien) und noch keine Daten manuell gespeichert wurden, schlage 0 Soll-Stunden vor
             if (holidayName && !workData[dateStr]) {
                 document.getElementById('time-target').value = 0;
             } else {
@@ -483,7 +485,16 @@
             let firstDay = new Date(year, month, 1).getDay();
             firstDay = (firstDay === 0) ? 6 : firstDay - 1; // Mo=0, So=6
             
-            // Leere Felder am Anfang
+            // 1. Zelle: Kalenderwoche des 1. Tages im Monat
+            const firstDateObj = new Date(year, month, 1);
+            let currentKW = getISOWeekNumber(firstDateObj);
+            
+            let kwCell = document.createElement('div');
+            kwCell.className = "flex items-center justify-center bg-blue-50 text-blue-400 font-black text-xs rounded-lg min-h-[65px] border border-blue-100 shadow-sm";
+            kwCell.innerText = currentKW;
+            grid.appendChild(kwCell);
+
+            // Leere Felder am Anfang (für die ersten Tage der Woche, die im Vormonat liegen)
             for (let i = 0; i < firstDay; i++) {
                 let empty = document.createElement('div');
                 empty.className = "bg-gray-50 border border-gray-50 rounded-lg min-h-[65px] opacity-50";
@@ -494,25 +505,39 @@
             let monthAppTarget = 0;
 
             for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(year, month, d);
+                const dayOfWeek = dateObj.getDay(); // 0=So, 1=Mo...
+                const isMonday = dayOfWeek === 1;
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                
+                // Falls es Montag ist und NICHT der erste Tag (den haben wir oben schon gemacht), neue KW Spalte einfügen
+                if (isMonday && d !== 1) {
+                    currentKW = getISOWeekNumber(dateObj);
+                    let newKwCell = document.createElement('div');
+                    newKwCell.className = "flex items-center justify-center bg-blue-50 text-blue-400 font-black text-xs rounded-lg min-h-[65px] border border-blue-100 shadow-sm";
+                    newKwCell.innerText = currentKW;
+                    grid.appendChild(newKwCell);
+                }
+
                 const data = workData[dateStr];
                 const holiday = holidays[dateStr];
                 const vacation = schoolHolidays[dateStr];
-                const isWeekend = new Date(year, month, d).getDay() === 0 || new Date(year, month, d).getDay() === 6;
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
                 const cell = document.createElement('div');
                 
-                // Styling basierend auf Typ (Feiertag überschreibt Ferien, Wochenende überschreibt Ferien visuell nicht)
-                let baseClass = 'bg-white';
+                let baseClass = 'bg-white border-gray-200';
                 if (holiday) baseClass = 'holiday-bg';
-                else if (vacation) baseClass = 'vacation-bg';
-                else if (isWeekend) baseClass = 'weekend-bg';
+                else if (vacation) baseClass = 'vacation-bg border-green-200';
+                else if (isWeekend) baseClass = 'weekend-bg border-gray-100';
 
                 cell.className = `border rounded-lg p-1 min-h-[65px] flex flex-col justify-between cursor-pointer transition-transform hover:scale-105 active:scale-95 shadow-sm ${baseClass}`;
-                
                 cell.onclick = () => { document.getElementById('date-picker').value = dateStr; switchTab('daily'); loadDayData(); };
                 
-                let html = `<div class="flex justify-between items-start"><span class="text-[11px] font-bold text-gray-700">${d}</span></div>`;
+                // Textfarbe des Datums (Sonntag rot, Rest normal)
+                let dayNumColor = dayOfWeek === 0 ? 'text-red-500' : (dayOfWeek === 6 ? 'text-gray-500' : 'text-gray-700');
+
+                let html = `<div class="flex justify-between items-start"><span class="text-[11px] font-bold ${dayNumColor}">${d}</span></div>`;
                 
                 if (data && data.start) {
                     monthAppNet += data.net || 0; 
@@ -523,7 +548,6 @@
                     html += `<div class="font-bold text-center mt-auto text-[10px] text-gray-800 leading-none">${data.start}-${data.end}</div>`;
                     html += `<div class="text-center ${colorClass} font-black text-[11px] mt-1">${data.net.toFixed(1)}h</div>`;
                 } else {
-                    // Falls leer, aber Feiertag/Ferien
                     if (holiday) {
                         html += `<div class="text-[7px] text-yellow-700 font-medium leading-tight mt-auto text-center truncate px-1">${holiday}</div>`;
                     } else if (vacation) {
@@ -532,6 +556,18 @@
                 }
                 
                 cell.innerHTML = html; grid.appendChild(cell);
+            }
+
+            // Fülle die restlichen Tage der Woche am Ende des Monats mit leeren Feldern auf
+            const lastDateObj = new Date(year, month, daysInMonth);
+            let lastDayOfWeek = lastDateObj.getDay();
+            lastDayOfWeek = (lastDayOfWeek === 0) ? 6 : lastDayOfWeek - 1; // Mo=0, So=6
+            const remainingEmptyCells = 6 - lastDayOfWeek;
+            
+            for(let i = 0; i < remainingEmptyCells; i++) {
+                let empty = document.createElement('div');
+                empty.className = "bg-gray-50 border border-gray-50 rounded-lg min-h-[65px] opacity-50";
+                grid.appendChild(empty);
             }
 
             // Dashboard Aktualisierung
@@ -550,13 +586,10 @@
             if (diff > 0.1 || diff < -0.1) diffEl.className = "font-bold text-red-500";
             else diffEl.className = "font-bold text-green-500";
 
-            // Gesamtsaldo Berechnung (Komplett)
-            // Regel: Wir nehmen das offiziell eingetragene Saldo des LETZTEN bearbeiteten Monats und addieren die App-Saldos aller FOLGENDEN Monate
             let total = 0;
             let lastOfficialMonth = null;
             let lastOfficialValue = 0;
 
-            // Finde den zeitlich spätesten Monat mit einem offiziellen Eintrag
             const sortedMonths = Object.keys(monthlyOfficialSaldo).sort();
             if (sortedMonths.length > 0) {
                 lastOfficialMonth = sortedMonths[sortedMonths.length - 1];
@@ -564,12 +597,8 @@
                 total = lastOfficialValue;
             }
 
-            // Addiere App-Saldos für alle Tage NACH dem letzten offiziellen Monat
             for (let dKey in workData) {
-                // dKey format: YYYY-MM-DD
-                const dMonth = dKey.substring(0, 7); // YYYY-MM
-                
-                // Wenn wir gar keinen offiziellen Eintrag haben, oder der Tag aus einem Monat stammt, der NACH dem letzten offiziellen Eintrag liegt
+                const dMonth = dKey.substring(0, 7); 
                 if (!lastOfficialMonth || dMonth > lastOfficialMonth) {
                     total += (workData[dKey].net || 0) - (workData[dKey].target || 0);
                 }
@@ -587,7 +616,7 @@
             if(val === '') delete monthlyOfficialSaldo[key];
             else monthlyOfficialSaldo[key] = parseFloat(val);
             saveToLocalStorage();
-            renderMonthView(); // Refresh um Differenz und Gesamtsaldo neu zu berechnen
+            renderMonthView();
         }
         function saveTemplate() {
             const name = document.getElementById('tpl-name').value;
