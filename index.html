@@ -20,6 +20,7 @@
         .tab-content.active { display: block; }
         button, summary { user-select: none; -webkit-user-select: none; }
         
+        /* Kräftigere Farben für den Kalender */
         .holiday-bg { background-color: #fef08a !important; border-color: #eab308 !important; } 
         .vacation-bg { background-color: #dcfce7 !important; border-color: #4ade80 !important; } 
         .weekend-bg { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; } 
@@ -132,27 +133,21 @@
                 </div>
             </div>
 
+            <!-- NEUE SALDO BERECHNUNG -->
             <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 space-y-2.5">
                 <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="bg-gray-50 p-1.5 rounded-xl border border-gray-100">
-                        <p class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">App Saldo</p>
-                        <p class="font-black text-blue-600 text-sm" id="month-app-saldo">0.00</p>
+                    <div class="bg-gray-50 p-1.5 rounded-xl border border-gray-100 flex flex-col justify-center">
+                        <p class="text-[9px] text-gray-500 uppercase font-bold tracking-wider leading-tight">App<br>(Dieser Monat)</p>
+                        <p class="font-black text-gray-800 text-sm mt-1" id="month-app-saldo">0.00</p>
                     </div>
-                    <div class="bg-blue-50 p-1.5 rounded-xl border border-blue-200 shadow-inner relative">
-                        <p class="text-[9px] text-blue-600 uppercase font-black tracking-wider">Offiziell (AG)</p>
-                        <input type="number" step="0.1" id="official-saldo" class="w-full bg-transparent text-center font-black text-blue-800 focus:outline-none text-sm pt-0.5" placeholder="0.0" onchange="saveOfficialSaldo()">
+                    <div class="bg-blue-50 p-1.5 rounded-xl border border-blue-200 shadow-inner relative flex flex-col justify-center">
+                        <p class="text-[9px] text-blue-600 uppercase font-black tracking-wider leading-tight">Übertrag<br>(AG Vormonat)</p>
+                        <input type="number" step="0.01" id="official-saldo" class="w-full bg-transparent text-center font-black text-blue-800 focus:outline-none text-sm pt-1" placeholder="0.0" onchange="saveOfficialSaldo()">
                     </div>
-                    <div class="bg-gray-50 p-1.5 rounded-xl border border-gray-100">
-                        <p class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Differenz</p>
-                        <p class="font-black text-sm" id="month-diff">0.00</p>
+                    <div class="bg-gray-800 p-1.5 rounded-xl border border-gray-900 flex flex-col justify-center shadow-md">
+                        <p class="text-[9px] text-gray-300 uppercase font-bold tracking-wider leading-tight">Stand<br>Ende Monat</p>
+                        <p class="font-black text-sm text-white mt-1" id="month-diff">0.00</p>
                     </div>
-                </div>
-                <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl flex justify-between items-center shadow-inner">
-                    <div>
-                        <p class="text-xs font-black text-blue-900 tracking-wide">Aktuelles Gesamtsaldo</p>
-                        <p class="text-[9px] text-blue-600 font-medium">Vormonat (AG) + Dieser Monat (App)</p>
-                    </div>
-                    <p id="total-saldo" class="text-2xl font-black text-blue-700">0.00 h</p>
                 </div>
             </div>
         </section>
@@ -468,7 +463,6 @@
             return Math.max(0, endDec - startDec - ((parseFloat(pauseMin)||0) / 60));
         }
 
-        // NEU: Logik nach § 4 Arbeitszeitgesetz (Pause automatisch vorschlagen)
         function autoSuggestPause() {
             const start = document.getElementById('time-start').value;
             const end = document.getElementById('time-end').value;
@@ -481,16 +475,11 @@
                 let grossHours = endDec - startDec;
                 let suggestedPause = 0;
 
-                // ArbZG § 4: > 9h = 45min, > 6h = 30min
-                if (grossHours > 9) {
-                    suggestedPause = 45;
-                } else if (grossHours > 6) {
-                    suggestedPause = 30;
-                }
+                if (grossHours > 9) suggestedPause = 45;
+                else if (grossHours > 6) suggestedPause = 30;
 
                 document.getElementById('time-pause').value = suggestedPause;
             }
-            // Danach immer sofort das Netto ausrechnen
             calculateNet();
         }
 
@@ -521,7 +510,7 @@
             if (workModel.days.includes(dayOfWeek) && workModel.days.length > 0) {
                 return workModel.hours / workModel.days.length;
             }
-            return 0; // Wochenende oder nicht ausgewählter Tag
+            return 0; 
         }
 
         function loadDayData() {
@@ -724,6 +713,7 @@
                 gridMonth.appendChild(emM); gridPlanner.appendChild(emP);
             }
 
+            // NEUE SALDO LOGIK (Berechnung Endstand Monat)
             const appSaldo = monthAppNet - monthAppTarget;
             document.getElementById('month-app-saldo').innerText = (appSaldo > 0 ? '+' : '') + appSaldo.toFixed(2) + ' h';
             
@@ -731,19 +721,13 @@
             const offSaldoInput = document.getElementById('official-saldo');
             offSaldoInput.value = monthlyOfficialSaldo[monthKey] || '';
             
-            const officialSaldoVal = parseFloat(offSaldoInput.value) || 0;
-            const diff = appSaldo - officialSaldoVal;
+            // Rechnet App-Saldo (dieser Monat) + Übertrag aus Vormonat
+            const carryoverVal = parseFloat(offSaldoInput.value) || 0;
+            const endOfMonthTotal = appSaldo + carryoverVal;
+            
             const diffEl = document.getElementById('month-diff');
-            diffEl.innerText = (diff > 0 ? '+' : '') + diff.toFixed(2) + ' h';
-            diffEl.className = Math.abs(diff) > 0.1 ? "font-black text-sm text-red-500" : "font-black text-sm text-green-500";
-
-            let total = 0; let lastOffMonth = null;
-            const sortedMonths = Object.keys(monthlyOfficialSaldo).sort();
-            if (sortedMonths.length > 0) { lastOffMonth = sortedMonths[sortedMonths.length - 1]; total = monthlyOfficialSaldo[lastOffMonth]; }
-            for (let dKey in workData) {
-                if (!lastOffMonth || dKey.substring(0, 7) > lastOffMonth) total += (workData[dKey].net || 0) - (workData[dKey].target || 0);
-            }
-            document.getElementById('total-saldo').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + ' h';
+            diffEl.innerText = (endOfMonthTotal > 0 ? '+' : '') + endOfMonthTotal.toFixed(2) + ' h';
+            diffEl.className = endOfMonthTotal < 0 ? "font-black text-sm text-red-400 mt-1" : "font-black text-sm text-green-400 mt-1";
         }
 
         function formatDate(date) { return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0'); }
@@ -801,7 +785,9 @@
         function saveOfficialSaldo() { 
             const key = `${viewMonthDate.getFullYear()}-${String(viewMonthDate.getMonth()+1).padStart(2,'0')}`;
             const val = document.getElementById('official-saldo').value;
-            if(val === '') delete monthlyOfficialSaldo[key]; else monthlyOfficialSaldo[key] = parseFloat(val);
+            // Erlaube Kommazahlen
+            let parsedVal = parseFloat(val.replace(',', '.')); 
+            if(isNaN(parsedVal)) delete monthlyOfficialSaldo[key]; else monthlyOfficialSaldo[key] = parsedVal;
             saveToLocalStorage(); renderMonthViews();
         }
         
