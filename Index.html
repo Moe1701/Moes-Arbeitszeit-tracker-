@@ -2,471 +2,677 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Arbeitszeit (Drive Sync)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moe's SimObserver | Master Regie</title>
     
-    <meta name="theme-color" content="#3b82f6">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.0/dist/obs-ws.min.js"></script>
 
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        brand: { 50: '#fff1f2', 100: '#ffe4e6', 500: '#f43f5e', 600: '#e11d48', 700: '#be123c', 800: '#9f1239', 900: '#4c0519' }
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f3f4f6;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .view-section { transition: opacity 0.2s ease-in-out; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         
-        /* Loading Overlay */
-        #loader {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(255,255,255,0.8);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
+        body { background-color: #f1f5f9; color: #0f172a; -webkit-tap-highlight-color: transparent; }
+        .no-select { user-select: none; -webkit-user-select: none; }
+
+        /* Kompakte Slider */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 5px; cursor: pointer; border-radius: 4px; background: #e2e8f0; }
+        input[type=range]::-webkit-slider-thumb { height: 16px; width: 16px; border-radius: 50%; cursor: pointer; -webkit-appearance: none; margin-top: -5.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .slider-green::-webkit-slider-thumb { background: #10b981; border: 2px solid #fff; }
+        .slider-blue::-webkit-slider-thumb { background: #3b82f6; border: 2px solid #fff; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+<body class="h-screen w-screen flex flex-col antialiased font-sans no-select overflow-hidden">
 
-    <div id="loader">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-        <p class="text-sm font-medium text-gray-600">Synchronisiere mit Google Drive...</p>
-    </div>
+    <!-- HEADER -->
+    <header class="bg-white border-b border-slate-300 h-16 px-8 flex justify-between items-center shrink-0 z-30 shadow-sm">
+        <div class="flex items-center gap-4">
+            <div class="bg-brand-600 p-2.5 rounded-2xl shadow-lg shadow-brand-100 flex items-center justify-center">
+                <i class="ph-fill ph-heartbeat text-white text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-black text-slate-900 tracking-tighter uppercase leading-none">Moe's SimObserver</h1>
+                <span class="text-[10px] text-brand-600 font-black tracking-[0.2em] uppercase">Master Regie V9.0</span>
+            </div>
+        </div>
+        
+        <!-- MODE SWITCHER -->
+        <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200 shadow-inner">
+            <button class="px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg bg-white text-brand-600 shadow-sm transition-all flex items-center gap-2">
+                <i class="ph-fill ph-broadcast text-lg"></i> Regie
+            </button>
+            <button onclick="window.location.href='observer.html'" class="px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg text-slate-500 hover:text-slate-800 transition-all flex items-center gap-2">
+                <i class="ph-fill ph-eye text-lg"></i> Beobachter
+            </button>
+            <button onclick="window.location.href='debriefing.html'" class="px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg text-slate-500 hover:text-slate-800 transition-all flex items-center gap-2">
+                <i class="ph-fill ph-presentation-chart text-lg"></i> Debriefing
+            </button>
+        </div>
 
-    <!-- App Header -->
-    <header class="bg-blue-600 text-white p-4 shadow-md z-10 flex justify-between items-center">
-        <h1 class="text-xl font-bold flex items-center gap-2">
-            <i class="ph ph-clock"></i> Arbeitszeit
-        </h1>
-        <div id="authStatus" class="text-[10px] bg-white/20 px-2 py-1 rounded-full">
-            Nicht verbunden
+        <div class="flex items-center gap-4 text-xs font-black uppercase tracking-widest">
+            <div id="obs-status" class="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200 shadow-sm transition-colors">
+                <div id="obs-dot" class="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse"></div>
+                <span id="obs-text" class="text-slate-500">OBS Verbinden...</span>
+            </div>
         </div>
     </header>
 
-    <!-- Login Screen (wird angezeigt wenn nicht eingeloggt) -->
-    <div id="loginOverlay" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-8 text-center">
-        <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-3xl flex items-center justify-center text-4xl mb-6">
-            <i class="ph ph-google-logo"></i>
-        </div>
-        <h2 class="text-2xl font-bold mb-2">Willkommen</h2>
-        <p class="text-gray-500 mb-8">Um Ihre Daten sicher in Ihrem Google Drive zu speichern, müssen Sie sich kurz anmelden.</p>
-        <button id="btnLogin" class="w-full max-w-xs bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform">
-            <i class="ph ph-signin text-xl"></i> Mit Google anmelden
-        </button>
-        <p class="mt-6 text-[10px] text-gray-400">Ihre Daten bleiben privat in Ihrem Google Konto.</p>
-    </div>
-
-    <!-- Hauptinhalt -->
-    <main class="flex-1 overflow-y-auto relative no-scrollbar" id="mainContainer">
+    <main class="flex-1 flex overflow-hidden">
         
-        <!-- TAG ANSICHT -->
-        <div id="view-day" class="p-4 flex flex-col gap-4 view-section absolute inset-0 bg-gray-50 pb-24">
-            <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
-                <button onclick="changeDate(-1)" class="p-2 text-blue-600"><i class="ph ph-caret-left"></i></button>
-                <div class="flex flex-col items-center">
-                    <span id="displayDayName" class="text-xs font-bold text-gray-400 uppercase">Tag</span>
-                    <input type="date" id="currentDateInput" class="font-bold border-none outline-none text-center" onchange="loadDayData()">
+        <!-- ========================================================= -->
+        <!-- LEFT COLUMN: Video Feed & Action Buttons                  -->
+        <!-- ========================================================= -->
+        <div class="flex-1 flex flex-col p-5 gap-5 min-w-0 relative">
+            
+            <div class="flex-1 bg-black rounded-3xl border border-slate-300 shadow-xl relative overflow-hidden flex items-center justify-center group">
+                <video id="live-video" class="absolute inset-0 w-full h-full object-contain z-0" autoplay playsinline muted></video>
+                <div id="video-placeholder" class="text-center relative z-10 transition-opacity duration-500">
+                    <div class="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-slate-800 shadow-2xl">
+                        <i class="ph ph-video-camera-slash text-slate-600 text-4xl"></i>
+                    </div>
+                    <p class="text-slate-500 font-black tracking-[0.2em] text-sm uppercase">Warte auf OBS Feed</p>
                 </div>
-                <button onclick="changeDate(1)" class="p-2 text-blue-600"><i class="ph ph-caret-right"></i></button>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm p-4 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Beginn</label>
-                        <input type="time" id="timeStart" class="w-full bg-gray-50 border rounded-xl p-3 outline-none" onchange="queueSave()">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Ende</label>
-                        <input type="time" id="timeEnd" class="w-full bg-gray-50 border rounded-xl p-3 outline-none" onchange="queueSave()">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Pause (Min.)</label>
-                        <input type="number" id="pauseMinutes" class="w-full bg-gray-50 border rounded-xl p-3 outline-none" onchange="queueSave()">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Soll (Std.)</label>
-                        <input type="number" step="0.5" id="sollHours" class="w-full bg-gray-50 border rounded-xl p-3 outline-none" onchange="queueSave()">
-                    </div>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-xl flex justify-between items-center">
-                    <div class="flex flex-col">
-                        <span class="text-blue-800 text-xs font-medium uppercase">Netto:</span>
-                        <span id="displayNetTime" class="text-xl font-bold text-blue-900">00:00 h</span>
-                    </div>
-                    <div class="flex flex-col items-end border-l border-blue-200 pl-4">
-                        <span class="text-blue-800 text-xs font-medium uppercase">Differenz:</span>
-                        <span id="displayDiff" class="text-xl font-bold text-blue-900">±0:00</span>
-                    </div>
+                <div class="absolute top-4 left-4 flex gap-2 z-20 pointer-events-none">
+                    <span class="px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-lg text-[10px] font-black tracking-widest uppercase text-white border border-white/10 shadow-lg">Cam 1 / Live</span>
                 </div>
             </div>
 
-            <div>
-                <h3 class="text-xs font-bold text-gray-400 mb-2 px-1">SCHNELL-DIENSTE</h3>
-                <div id="quickTemplates" class="flex gap-2 overflow-x-auto no-scrollbar"></div>
+            <!-- BOTTOM BAR -->
+            <div class="h-24 shrink-0 bg-white border border-slate-300 rounded-[24px] p-3 flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.03)]">
+                <button id="btn-rec" onclick="toggleRecording()" class="h-full px-8 bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 rounded-[16px] flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95">
+                    <div id="rec-dot" class="w-5 h-5 rounded-full bg-brand-500 shadow-[0_0_12px_rgba(225,29,72,0.4)]"></div>
+                    <span id="rec-text" class="text-[11px] font-black text-slate-500 uppercase tracking-widest">START</span>
+                </button>
+
+                <div class="h-full px-8 bg-slate-900 rounded-[16px] border border-slate-800 flex flex-col items-center justify-center font-mono shadow-inner relative overflow-hidden group">
+                    <div id="timer-display" class="text-4xl font-black tracking-wider text-white relative z-10 tabular-nums">00:00:00</div>
+                    <div class="text-[9px] text-brand-500 font-bold uppercase tracking-[0.2em] relative z-10 mt-1">Session Time</div>
+                </div>
+
+                <div class="w-px h-12 bg-slate-200 mx-2"></div>
+
+                <div class="flex-1 flex gap-3 h-full">
+                    <button onclick="addMarker('Achtung')" class="flex-1 bg-white hover:bg-amber-50 border-2 border-slate-200 hover:border-amber-300 rounded-[16px] flex flex-col items-center justify-center transition-all group shadow-sm active:scale-95">
+                        <i class="ph-fill ph-warning text-amber-500 text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                        <span class="text-[11px] font-black text-slate-700 uppercase tracking-widest">ACHTUNG</span>
+                    </button>
+                    <button onclick="addMarker('Positiv')" class="flex-1 bg-white hover:bg-emerald-50 border-2 border-slate-200 hover:border-emerald-300 rounded-[16px] flex flex-col items-center justify-center transition-all group shadow-sm active:scale-95">
+                        <i class="ph-fill ph-check-circle text-emerald-500 text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                        <span class="text-[11px] font-black text-slate-700 uppercase tracking-widest">POSITIV</span>
+                    </button>
+                    <button onclick="addMarker('Ereignis')" class="flex-1 bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 border-dashed rounded-[16px] flex flex-col items-center justify-center transition-all group shadow-sm active:scale-95">
+                        <i class="ph ph-plus text-slate-400 text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                        <span class="text-[11px] font-black text-slate-500 uppercase tracking-widest">+ EREIGNIS</span>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- ÜBERSICHT ANSICHT -->
-        <div id="view-summary" class="p-4 hidden view-section absolute inset-0 bg-gray-50 pb-24 overflow-y-auto">
-             <div class="bg-blue-600 rounded-2xl p-6 text-white mb-4 shadow-lg">
-                <div class="flex justify-between items-start mb-4">
+        <!-- ========================================================= -->
+        <!-- RIGHT SIDEBAR: Matrix, Intercom, Log & Sounds             -->
+        <!-- ========================================================= -->
+        <aside class="w-[26rem] bg-slate-50 flex flex-col shrink-0 z-20 shadow-[-20px_0_60px_rgba(0,0,0,0.03)] border-l border-slate-300">
+            
+            <!-- 1. AUDIO MATRIX -->
+            <div class="px-5 pt-2 pb-2 bg-white border-b border-slate-300 shrink-0">
+                <div>
+                    <!-- Inputs -->
+                    <div class="space-y-1">
+                        <div>
+                            <div class="flex items-center justify-between mb-0.5">
+                                <input type="text" id="label_in1" value="VoG Mic (Raum)" onchange="saveLabel('in1', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-36 transition-colors">
+                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
+                                    <button id="btn_in1_A" onclick="toggleRoute('in1', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
+                                    <button id="btn_in1_B" onclick="toggleRoute('in1', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
+                                </div>
+                            </div>
+                            <input type="range" id="vol_in1" min="0" max="100" value="80" class="slider-green">
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-0.5">
+                                <input type="text" id="label_in2" value="Patient 1 Mic" onchange="saveLabel('in2', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-36 transition-colors">
+                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
+                                    <button id="btn_in2_A" onclick="toggleRoute('in2', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
+                                    <button id="btn_in2_B" onclick="toggleRoute('in2', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
+                                </div>
+                            </div>
+                            <input type="range" id="vol_in2" min="0" max="100" value="80" class="slider-green">
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-0.5">
+                                <input type="text" id="label_in3" value="Patient 2 Mic" onchange="saveLabel('in3', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-36 transition-colors">
+                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
+                                    <button id="btn_in3_A" onclick="toggleRoute('in3', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
+                                    <button id="btn_in3_B" onclick="toggleRoute('in3', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
+                                </div>
+                            </div>
+                            <input type="range" id="vol_in3" min="0" max="100" value="80" class="slider-green">
+                        </div>
+                    </div>
+                    
+                    <div class="h-px w-full bg-slate-100 my-1"></div>
+
+                    <!-- Outputs -->
+                    <div class="space-y-1">
+                        <div>
+                            <div class="flex items-center justify-between mb-0.5">
+                                <input type="text" id="label_out1" value="Raum LS (VoG)" onchange="saveLabel('out1', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-blue-500 outline-none w-36 transition-colors">
+                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
+                                    <button id="btn_out1_A" onclick="toggleRoute('out1', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
+                                    <button id="btn_out1_B" onclick="toggleRoute('out1', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
+                                </div>
+                            </div>
+                            <input type="range" id="vol_out1" min="0" max="100" value="80" class="slider-blue">
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-0.5">
+                                <input type="text" id="label_out2" value="Bett 1 LS (Pat1)" onchange="saveLabel('out2', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-blue-500 outline-none w-36 transition-colors">
+                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
+                                    <button id="btn_out2_A" onclick="toggleRoute('out2', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
+                                    <button id="btn_out2_B" onclick="toggleRoute('out2', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
+                                </div>
+                            </div>
+                            <input type="range" id="vol_out2" min="0" max="100" value="80" class="slider-blue">
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-0.5">
+                                <input type="text" id="label_out3" value="Bett 2 LS (Pat2)" onchange="saveLabel('out3', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-blue-500 outline-none w-36 transition-colors">
+                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
+                                    <button id="btn_out3_A" onclick="toggleRoute('out3', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
+                                    <button id="btn_out3_B" onclick="toggleRoute('out3', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
+                                </div>
+                            </div>
+                            <input type="range" id="vol_out3" min="0" max="100" value="80" class="slider-blue">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 2. PTT INTERCOM & LOKALE SFX/FILTER (Die Split-Buttons) -->
+                <div class="mt-2 grid grid-cols-3 gap-2">
+                    
+                    <!-- VOICE OF GOD -->
+                    <button id="ptt-out1" data-active="false" onmousedown="handlePTT('out1', false)" onmouseup="handlePTT('out1', true)" onmouseleave="handlePTT('out1', true)" class="bg-slate-50 hover:bg-emerald-50 data-[active=true]:bg-brand-600 border border-slate-200 hover:border-emerald-200 data-[active=true]:border-brand-700 shadow-sm rounded-lg py-1.5 px-1 flex items-center justify-center gap-1.5 transition-all group active:scale-95">
+                        <i class="ph-fill ph-megaphone text-slate-400 group-hover:text-emerald-500 group-data-[active=true]:text-white text-sm transition-colors"></i>
+                        <span class="text-[10px] font-black text-slate-800 uppercase leading-none group-hover:text-emerald-600 group-data-[active=true]:text-white transition-colors truncate">VoG</span>
+                    </button>
+
+                    <!-- PATIENT 1 (Split Button) -->
+                    <div class="dropdown-container relative h-full">
+                        <div class="flex h-full bg-slate-50 border border-slate-200 rounded-lg shadow-sm group-container">
+                            <!-- Linke Seite: PTT -->
+                            <button id="ptt-out2" data-active="false" onmousedown="handlePTT('out2', false)" onmouseup="handlePTT('out2', true)" onmouseleave="handlePTT('out2', true)" class="flex-1 flex items-center justify-center gap-1.5 hover:bg-blue-50 data-[active=true]:bg-brand-600 transition-colors rounded-l-lg active:scale-95 group">
+                                <i class="ph-fill ph-microphone text-slate-400 group-hover:text-blue-500 group-data-[active=true]:text-white text-sm transition-colors"></i>
+                                <span class="flex flex-col items-center">
+                                    <span class="text-[10px] font-black text-slate-800 uppercase leading-none group-hover:text-blue-600 group-data-[active=true]:text-white transition-colors">Pat 1</span>
+                                    <span id="fx-label-p1" class="hidden text-[6.5px] font-black text-purple-500 uppercase mt-0.5 leading-none group-data-[active=true]:text-purple-200"></span>
+                                </span>
+                            </button>
+                            <div class="w-px bg-slate-200"></div>
+                            <!-- Rechte Seite: Dropdown Trigger -->
+                            <button onclick="toggleDropdown('drop-pat1')" class="px-1.5 flex items-center justify-center hover:bg-slate-200 rounded-r-lg transition-colors">
+                                <i class="ph-bold ph-caret-up text-[10px] text-slate-500"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Dropdown P1 -->
+                        <div id="drop-pat1" class="sfx-dropdown hidden absolute bottom-[calc(100%+6px)] left-0 w-36 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                            <!-- SFX -->
+                            <div class="px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-[8px] font-black text-slate-400 uppercase tracking-widest">Symptome</div>
+                            <button onclick="triggerSound('P1_Husten')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-lungs text-sm"></i> Husten</button>
+                            <button onclick="triggerSound('P1_Stoehnen')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-smiley-sad text-sm"></i> Stöhnen</button>
+                            <button onclick="triggerSound('P1_Erbrechen')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-drop text-sm"></i> Brechen</button>
+                            <!-- FX -->
+                            <div class="px-3 py-1.5 bg-purple-50 border-y border-slate-200 text-[8px] font-black text-purple-400 uppercase tracking-widest">Stimmen-Filter</div>
+                            <button onclick="setPatientFilter('p1', 'Normal')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-bold ph-x text-sm"></i> Normal</button>
+                            <button onclick="setPatientFilter('p1', 'Maske')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-mask-happy text-sm"></i> O2-Maske</button>
+                            <button onclick="setPatientFilter('p1', 'Kind')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-baby text-sm"></i> Kind (Hoch)</button>
+                            <button onclick="setPatientFilter('p1', 'Senior')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-user text-sm"></i> Senior (Tief)</button>
+                        </div>
+                    </div>
+
+                    <!-- PATIENT 2 (Split Button) -->
+                    <div class="dropdown-container relative h-full">
+                        <div class="flex h-full bg-slate-50 border border-slate-200 rounded-lg shadow-sm group-container">
+                            <button id="ptt-out3" data-active="false" onmousedown="handlePTT('out3', false)" onmouseup="handlePTT('out3', true)" onmouseleave="handlePTT('out3', true)" class="flex-1 flex items-center justify-center gap-1.5 hover:bg-amber-50 data-[active=true]:bg-brand-600 transition-colors rounded-l-lg active:scale-95 group">
+                                <i class="ph-fill ph-microphone text-slate-400 group-hover:text-amber-500 group-data-[active=true]:text-white text-sm transition-colors"></i>
+                                <span class="flex flex-col items-center">
+                                    <span class="text-[10px] font-black text-slate-800 uppercase leading-none group-hover:text-amber-600 group-data-[active=true]:text-white transition-colors">Pat 2</span>
+                                    <span id="fx-label-p2" class="hidden text-[6.5px] font-black text-purple-500 uppercase mt-0.5 leading-none group-data-[active=true]:text-purple-200"></span>
+                                </span>
+                            </button>
+                            <div class="w-px bg-slate-200"></div>
+                            <button onclick="toggleDropdown('drop-pat2')" class="px-1.5 flex items-center justify-center hover:bg-slate-200 rounded-r-lg transition-colors">
+                                <i class="ph-bold ph-caret-up text-[10px] text-slate-500"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Dropdown P2 -->
+                        <div id="drop-pat2" class="sfx-dropdown hidden absolute bottom-[calc(100%+6px)] right-0 w-36 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                            <!-- SFX -->
+                            <div class="px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-[8px] font-black text-slate-400 uppercase tracking-widest">Symptome</div>
+                            <button onclick="triggerSound('P2_Husten')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-lungs text-sm"></i> Husten</button>
+                            <button onclick="triggerSound('P2_Stoehnen')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-smiley-sad text-sm"></i> Stöhnen</button>
+                            <button onclick="triggerSound('P2_Erbrechen')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-drop text-sm"></i> Brechen</button>
+                            <!-- FX -->
+                            <div class="px-3 py-1.5 bg-purple-50 border-y border-slate-200 text-[8px] font-black text-purple-400 uppercase tracking-widest">Stimmen-Filter</div>
+                            <button onclick="setPatientFilter('p2', 'Normal')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-bold ph-x text-sm"></i> Normal</button>
+                            <button onclick="setPatientFilter('p2', 'Maske')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-mask-happy text-sm"></i> O2-Maske</button>
+                            <button onclick="setPatientFilter('p2', 'Kind')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-baby text-sm"></i> Kind (Hoch)</button>
+                            <button onclick="setPatientFilter('p2', 'Senior')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-user text-sm"></i> Senior (Tief)</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 3. ACTION LOG / GLOBALE SOUNDS TABS -->
+            <div class="flex-1 flex flex-col overflow-hidden bg-slate-100/50">
+                <div class="px-4 pt-3 pb-2 flex justify-between items-center border-b border-slate-200 shrink-0">
+                    <div class="bg-slate-200/50 p-1 rounded-xl flex gap-1 w-full relative border border-slate-200">
+                        <button onclick="switchRightTab('log')" id="tab-log" class="flex-1 py-1.5 bg-white text-slate-800 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm transition-all">Action Log</button>
+                        <button onclick="switchRightTab('sounds')" id="tab-sounds" class="flex-1 py-1.5 text-slate-500 hover:text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all">Globale Sounds</button>
+                    </div>
+                </div>
+                
+                <!-- Log Pane -->
+                <div id="pane-log" class="flex-1 overflow-y-auto p-4 space-y-2.5">
+                    <div id="empty-log-state" class="flex flex-col items-center justify-center py-8 opacity-40 text-slate-500">
+                        <i class="ph-fill ph-clipboard-text text-3xl mb-2"></i>
+                        <span class="text-[9px] font-black uppercase tracking-widest text-center mt-2">Log ist leer<br>Drücke Start</span>
+                    </div>
+                    <div id="marker-list"></div>
+                </div>
+
+                <!-- Global Sounds Pane -->
+                <div id="pane-sounds" class="flex-1 overflow-y-auto p-4 space-y-4 hidden">
+                    
+                    <!-- Sektion 1: Voice of God Filter -->
                     <div>
-                        <p class="text-blue-100 text-xs uppercase font-bold">Gesamt Monat</p>
-                        <h2 id="totalMonthHours" class="text-4xl font-bold">00:00 h</h2>
+                        <h3 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><i class="ph-fill ph-faders"></i> VoG Stimm-Verzerrer</h3>
+                        <div class="flex gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                            <button onclick="setVogFilter('Normal')" id="btn-vog-Normal" class="flex-1 py-1.5 bg-slate-800 text-white shadow-sm rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Normal</button>
+                            <button onclick="setVogFilter('Funk')" id="btn-vog-Funk" class="flex-1 py-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Funkgerät</button>
+                            <button onclick="setVogFilter('Telefon')" id="btn-vog-Telefon" class="flex-1 py-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Telefon</button>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-blue-100 text-xs uppercase font-bold">Saldo</p>
-                        <h2 id="totalBalance" class="text-2xl font-bold">±0:00</h2>
+
+                    <div class="h-px bg-slate-200"></div>
+
+                    <!-- Sektion 2: Globale Effekte (Raum/Decke) -->
+                    <div>
+                        <h3 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><i class="ph-fill ph-speaker-high"></i> Umgebungs-Effekte</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="triggerSound('SFX_Heli_Global')" class="bg-white border border-slate-200 hover:border-slate-400 p-3 rounded-xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-all shadow-sm group">
+                                <div class="bg-slate-50 p-2 rounded-full group-hover:bg-slate-100 transition-colors"><i class="ph-fill ph-airplane-tilt text-2xl text-slate-600"></i></div>
+                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-800 text-center">Helikopter</span>
+                            </button>
+                            <button onclick="triggerSound('SFX_Sirene_Global')" class="bg-white border border-slate-200 hover:border-rose-400 p-3 rounded-xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-all shadow-sm group">
+                                <div class="bg-rose-50 p-2 rounded-full group-hover:bg-rose-100 transition-colors"><i class="ph-fill ph-siren text-2xl text-rose-500"></i></div>
+                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-800 text-center">RTW Sirene</span>
+                            </button>
+                            <button onclick="triggerSound('SFX_EKG_Global')" class="col-span-2 bg-white border border-slate-200 hover:border-blue-400 p-3 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-sm group">
+                                <div class="bg-blue-50 p-1.5 rounded-lg group-hover:bg-blue-100 transition-colors"><i class="ph-fill ph-heartbeat text-lg text-blue-500"></i></div>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-800">Monitor Alarm (Asystolie)</span>
+                            </button>
+                            <button onclick="triggerSound('SFX_Telefon_Global')" class="col-span-2 bg-white border border-slate-200 hover:border-emerald-400 p-3 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-sm group">
+                                <div class="bg-emerald-50 p-1.5 rounded-lg group-hover:bg-emerald-100 transition-colors"><i class="ph-fill ph-phone-ringing text-lg text-emerald-500"></i></div>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-800">Labor-Telefon Klingeln</span>
+                            </button>
+                        </div>
                     </div>
+
                 </div>
-                <div class="bg-white/10 p-3 rounded-xl flex items-center justify-between">
-                    <span class="text-xs">Standard-Soll/Tag:</span>
-                    <input type="number" step="0.5" id="globalSoll" class="bg-transparent border-b border-white/30 w-12 text-center font-bold outline-none" onchange="updateGlobalSoll()">
-                </div>
-             </div>
-             <div id="summaryList" class="space-y-2"></div>
-        </div>
+            </div>
+        </aside>
     </main>
 
-    <!-- Nav -->
-    <nav class="bg-white border-t fixed bottom-0 w-full h-16 flex justify-around items-center">
-        <button onclick="showView('day')" class="flex flex-col items-center text-blue-600">
-            <i class="ph-fill ph-calendar text-2xl"></i>
-            <span class="text-[10px]">Heute</span>
-        </button>
-        <button onclick="showView('summary')" class="flex flex-col items-center text-gray-400">
-            <i class="ph ph-chart-bar text-2xl"></i>
-            <span class="text-[10px]">Übersicht</span>
-        </button>
-    </nav>
+    <!-- VERSTECKTER DOWNLOAD BUTTON -->
+    <button id="btn-export-log" onclick="downloadMasterLog()" class="hidden"></button>
 
-    <!-- Google Identity Services & API -->
-    <script src="https://accounts.google.com/gsi/client"></script>
-    
     <script>
-        const CLIENT_ID = 'IHRE_CLIENT_ID_HIER_EINTRAGEN'; 
-        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        // --- GLOBALE VARIABLEN ---
+        const obs = new OBSWebSocket();
+        let isOBSConnected = false;
+        let isRecording = false;
+        let timerInterval;
+        let seconds = 0;
+        let masterMarkers = [];
+
+        const channels = ['in1', 'in2', 'in3', 'out1', 'out2', 'out3'];
         
-        let accessToken = null;
-        let driveFileId = null;
-        // State erweitert um Soll-Zeit
-        let appState = { 
-            entries: {}, 
-            settings: { defaultSoll: 8.0 },
-            templates: [{name: 'Früh', s:'06:00', e:'14:00', p:30}, {name: 'Spät', s:'12:00', e:'20:00', p:30}] 
-        };
-        let saveTimeout = null;
-
-        // ... existing auth code ...
-
-        async function initDriveData() {
-            showLoader(true);
-            try {
-                const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='arbeitszeit_data.json'&fields=files(id,name)`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                const searchData = await searchRes.json();
-                
-                if (searchData.files && searchData.files.length > 0) {
-                    driveFileId = searchData.files[0].id;
-                    const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    });
-                    appState = await fileRes.json();
-                    // Migration für alte Daten falls settings fehlen
-                    if (!appState.settings) appState.settings = { defaultSoll: 8.0 };
-                } else {
-                    await saveToDrive(true); 
+        window.onload = () => {
+            channels.forEach(ch => {
+                const savedName = localStorage.getItem('label_' + ch);
+                if(savedName) {
+                    document.getElementById('label_' + ch).value = savedName;
+                    if (ch.startsWith('out')) {
+                        document.getElementById('btnLabel_' + ch).innerText = savedName.split(' ')[0]; 
+                    }
                 }
-                document.getElementById('globalSoll').value = appState.settings.defaultSoll;
-                renderTemplates();
-                loadDayData();
-            } catch (e) { console.error("Drive Fehler", e); }
-            showLoader(false);
-        }
 
-        function updateGlobalSoll() {
-            appState.settings.defaultSoll = parseFloat(document.getElementById('globalSoll').value) || 0;
-            queueSave();
-        }
-
-        function queueSave() {
-            const dateKey = document.getElementById('currentDateInput').value;
-            appState.entries[dateKey] = {
-                s: document.getElementById('timeStart').value,
-                e: document.getElementById('timeEnd').value,
-                p: parseInt(document.getElementById('pauseMinutes').value) || 0,
-                soll: parseFloat(document.getElementById('sollHours').value)
-            };
-            calculateNet();
-
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                saveToDrive();
-                document.getElementById('authStatus').innerText = 'Gespeichert';
-                setTimeout(() => document.getElementById('authStatus').innerText = 'Drive verbunden', 2000);
-            }, 1500);
-        }
-
-        function loadDayData() {
-            const dateKey = document.getElementById('currentDateInput').value;
-            const data = appState.entries[dateKey] || {s:'', e:'', p:0, soll: appState.settings.defaultSoll};
-            document.getElementById('timeStart').value = data.s || '';
-            document.getElementById('timeEnd').value = data.e || '';
-            document.getElementById('pauseMinutes').value = data.p || 0;
-            document.getElementById('sollHours').value = data.soll !== undefined ? data.soll : appState.settings.defaultSoll;
-            calculateNet();
-        }
-
-        function calculateNet() {
-            const s = document.getElementById('timeStart').value;
-            const e = document.getElementById('timeEnd').value;
-            const p = parseInt(document.getElementById('pauseMinutes').value) || 0;
-            const sollInput = parseFloat(document.getElementById('sollHours').value) || 0;
-            
-            const display = document.getElementById('displayNetTime');
-            const diffDisplay = document.getElementById('displayDiff');
-            
-            if(!s || !e) { 
-                display.innerText = "00:00 h"; 
-                diffDisplay.innerText = "±0:00";
-                return; 
-            }
-            
-            const start = s.split(':').map(Number);
-            const end = e.split(':').map(Number);
-            let diffMin = (end[0]*60 + end[1]) - (start[0]*60 + start[1]) - p;
-            if(diffMin < 0) diffMin += 1440;
-            
-            const h = Math.floor(diffMin/60);
-            const m = diffMin % 60;
-            display.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} h`;
-
-            // Differenz berechnen
-            const sollMin = sollInput * 60;
-            const balanceMin = diffMin - sollMin;
-            const bH = Math.floor(Math.abs(balanceMin)/60);
-            const bM = Math.abs(balanceMin) % 60;
-            const sign = balanceMin >= 0 ? '+' : '-';
-            diffDisplay.innerText = `${sign}${bH}:${String(bM).padStart(2,'0')}`;
-            diffDisplay.className = balanceMin >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
-        }
-
-        function renderSummary() {
-            const list = document.getElementById('summaryList');
-            list.innerHTML = '';
-            let totalMin = 0;
-            let totalSollMin = 0;
-
-            const currentMonth = document.getElementById('currentDateInput').value.substring(0, 7);
-
-            Object.keys(appState.entries).sort().reverse().forEach(date => {
-                if (!date.startsWith(currentMonth)) return;
-
-                const entry = appState.entries[date];
-                if(entry.s && entry.e) {
-                    const start = entry.s.split(':').map(Number);
-                    const end = entry.e.split(':').map(Number);
-                    let diff = (end[0]*60 + end[1]) - (start[0]*60 + start[1]) - entry.p;
-                    if(diff < 0) diff += 1440;
-                    
-                    totalMin += diff;
-                    const daySoll = entry.soll !== undefined ? entry.soll : appState.settings.defaultSoll;
-                    totalSollMin += (daySoll * 60);
-
-                    const h = Math.floor(diff/60);
-                    const m = diff % 60;
-                    const diffTag = diff - (daySoll * 60);
-
-                    const div = document.createElement('div');
-                    div.className = "bg-white p-4 rounded-xl flex justify-between items-center shadow-sm border-l-4 " + (diffTag >= 0 ? 'border-green-400' : 'border-red-400');
-                    div.innerHTML = `
-                        <div>
-                            <span class="font-bold">${new Date(date).toLocaleDateString('de-DE', {day: '2-digit', month: '2-digit'})}</span>
-                            <br><span class="text-[10px] text-gray-400 uppercase">${entry.s} - ${entry.e} (${entry.p}m P)</span>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold text-gray-800">${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} h</div>
-                            <div class="text-[10px] ${diffTag >= 0 ? 'text-green-600' : 'text-red-600'} font-bold">
-                                ${diffTag >= 0 ? '+' : ''}${Math.floor(diffTag/60)}:${String(Math.abs(diffTag)%60).padStart(2,'0')}
-                            </div>
-                        </div>`;
-                    list.appendChild(div);
+                const slider = document.getElementById('vol_' + ch);
+                if(slider) {
+                    slider.addEventListener('input', (e) => {
+                        changeVolume(ch, e.target.value);
+                    });
                 }
             });
+            connectOBS();
+            startVideoStream();
+        };
 
-            // Monats-Summen
-            const hTotal = Math.floor(totalMin/60);
-            const mTotal = totalMin % 60;
-            document.getElementById('totalMonthHours').innerText = `${String(hTotal).padStart(2,'0')}:${String(mTotal).padStart(2,'0')} h`;
-
-            const balanceTotal = totalMin - totalSollMin;
-            const bH = Math.floor(Math.abs(balanceTotal)/60);
-            const bM = Math.abs(balanceTotal) % 60;
-            document.getElementById('totalBalance').innerText = `${balanceTotal >= 0 ? '+' : '-'}${bH}:${String(bM).padStart(2,'0')}`;
-            document.getElementById('totalBalance').className = "text-2xl font-bold " + (balanceTotal >= 0 ? 'text-green-300' : 'text-red-300');
+        // --- 0. VIDEO FEED ---
+        async function startVideoStream() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 1920 }, height: { ideal: 1080 } }, 
+                    audio: false 
+                });
+                const videoElement = document.getElementById('live-video');
+                videoElement.srcObject = stream;
+                
+                const placeholder = document.getElementById('video-placeholder');
+                if(placeholder) {
+                    placeholder.style.opacity = '0';
+                    setTimeout(() => placeholder.style.display = 'none', 500);
+                }
+            } catch (err) { console.error("Kamera-Zugriff verweigert:", err); }
         }
-            },
+
+        function saveLabel(ch, value) {
+            localStorage.setItem('label_' + ch, value);
+            if (ch.startsWith('out')) {
+                // Nur den Text-Node aktualisieren, nicht das ganze innerHTML (wichtig wegen FX Badge)
+                const labelSpan = document.getElementById('btnLabel_' + ch);
+                if(labelSpan && labelSpan.firstChild) {
+                    labelSpan.firstChild.textContent = value.split(' ')[0];
+                }
+            }
+        }
+
+        // --- 1. VOLUME & ROUTING ---
+        async function changeVolume(ch, value) {
+            if(!isOBSConnected) return;
+            try {
+                const mulValue = value / 100;
+                await obs.call('SetInputVolume', { inputName: ch, inputVolumeMul: mulValue });
+            } catch(e) { console.warn("Volume Error:", e); }
+        }
+
+        const routingState = {};
+        channels.forEach(ch => routingState[ch] = { A: false, B: false });
+
+        async function toggleRoute(ch, route) {
+            routingState[ch][route] = !routingState[ch][route];
+            const btn = document.getElementById(`btn_${ch}_${route}`);
+            
+            if(routingState[ch][route]) {
+                btn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
+                btn.classList.add('bg-brand-600', 'text-white', 'border-brand-700', 'shadow-md');
+            } else {
+                btn.classList.remove('bg-brand-600', 'text-white', 'border-brand-700', 'shadow-md');
+                btn.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
+            }
+
+            if(isOBSConnected) {
+                try {
+                    await obs.call('SetSourceFilterEnabled', {
+                        sourceName: ch,
+                        filterName: 'Monitor ' + route,
+                        filterEnabled: routingState[ch][route]
+                    });
+                } catch(e) { console.error("Routing Error:", e); }
+            }
+        }
+
+        // --- 2. PTT (Push-To-Talk) ---
+        async function handlePTT(ch, isMuted) {
+            const btn = document.getElementById(`ptt-${ch}`);
+            if(btn) btn.setAttribute('data-active', !isMuted);
+
+            if(isOBSConnected) {
+                try {
+                    const inputName = document.getElementById('label_'+ch).value;
+                    await obs.call('SetInputMute', { inputName: inputName, inputMuted: isMuted });
+                } catch(e) { console.warn("PTT Mute Error:", e); }
+            }
+        }
+
+        // --- 3. SPLIT-BUTTON DROPDOWNS (Lokale SFX & FX) ---
+        function toggleDropdown(id) {
+            const drop = document.getElementById(id);
+            document.querySelectorAll('.sfx-dropdown').forEach(el => {
+                if(el.id !== id) el.classList.add('hidden');
+            });
+            drop.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown-container')) {
+                document.querySelectorAll('.sfx-dropdown').forEach(el => el.classList.add('hidden'));
+            }
         });
 
-        document.getElementById('btnLogin').onclick = () => client.requestAccessToken();
+        // --- 4. PATIENTEN STIMMEN-FILTER ---
+        async function setPatientFilter(patId, filterName) {
+            // Dropdown schließen
+            document.querySelectorAll('.sfx-dropdown').forEach(el => el.classList.add('hidden'));
 
-        // --- DRIVE LOGIK ---
-        async function initDriveData() {
-            showLoader(true);
-            try {
-                // 1. Suche nach existierender Datei
-                const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='arbeitszeit_data.json'&fields=files(id,name)`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                const searchData = await searchRes.json();
-                
-                if (searchData.files && searchData.files.length > 0) {
-                    driveFileId = searchData.files[0].id;
-                    // 2. Lade Inhalt
-                    const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    });
-                    appState = await fileRes.json();
-                } else {
-                    // 3. Erstelle neue Datei
-                    await saveToDrive(true); 
-                }
-                renderTemplates();
-                loadDayData();
-            } catch (e) {
-                console.error("Drive Fehler", e);
+            // Welcher Input in OBS? (Wir greifen auf die versteckten Werte der Textfelder zu)
+            const inputId = patId === 'p1' ? 'out2' : 'out3'; // out2 = Pat1, out3 = Pat2 in unserem Layout
+            const obsMicName = document.getElementById('label_' + inputId).value; 
+            
+            // UI Badge aktualisieren
+            const badge = document.getElementById(`fx-label-${patId}`);
+            if(filterName === 'Normal') {
+                badge.classList.add('hidden');
+            } else {
+                badge.innerText = filterName.toUpperCase();
+                badge.classList.remove('hidden');
             }
-            showLoader(false);
+
+            if(!isOBSConnected) return;
+
+            try {
+                // Zuerst ALLE speziellen Filter auf diesem Mic deaktivieren
+                await obs.call('SetSourceFilterEnabled', { sourceName: obsMicName, filterName: 'Filter_Maske', filterEnabled: false });
+                await obs.call('SetSourceFilterEnabled', { sourceName: obsMicName, filterName: 'Filter_Kind', filterEnabled: false });
+                await obs.call('SetSourceFilterEnabled', { sourceName: obsMicName, filterName: 'Filter_Senior', filterEnabled: false });
+
+                // Dann den gewünschten Filter aktivieren (falls nicht Normal)
+                if(filterName !== 'Normal') {
+                    await obs.call('SetSourceFilterEnabled', { sourceName: obsMicName, filterName: `Filter_${filterName}`, filterEnabled: true });
+                }
+            } catch(e) { console.warn(`Patient Filter Error (${patId}):`, e); }
         }
 
-        async function saveToDrive(isNew = false) {
-            const metadata = { name: 'arbeitszeit_data.json', mimeType: 'application/json' };
-            const formData = new FormData();
-            formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            formData.append('file', new Blob([JSON.stringify(appState)], { type: 'application/json' }));
+        // --- 5. TABS, SOUNDS & VOG FILTER ---
+        function switchRightTab(tab) {
+            const logTab = document.getElementById('tab-log');
+            const soundsTab = document.getElementById('tab-sounds');
+            const paneLog = document.getElementById('pane-log');
+            const paneSounds = document.getElementById('pane-sounds');
 
-            const url = isNew 
-                ? 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
-                : `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`;
-            
-            const res = await fetch(url, {
-                method: isNew ? 'POST' : 'PATCH',
-                headers: { 'Authorization': `Bearer ${accessToken}` },
-                body: formData
-            });
-            const data = await res.json();
-            if (isNew) driveFileId = data.id;
+            if (tab === 'log') {
+                paneLog.classList.remove('hidden'); paneSounds.classList.add('hidden');
+                logTab.className = "flex-1 py-1.5 bg-white text-slate-800 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm transition-all";
+                soundsTab.className = "flex-1 py-1.5 text-slate-500 hover:text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all";
+            } else {
+                paneLog.classList.add('hidden'); paneSounds.classList.remove('hidden');
+                soundsTab.className = "flex-1 py-1.5 bg-white text-slate-800 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm transition-all";
+                logTab.className = "flex-1 py-1.5 text-slate-500 hover:text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all";
+            }
         }
 
-        function queueSave() {
-            // UI Update sofort
-            const dateKey = document.getElementById('currentDateInput').value;
-            appState.entries[dateKey] = {
-                s: document.getElementById('timeStart').value,
-                e: document.getElementById('timeEnd').value,
-                p: parseInt(document.getElementById('pauseMinutes').value) || 0
-            };
-            calculateNet();
+        async function triggerSound(soundName) {
+            document.querySelectorAll('.sfx-dropdown').forEach(el => el.classList.add('hidden'));
 
-            // Verzögertes Speichern in Drive (um API-Limits zu schonen)
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                saveToDrive();
-                document.getElementById('authStatus').innerText = 'Gespeichert';
-                setTimeout(() => document.getElementById('authStatus').innerText = 'Drive verbunden', 2000);
-            }, 1500);
+            if (isOBSConnected) {
+                try {
+                    await obs.call('TriggerMediaInputAction', { inputName: soundName, mediaAction: 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART' });
+                } catch(e) { console.warn("Sound Error:", e); }
+            } else { alert("OBS nicht verbunden: " + soundName); }
         }
 
-        // --- UI LOGIK ---
-        function loadDayData() {
-            const dateKey = document.getElementById('currentDateInput').value;
-            const data = appState.entries[dateKey] || {s:'', e:'', p:0};
-            document.getElementById('timeStart').value = data.s;
-            document.getElementById('timeEnd').value = data.e;
-            document.getElementById('pauseMinutes').value = data.p;
-            calculateNet();
-        }
-
-        function calculateNet() {
-            const s = document.getElementById('timeStart').value;
-            const e = document.getElementById('timeEnd').value;
-            const p = parseInt(document.getElementById('pauseMinutes').value) || 0;
-            const display = document.getElementById('displayNetTime');
-            
-            if(!s || !e) { display.innerText = "00:00 h"; return; }
-            
-            const start = s.split(':').map(Number);
-            const end = e.split(':').map(Number);
-            let diff = (end[0]*60 + end[1]) - (start[0]*60 + start[1]) - p;
-            if(diff < 0) diff += 1440;
-            
-            const h = Math.floor(diff/60);
-            const m = diff % 60;
-            display.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} h`;
-        }
-
-        function renderTemplates() {
-            const container = document.getElementById('quickTemplates');
-            container.innerHTML = '';
-            appState.templates.forEach(t => {
-                const b = document.createElement('button');
-                b.className = "bg-white border px-4 py-3 rounded-xl shadow-sm shrink-0 font-bold text-sm active:bg-blue-50";
-                b.innerText = t.name;
-                b.onclick = () => {
-                    document.getElementById('timeStart').value = t.s;
-                    document.getElementById('timeEnd').value = t.e;
-                    document.getElementById('pauseMinutes').value = t.p;
-                    queueSave();
-                };
-                container.appendChild(b);
-            });
-        }
-
-        function showView(view) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
-            document.getElementById(`view-${view}`).classList.remove('hidden');
-            if(view === 'summary') renderSummary();
-        }
-
-        function renderSummary() {
-            const list = document.getElementById('summaryList');
-            list.innerHTML = '';
-            let total = 0;
-            Object.keys(appState.entries).sort().reverse().forEach(date => {
-                const entry = appState.entries[date];
-                if(entry.s && entry.e) {
-                    const div = document.createElement('div');
-                    div.className = "bg-white p-4 rounded-xl flex justify-between shadow-sm";
-                    div.innerHTML = `<div><span class="font-bold">${date}</span><br><span class="text-xs text-gray-400">${entry.s} - ${entry.e}</span></div><div class="font-bold text-blue-600">Netto inkl. Pause</div>`;
-                    list.appendChild(div);
+        async function setVogFilter(filter) {
+            ['Normal', 'Funk', 'Telefon'].forEach(f => {
+                const btn = document.getElementById('btn-vog-' + f);
+                if(f === filter) {
+                    btn.className = "flex-1 py-1.5 bg-slate-800 text-white shadow-sm rounded-lg text-[9px] font-black uppercase tracking-widest transition-all";
+                } else {
+                    btn.className = "flex-1 py-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all";
                 }
             });
+
+            if(!isOBSConnected) return;
+            const vogMicName = document.getElementById('label_out1').value; 
+
+            try {
+                if(filter === 'Normal') {
+                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Funk', filterEnabled: false });
+                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Telefon', filterEnabled: false });
+                } else if(filter === 'Funk') {
+                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Telefon', filterEnabled: false });
+                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Funk', filterEnabled: true });
+                } else if(filter === 'Telefon') {
+                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Funk', filterEnabled: false });
+                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Telefon', filterEnabled: true });
+                }
+            } catch(e) { console.warn("VST Filter Error:", e); }
         }
 
-        function changeDate(days) {
-            const input = document.getElementById('currentDateInput');
-            const d = new Date(input.value);
-            d.setDate(d.getDate() + days);
-            input.value = d.toISOString().split('T')[0];
-            loadDayData();
+        // --- 6. OBS CONNECTION & TIMER ---
+        async function connectOBS() {
+            try {
+                await obs.connect('ws://127.0.0.1:4455', 'medsim2026');
+                isOBSConnected = true;
+                const dot = document.getElementById('obs-dot');
+                const text = document.getElementById('obs-text');
+                const container = document.getElementById('obs-status');
+                
+                dot.classList.replace('bg-amber-500', 'bg-emerald-500');
+                dot.classList.remove('animate-pulse');
+                text.innerText = "OBS Bereit";
+                text.classList.replace('text-slate-500', 'text-emerald-700');
+                container.classList.replace('bg-slate-50', 'bg-emerald-50');
+                container.classList.replace('border-slate-200', 'border-emerald-200');
+            } catch (e) { console.warn("OBS Connection Error"); }
         }
 
-        function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
+        async function toggleRecording() {
+            try {
+                if(!isRecording) {
+                    if(isOBSConnected) await obs.call('StartRecord');
+                    isRecording = true;
+                    masterMarkers = []; 
+                    document.getElementById('marker-list').innerHTML = ''; 
+                    
+                    document.getElementById('rec-dot').classList.add('animate-pulse');
+                    document.getElementById('btn-rec').classList.replace('bg-slate-50', 'bg-brand-50');
+                    document.getElementById('btn-rec').classList.replace('border-slate-200', 'border-brand-200');
+                    document.getElementById('rec-text').innerText = "STOP";
+                    document.getElementById('rec-text').classList.replace('text-slate-500', 'text-brand-600');
+                    
+                    seconds = 0;
+                    document.getElementById('timer-display').innerText = "00:00:00";
+                    timerInterval = setInterval(() => {
+                        seconds++;
+                        const hrs = Math.floor(seconds / 3600).toString().padStart(2, '0');
+                        const mins = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+                        const secs = (seconds % 60).toString().padStart(2, '0');
+                        document.getElementById('timer-display').innerText = `${hrs}:${mins}:${secs}`;
+                    }, 1000);
+                } else {
+                    if(isOBSConnected) await obs.call('StopRecord');
+                    isRecording = false;
+                    document.getElementById('rec-dot').classList.remove('animate-pulse');
+                    document.getElementById('btn-rec').classList.replace('bg-brand-50', 'bg-slate-50');
+                    document.getElementById('btn-rec').classList.replace('border-brand-200', 'border-slate-200');
+                    document.getElementById('rec-text').innerText = "START";
+                    document.getElementById('rec-text').classList.replace('text-brand-600', 'text-slate-500');
+                    clearInterval(timerInterval);
 
-        // Init Datum
-        document.getElementById('currentDateInput').value = new Date().toISOString().split('T')[0];
+                    if(masterMarkers.length > 0) {
+                        downloadMasterLog();
+                    }
+                }
+            } catch(e) { console.error("Toggle Record Error:", e); }
+        }
+
+        // --- 7. MARKER LOGIK FÜR REGIE ---
+        function addMarker(type) {
+            if(!isRecording) return; 
+
+            const timeStr = document.getElementById('timer-display').innerText;
+            const list = document.getElementById('marker-list');
+            const emptyState = document.getElementById('empty-log-state');
+            if(emptyState) emptyState.style.display = 'none';
+
+            masterMarkers.push({ time: timeStr, type: type });
+
+            const btn = event.currentTarget;
+            btn.classList.add('scale-95', 'bg-slate-100');
+            setTimeout(() => btn.classList.remove('scale-95', 'bg-slate-100'), 150);
+
+            const div = document.createElement('div');
+            let iconColor = type === 'Achtung' ? 'text-amber-500' : (type === 'Positiv' ? 'text-emerald-500' : 'text-blue-500');
+            let iconPh = type === 'Achtung' ? 'ph-warning' : (type === 'Positiv' ? 'ph-check-circle' : 'ph-map-pin');
+            
+            div.className = "p-2.5 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between animate-[fadeIn_0.3s_ease-out]";
+            div.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ${iconPh} ${iconColor} text-base"></i>
+                    <span class="text-slate-800 font-black uppercase text-[9px] tracking-widest">${type}</span>
+                </div>
+                <span class="text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded-md border border-slate-100 font-mono text-[10px] font-black tabular-nums">${timeStr}</span>
+            `;
+            list.prepend(div);
+        }
+
+        function downloadMasterLog() {
+            if(masterMarkers.length === 0) return;
+
+            let logContent = "MOE'S LOG - REGIE\n";
+            logContent += "========================\n\n";
+            
+            masterMarkers.forEach(m => {
+                const shortTime = m.time.substring(3); 
+                logContent += `[${shortTime}] - ${m.type}\n`;
+            });
+
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            const date = new Date();
+            const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}`;
+            
+            a.href = url;
+            a.download = `Regie_Log_${dateString}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 </html>
