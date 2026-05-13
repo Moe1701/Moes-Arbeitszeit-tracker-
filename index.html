@@ -2,677 +2,683 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moe's SimObserver | Master Regie</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meine Arbeitszeit</title>
     
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.0/dist/obs-ws.min.js"></script>
+    
+    <!-- Google Identity Services für Drive API -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { 
-                        brand: { 50: '#fff1f2', 100: '#ffe4e6', 500: '#f43f5e', 600: '#e11d48', 700: '#be123c', 800: '#9f1239', 900: '#4c0519' }
-                    },
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+        /* Versteckt Scrollbars für ein sauberes App-Feeling, lässt aber Scrollen zu */
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
         
-        body { background-color: #f1f5f9; color: #0f172a; -webkit-tap-highlight-color: transparent; }
-        .no-select { user-select: none; -webkit-user-select: none; }
-
-        /* Kompakte Slider */
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 5px; cursor: pointer; border-radius: 4px; background: #e2e8f0; }
-        input[type=range]::-webkit-slider-thumb { height: 16px; width: 16px; border-radius: 50%; cursor: pointer; -webkit-appearance: none; margin-top: -5.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .slider-green::-webkit-slider-thumb { background: #10b981; border: 2px solid #fff; }
-        .slider-blue::-webkit-slider-thumb { background: #3b82f6; border: 2px solid #fff; }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Verhindert Textauswahl beim Tippen auf Buttons */
+        button { user-select: none; -webkit-user-select: none; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col antialiased font-sans no-select overflow-hidden">
+<body class="bg-gray-50 text-gray-800 font-sans antialiased pb-20">
 
-    <!-- HEADER -->
-    <header class="bg-white border-b border-slate-300 h-16 px-8 flex justify-between items-center shrink-0 z-30 shadow-sm">
-        <div class="flex items-center gap-4">
-            <div class="bg-brand-600 p-2.5 rounded-2xl shadow-lg shadow-brand-100 flex items-center justify-center">
-                <i class="ph-fill ph-heartbeat text-white text-2xl"></i>
-            </div>
-            <div>
-                <h1 class="text-lg font-black text-slate-900 tracking-tighter uppercase leading-none">Moe's SimObserver</h1>
-                <span class="text-[10px] text-brand-600 font-black tracking-[0.2em] uppercase">Master Regie V9.0</span>
-            </div>
-        </div>
-        
-        <!-- MODE SWITCHER -->
-        <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200 shadow-inner">
-            <button class="px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg bg-white text-brand-600 shadow-sm transition-all flex items-center gap-2">
-                <i class="ph-fill ph-broadcast text-lg"></i> Regie
-            </button>
-            <button onclick="window.location.href='observer.html'" class="px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg text-slate-500 hover:text-slate-800 transition-all flex items-center gap-2">
-                <i class="ph-fill ph-eye text-lg"></i> Beobachter
-            </button>
-            <button onclick="window.location.href='debriefing.html'" class="px-5 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg text-slate-500 hover:text-slate-800 transition-all flex items-center gap-2">
-                <i class="ph-fill ph-presentation-chart text-lg"></i> Debriefing
-            </button>
-        </div>
-
-        <div class="flex items-center gap-4 text-xs font-black uppercase tracking-widest">
-            <div id="obs-status" class="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200 shadow-sm transition-colors">
-                <div id="obs-dot" class="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse"></div>
-                <span id="obs-text" class="text-slate-500">OBS Verbinden...</span>
-            </div>
-        </div>
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
+        <h1 class="text-xl font-bold">Zeiterfassung</h1>
+        <button id="btn-sync" onclick="handleAuthClick()" class="bg-blue-700 hover:bg-blue-800 text-xs px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+            <span id="sync-status">Drive Login</span>
+        </button>
     </header>
 
-    <main class="flex-1 flex overflow-hidden">
+    <main class="p-4 max-w-md mx-auto">
         
-        <!-- ========================================================= -->
-        <!-- LEFT COLUMN: Video Feed & Action Buttons                  -->
-        <!-- ========================================================= -->
-        <div class="flex-1 flex flex-col p-5 gap-5 min-w-0 relative">
+        <!-- ==================== ANSICHT: TAGESERFASSUNG ==================== -->
+        <section id="view-daily" class="tab-content active space-y-4">
             
-            <div class="flex-1 bg-black rounded-3xl border border-slate-300 shadow-xl relative overflow-hidden flex items-center justify-center group">
-                <video id="live-video" class="absolute inset-0 w-full h-full object-contain z-0" autoplay playsinline muted></video>
-                <div id="video-placeholder" class="text-center relative z-10 transition-opacity duration-500">
-                    <div class="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-slate-800 shadow-2xl">
-                        <i class="ph ph-video-camera-slash text-slate-600 text-4xl"></i>
-                    </div>
-                    <p class="text-slate-500 font-black tracking-[0.2em] text-sm uppercase">Warte auf OBS Feed</p>
-                </div>
-                <div class="absolute top-4 left-4 flex gap-2 z-20 pointer-events-none">
-                    <span class="px-3 py-1.5 bg-black/50 backdrop-blur-md rounded-lg text-[10px] font-black tracking-widest uppercase text-white border border-white/10 shadow-lg">Cam 1 / Live</span>
-                </div>
-            </div>
-
-            <!-- BOTTOM BAR -->
-            <div class="h-24 shrink-0 bg-white border border-slate-300 rounded-[24px] p-3 flex items-center gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.03)]">
-                <button id="btn-rec" onclick="toggleRecording()" class="h-full px-8 bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 rounded-[16px] flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95">
-                    <div id="rec-dot" class="w-5 h-5 rounded-full bg-brand-500 shadow-[0_0_12px_rgba(225,29,72,0.4)]"></div>
-                    <span id="rec-text" class="text-[11px] font-black text-slate-500 uppercase tracking-widest">START</span>
+            <!-- Datumsauswahl -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <button onclick="changeDate(-1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
-
-                <div class="h-full px-8 bg-slate-900 rounded-[16px] border border-slate-800 flex flex-col items-center justify-center font-mono shadow-inner relative overflow-hidden group">
-                    <div id="timer-display" class="text-4xl font-black tracking-wider text-white relative z-10 tabular-nums">00:00:00</div>
-                    <div class="text-[9px] text-brand-500 font-bold uppercase tracking-[0.2em] relative z-10 mt-1">Session Time</div>
-                </div>
-
-                <div class="w-px h-12 bg-slate-200 mx-2"></div>
-
-                <div class="flex-1 flex gap-3 h-full">
-                    <button onclick="addMarker('Achtung')" class="flex-1 bg-white hover:bg-amber-50 border-2 border-slate-200 hover:border-amber-300 rounded-[16px] flex flex-col items-center justify-center transition-all group shadow-sm active:scale-95">
-                        <i class="ph-fill ph-warning text-amber-500 text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
-                        <span class="text-[11px] font-black text-slate-700 uppercase tracking-widest">ACHTUNG</span>
-                    </button>
-                    <button onclick="addMarker('Positiv')" class="flex-1 bg-white hover:bg-emerald-50 border-2 border-slate-200 hover:border-emerald-300 rounded-[16px] flex flex-col items-center justify-center transition-all group shadow-sm active:scale-95">
-                        <i class="ph-fill ph-check-circle text-emerald-500 text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
-                        <span class="text-[11px] font-black text-slate-700 uppercase tracking-widest">POSITIV</span>
-                    </button>
-                    <button onclick="addMarker('Ereignis')" class="flex-1 bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 border-dashed rounded-[16px] flex flex-col items-center justify-center transition-all group shadow-sm active:scale-95">
-                        <i class="ph ph-plus text-slate-400 text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
-                        <span class="text-[11px] font-black text-slate-500 uppercase tracking-widest">+ EREIGNIS</span>
-                    </button>
-                </div>
+                <input type="date" id="date-picker" class="font-bold text-lg bg-transparent border-none text-center focus:ring-0" onchange="loadDayData()">
+                <button onclick="changeDate(1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
             </div>
-        </div>
 
-        <!-- ========================================================= -->
-        <!-- RIGHT SIDEBAR: Matrix, Intercom, Log & Sounds             -->
-        <!-- ========================================================= -->
-        <aside class="w-[26rem] bg-slate-50 flex flex-col shrink-0 z-20 shadow-[-20px_0_60px_rgba(0,0,0,0.03)] border-l border-slate-300">
+            <!-- Vorlagen Schnellzugriff -->
+            <div id="quick-templates" class="flex gap-2 overflow-x-auto pb-2">
+                <!-- Wird per JS gefüllt -->
+            </div>
+
+            <!-- Eingabeformular -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Arbeitsbeginn</label>
+                        <input type="time" id="time-start" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" onchange="calculateNet()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Arbeitsende</label>
+                        <input type="time" id="time-end" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" onchange="calculateNet()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Pause (Minuten)</label>
+                        <input type="number" id="time-pause" placeholder="z.B. 30" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" onchange="calculateNet()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Tages-Soll (Stunden)</label>
+                        <input type="number" step="0.1" id="time-target" class="w-full p-3 bg-blue-50 rounded-xl border border-blue-200 focus:outline-none focus:border-blue-500 text-blue-700 font-bold" onchange="calculateNet()">
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100 flex justify-between items-end">
+                    <div>
+                        <p class="text-xs text-gray-500">Netto-Arbeitszeit</p>
+                        <p class="text-3xl font-bold text-gray-800"><span id="net-hours">0.00</span> <span class="text-base font-normal text-gray-500">h</span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500">Tagessaldo</p>
+                        <p id="day-saldo" class="text-xl font-bold text-gray-400">0.00 h</p>
+                    </div>
+                </div>
+
+                <button onclick="saveDay()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform active:scale-95 mt-4">
+                    Tag speichern
+                </button>
+            </div>
+        </section>
+
+
+        <!-- ==================== ANSICHT: MONATSÜBERSICHT ==================== -->
+        <section id="view-month" class="tab-content space-y-4">
             
-            <!-- 1. AUDIO MATRIX -->
-            <div class="px-5 pt-2 pb-2 bg-white border-b border-slate-300 shrink-0">
+            <!-- Globale Einstellungen -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
                 <div>
-                    <!-- Inputs -->
-                    <div class="space-y-1">
-                        <div>
-                            <div class="flex items-center justify-between mb-0.5">
-                                <input type="text" id="label_in1" value="VoG Mic (Raum)" onchange="saveLabel('in1', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-36 transition-colors">
-                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
-                                    <button id="btn_in1_A" onclick="toggleRoute('in1', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
-                                    <button id="btn_in1_B" onclick="toggleRoute('in1', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
-                                </div>
-                            </div>
-                            <input type="range" id="vol_in1" min="0" max="100" value="80" class="slider-green">
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between mb-0.5">
-                                <input type="text" id="label_in2" value="Patient 1 Mic" onchange="saveLabel('in2', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-36 transition-colors">
-                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
-                                    <button id="btn_in2_A" onclick="toggleRoute('in2', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
-                                    <button id="btn_in2_B" onclick="toggleRoute('in2', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
-                                </div>
-                            </div>
-                            <input type="range" id="vol_in2" min="0" max="100" value="80" class="slider-green">
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between mb-0.5">
-                                <input type="text" id="label_in3" value="Patient 2 Mic" onchange="saveLabel('in3', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-36 transition-colors">
-                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
-                                    <button id="btn_in3_A" onclick="toggleRoute('in3', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
-                                    <button id="btn_in3_B" onclick="toggleRoute('in3', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
-                                </div>
-                            </div>
-                            <input type="range" id="vol_in3" min="0" max="100" value="80" class="slider-green">
-                        </div>
-                    </div>
-                    
-                    <div class="h-px w-full bg-slate-100 my-1"></div>
-
-                    <!-- Outputs -->
-                    <div class="space-y-1">
-                        <div>
-                            <div class="flex items-center justify-between mb-0.5">
-                                <input type="text" id="label_out1" value="Raum LS (VoG)" onchange="saveLabel('out1', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-blue-500 outline-none w-36 transition-colors">
-                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
-                                    <button id="btn_out1_A" onclick="toggleRoute('out1', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
-                                    <button id="btn_out1_B" onclick="toggleRoute('out1', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
-                                </div>
-                            </div>
-                            <input type="range" id="vol_out1" min="0" max="100" value="80" class="slider-blue">
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between mb-0.5">
-                                <input type="text" id="label_out2" value="Bett 1 LS (Pat1)" onchange="saveLabel('out2', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-blue-500 outline-none w-36 transition-colors">
-                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
-                                    <button id="btn_out2_A" onclick="toggleRoute('out2', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
-                                    <button id="btn_out2_B" onclick="toggleRoute('out2', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
-                                </div>
-                            </div>
-                            <input type="range" id="vol_out2" min="0" max="100" value="80" class="slider-blue">
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between mb-0.5">
-                                <input type="text" id="label_out3" value="Bett 2 LS (Pat2)" onchange="saveLabel('out3', this.value)" class="text-[11px] font-black text-slate-900 uppercase tracking-wide bg-transparent border-b border-transparent focus:border-blue-500 outline-none w-36 transition-colors">
-                                <div class="flex gap-1 bg-slate-100 rounded-md p-0.5 border border-slate-200">
-                                    <button id="btn_out3_A" onclick="toggleRoute('out3', 'A')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">A</button>
-                                    <button id="btn_out3_B" onclick="toggleRoute('out3', 'B')" class="w-6 h-3.5 rounded text-[7px] font-bold bg-white text-slate-500 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all leading-none">B</button>
-                                </div>
-                            </div>
-                            <input type="range" id="vol_out3" min="0" max="100" value="80" class="slider-blue">
-                        </div>
-                    </div>
+                    <h3 class="font-bold text-gray-800">Standard-Sollzeit</h3>
+                    <p class="text-xs text-gray-500">Wird für neue Tage verwendet</p>
                 </div>
-                
-                <!-- 2. PTT INTERCOM & LOKALE SFX/FILTER (Die Split-Buttons) -->
-                <div class="mt-2 grid grid-cols-3 gap-2">
-                    
-                    <!-- VOICE OF GOD -->
-                    <button id="ptt-out1" data-active="false" onmousedown="handlePTT('out1', false)" onmouseup="handlePTT('out1', true)" onmouseleave="handlePTT('out1', true)" class="bg-slate-50 hover:bg-emerald-50 data-[active=true]:bg-brand-600 border border-slate-200 hover:border-emerald-200 data-[active=true]:border-brand-700 shadow-sm rounded-lg py-1.5 px-1 flex items-center justify-center gap-1.5 transition-all group active:scale-95">
-                        <i class="ph-fill ph-megaphone text-slate-400 group-hover:text-emerald-500 group-data-[active=true]:text-white text-sm transition-colors"></i>
-                        <span class="text-[10px] font-black text-slate-800 uppercase leading-none group-hover:text-emerald-600 group-data-[active=true]:text-white transition-colors truncate">VoG</span>
-                    </button>
-
-                    <!-- PATIENT 1 (Split Button) -->
-                    <div class="dropdown-container relative h-full">
-                        <div class="flex h-full bg-slate-50 border border-slate-200 rounded-lg shadow-sm group-container">
-                            <!-- Linke Seite: PTT -->
-                            <button id="ptt-out2" data-active="false" onmousedown="handlePTT('out2', false)" onmouseup="handlePTT('out2', true)" onmouseleave="handlePTT('out2', true)" class="flex-1 flex items-center justify-center gap-1.5 hover:bg-blue-50 data-[active=true]:bg-brand-600 transition-colors rounded-l-lg active:scale-95 group">
-                                <i class="ph-fill ph-microphone text-slate-400 group-hover:text-blue-500 group-data-[active=true]:text-white text-sm transition-colors"></i>
-                                <span class="flex flex-col items-center">
-                                    <span class="text-[10px] font-black text-slate-800 uppercase leading-none group-hover:text-blue-600 group-data-[active=true]:text-white transition-colors">Pat 1</span>
-                                    <span id="fx-label-p1" class="hidden text-[6.5px] font-black text-purple-500 uppercase mt-0.5 leading-none group-data-[active=true]:text-purple-200"></span>
-                                </span>
-                            </button>
-                            <div class="w-px bg-slate-200"></div>
-                            <!-- Rechte Seite: Dropdown Trigger -->
-                            <button onclick="toggleDropdown('drop-pat1')" class="px-1.5 flex items-center justify-center hover:bg-slate-200 rounded-r-lg transition-colors">
-                                <i class="ph-bold ph-caret-up text-[10px] text-slate-500"></i>
-                            </button>
-                        </div>
-                        
-                        <!-- Dropdown P1 -->
-                        <div id="drop-pat1" class="sfx-dropdown hidden absolute bottom-[calc(100%+6px)] left-0 w-36 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                            <!-- SFX -->
-                            <div class="px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-[8px] font-black text-slate-400 uppercase tracking-widest">Symptome</div>
-                            <button onclick="triggerSound('P1_Husten')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-lungs text-sm"></i> Husten</button>
-                            <button onclick="triggerSound('P1_Stoehnen')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-smiley-sad text-sm"></i> Stöhnen</button>
-                            <button onclick="triggerSound('P1_Erbrechen')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-drop text-sm"></i> Brechen</button>
-                            <!-- FX -->
-                            <div class="px-3 py-1.5 bg-purple-50 border-y border-slate-200 text-[8px] font-black text-purple-400 uppercase tracking-widest">Stimmen-Filter</div>
-                            <button onclick="setPatientFilter('p1', 'Normal')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-bold ph-x text-sm"></i> Normal</button>
-                            <button onclick="setPatientFilter('p1', 'Maske')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-mask-happy text-sm"></i> O2-Maske</button>
-                            <button onclick="setPatientFilter('p1', 'Kind')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-baby text-sm"></i> Kind (Hoch)</button>
-                            <button onclick="setPatientFilter('p1', 'Senior')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-user text-sm"></i> Senior (Tief)</button>
-                        </div>
-                    </div>
-
-                    <!-- PATIENT 2 (Split Button) -->
-                    <div class="dropdown-container relative h-full">
-                        <div class="flex h-full bg-slate-50 border border-slate-200 rounded-lg shadow-sm group-container">
-                            <button id="ptt-out3" data-active="false" onmousedown="handlePTT('out3', false)" onmouseup="handlePTT('out3', true)" onmouseleave="handlePTT('out3', true)" class="flex-1 flex items-center justify-center gap-1.5 hover:bg-amber-50 data-[active=true]:bg-brand-600 transition-colors rounded-l-lg active:scale-95 group">
-                                <i class="ph-fill ph-microphone text-slate-400 group-hover:text-amber-500 group-data-[active=true]:text-white text-sm transition-colors"></i>
-                                <span class="flex flex-col items-center">
-                                    <span class="text-[10px] font-black text-slate-800 uppercase leading-none group-hover:text-amber-600 group-data-[active=true]:text-white transition-colors">Pat 2</span>
-                                    <span id="fx-label-p2" class="hidden text-[6.5px] font-black text-purple-500 uppercase mt-0.5 leading-none group-data-[active=true]:text-purple-200"></span>
-                                </span>
-                            </button>
-                            <div class="w-px bg-slate-200"></div>
-                            <button onclick="toggleDropdown('drop-pat2')" class="px-1.5 flex items-center justify-center hover:bg-slate-200 rounded-r-lg transition-colors">
-                                <i class="ph-bold ph-caret-up text-[10px] text-slate-500"></i>
-                            </button>
-                        </div>
-                        
-                        <!-- Dropdown P2 -->
-                        <div id="drop-pat2" class="sfx-dropdown hidden absolute bottom-[calc(100%+6px)] right-0 w-36 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                            <!-- SFX -->
-                            <div class="px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-[8px] font-black text-slate-400 uppercase tracking-widest">Symptome</div>
-                            <button onclick="triggerSound('P2_Husten')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-lungs text-sm"></i> Husten</button>
-                            <button onclick="triggerSound('P2_Stoehnen')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-smiley-sad text-sm"></i> Stöhnen</button>
-                            <button onclick="triggerSound('P2_Erbrechen')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 flex items-center gap-2 transition-colors"><i class="ph-fill ph-drop text-sm"></i> Brechen</button>
-                            <!-- FX -->
-                            <div class="px-3 py-1.5 bg-purple-50 border-y border-slate-200 text-[8px] font-black text-purple-400 uppercase tracking-widest">Stimmen-Filter</div>
-                            <button onclick="setPatientFilter('p2', 'Normal')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-bold ph-x text-sm"></i> Normal</button>
-                            <button onclick="setPatientFilter('p2', 'Maske')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-mask-happy text-sm"></i> O2-Maske</button>
-                            <button onclick="setPatientFilter('p2', 'Kind')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-baby text-sm"></i> Kind (Hoch)</button>
-                            <button onclick="setPatientFilter('p2', 'Senior')" class="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-700 hover:bg-purple-100 hover:text-purple-700 flex items-center gap-2 transition-colors"><i class="ph-fill ph-user text-sm"></i> Senior (Tief)</button>
-                        </div>
-                    </div>
-
+                <div class="flex items-center gap-2">
+                    <input type="number" step="0.1" id="global-target" class="w-20 p-2 text-center bg-gray-50 rounded-lg border border-gray-200 font-bold" onchange="saveGlobalTarget()">
+                    <span class="text-gray-500">Std.</span>
                 </div>
             </div>
 
-            <!-- 3. ACTION LOG / GLOBALE SOUNDS TABS -->
-            <div class="flex-1 flex flex-col overflow-hidden bg-slate-100/50">
-                <div class="px-4 pt-3 pb-2 flex justify-between items-center border-b border-slate-200 shrink-0">
-                    <div class="bg-slate-200/50 p-1 rounded-xl flex gap-1 w-full relative border border-slate-200">
-                        <button onclick="switchRightTab('log')" id="tab-log" class="flex-1 py-1.5 bg-white text-slate-800 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm transition-all">Action Log</button>
-                        <button onclick="switchRightTab('sounds')" id="tab-sounds" class="flex-1 py-1.5 text-slate-500 hover:text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all">Globale Sounds</button>
+            <!-- Monatsauswahl & Statistik -->
+            <div class="bg-blue-600 text-white p-5 rounded-2xl shadow-md relative overflow-hidden">
+                <div class="flex justify-between items-center mb-4 relative z-10">
+                    <button onclick="changeMonth(-1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <h2 id="month-display" class="font-bold text-lg">Monat Jahr</h2>
+                    <button onclick="changeMonth(1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2 text-center relative z-10">
+                    <div class="bg-blue-700 bg-opacity-50 p-2 rounded-xl">
+                        <p class="text-xs opacity-80">Ist-Stunden</p>
+                        <p class="font-bold text-lg" id="month-ist">0.00</p>
+                    </div>
+                    <div class="bg-blue-700 bg-opacity-50 p-2 rounded-xl">
+                        <p class="text-xs opacity-80">Soll-Stunden</p>
+                        <p class="font-bold text-lg" id="month-soll">0.00</p>
+                    </div>
+                    <div class="bg-white text-blue-800 p-2 rounded-xl shadow-inner">
+                        <p class="text-xs font-semibold">Monats-Saldo</p>
+                        <p class="font-black text-lg" id="month-saldo">0.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste der Einträge -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <ul id="month-list" class="divide-y divide-gray-100">
+                    <!-- Wird per JS gefüllt -->
+                </ul>
+            </div>
+        </section>
+
+
+        <!-- ==================== ANSICHT: VORLAGEN ==================== -->
+        <section id="view-templates" class="tab-content space-y-4">
+            
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h3 class="font-bold text-gray-800">Neue Vorlage erstellen</h3>
+                
+                <input type="text" id="tpl-name" placeholder="Name (z.B. Frühschicht)" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Beginn</label>
+                        <input type="time" id="tpl-start" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Ende</label>
+                        <input type="time" id="tpl-end" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200">
                     </div>
                 </div>
                 
-                <!-- Log Pane -->
-                <div id="pane-log" class="flex-1 overflow-y-auto p-4 space-y-2.5">
-                    <div id="empty-log-state" class="flex flex-col items-center justify-center py-8 opacity-40 text-slate-500">
-                        <i class="ph-fill ph-clipboard-text text-3xl mb-2"></i>
-                        <span class="text-[9px] font-black uppercase tracking-widest text-center mt-2">Log ist leer<br>Drücke Start</span>
-                    </div>
-                    <div id="marker-list"></div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Pause (Min)</label>
+                    <input type="number" id="tpl-pause" value="30" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200">
                 </div>
 
-                <!-- Global Sounds Pane -->
-                <div id="pane-sounds" class="flex-1 overflow-y-auto p-4 space-y-4 hidden">
-                    
-                    <!-- Sektion 1: Voice of God Filter -->
-                    <div>
-                        <h3 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><i class="ph-fill ph-faders"></i> VoG Stimm-Verzerrer</h3>
-                        <div class="flex gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                            <button onclick="setVogFilter('Normal')" id="btn-vog-Normal" class="flex-1 py-1.5 bg-slate-800 text-white shadow-sm rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Normal</button>
-                            <button onclick="setVogFilter('Funk')" id="btn-vog-Funk" class="flex-1 py-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Funkgerät</button>
-                            <button onclick="setVogFilter('Telefon')" id="btn-vog-Telefon" class="flex-1 py-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Telefon</button>
-                        </div>
-                    </div>
+                <button onclick="saveTemplate()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform active:scale-95">
+                    Vorlage speichern
+                </button>
+            </div>
 
-                    <div class="h-px bg-slate-200"></div>
-
-                    <!-- Sektion 2: Globale Effekte (Raum/Decke) -->
-                    <div>
-                        <h3 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><i class="ph-fill ph-speaker-high"></i> Umgebungs-Effekte</h3>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="triggerSound('SFX_Heli_Global')" class="bg-white border border-slate-200 hover:border-slate-400 p-3 rounded-xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-all shadow-sm group">
-                                <div class="bg-slate-50 p-2 rounded-full group-hover:bg-slate-100 transition-colors"><i class="ph-fill ph-airplane-tilt text-2xl text-slate-600"></i></div>
-                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-800 text-center">Helikopter</span>
-                            </button>
-                            <button onclick="triggerSound('SFX_Sirene_Global')" class="bg-white border border-slate-200 hover:border-rose-400 p-3 rounded-xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-all shadow-sm group">
-                                <div class="bg-rose-50 p-2 rounded-full group-hover:bg-rose-100 transition-colors"><i class="ph-fill ph-siren text-2xl text-rose-500"></i></div>
-                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-800 text-center">RTW Sirene</span>
-                            </button>
-                            <button onclick="triggerSound('SFX_EKG_Global')" class="col-span-2 bg-white border border-slate-200 hover:border-blue-400 p-3 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-sm group">
-                                <div class="bg-blue-50 p-1.5 rounded-lg group-hover:bg-blue-100 transition-colors"><i class="ph-fill ph-heartbeat text-lg text-blue-500"></i></div>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-800">Monitor Alarm (Asystolie)</span>
-                            </button>
-                            <button onclick="triggerSound('SFX_Telefon_Global')" class="col-span-2 bg-white border border-slate-200 hover:border-emerald-400 p-3 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-sm group">
-                                <div class="bg-emerald-50 p-1.5 rounded-lg group-hover:bg-emerald-100 transition-colors"><i class="ph-fill ph-phone-ringing text-lg text-emerald-500"></i></div>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-800">Labor-Telefon Klingeln</span>
-                            </button>
-                        </div>
-                    </div>
-
+            <div>
+                <h3 class="font-bold text-gray-500 text-sm mb-2 px-2">Gespeicherte Vorlagen</h3>
+                <div id="templates-list" class="space-y-2">
+                    <!-- Wird per JS gefüllt -->
                 </div>
             </div>
-        </aside>
+            
+            <!-- Setup Info Bereich -->
+            <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-2xl">
+                <h4 class="font-bold text-yellow-800 text-sm mb-1">Google Drive Einrichtung</h4>
+                <p class="text-xs text-yellow-700 mb-2">Damit Cloud-Speicherung funktioniert, müssen Sie im Code die Client-ID hinterlegen.</p>
+                <div class="text-xs bg-white p-2 rounded border border-yellow-100 overflow-x-auto text-gray-500 font-mono">
+                    const CLIENT_ID = 'HIER_EINTRAGEN';
+                </div>
+            </div>
+
+        </section>
+
     </main>
 
-    <!-- VERSTECKTER DOWNLOAD BUTTON -->
-    <button id="btn-export-log" onclick="downloadMasterLog()" class="hidden"></button>
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 pb-safe">
+        <div class="flex justify-around items-center h-16 max-w-md mx-auto">
+            <button onclick="switchTab('daily')" class="nav-btn active flex flex-col items-center justify-center w-full h-full text-blue-600">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="text-[10px] font-medium">Heute</span>
+            </button>
+            <button onclick="switchTab('month')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-blue-500 transition-colors">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <span class="text-[10px] font-medium">Monat</span>
+            </button>
+            <button onclick="switchTab('templates')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-blue-500 transition-colors">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <span class="text-[10px] font-medium">Vorlagen</span>
+            </button>
+        </div>
+    </nav>
 
+    <!-- App Logik -->
     <script>
-        // --- GLOBALE VARIABLEN ---
-        const obs = new OBSWebSocket();
-        let isOBSConnected = false;
-        let isRecording = false;
-        let timerInterval;
-        let seconds = 0;
-        let masterMarkers = [];
-
-        const channels = ['in1', 'in2', 'in3', 'out1', 'out2', 'out3'];
-        
-        window.onload = () => {
-            channels.forEach(ch => {
-                const savedName = localStorage.getItem('label_' + ch);
-                if(savedName) {
-                    document.getElementById('label_' + ch).value = savedName;
-                    if (ch.startsWith('out')) {
-                        document.getElementById('btnLabel_' + ch).innerText = savedName.split(' ')[0]; 
-                    }
-                }
-
-                const slider = document.getElementById('vol_' + ch);
-                if(slider) {
-                    slider.addEventListener('input', (e) => {
-                        changeVolume(ch, e.target.value);
-                    });
-                }
+        // ==========================================
+        // SERVICE WORKER REGISTRIERUNG (Für PWA)
+        // ==========================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(registration => {
+                    console.log('ServiceWorker registriert');
+                }).catch(err => {
+                    console.log('ServiceWorker Fehler: ', err);
+                });
             });
-            connectOBS();
-            startVideoStream();
+        }
+
+        // ==========================================
+        // GOOGLE DRIVE API KONFIGURATION
+        // ==========================================
+        // ACHTUNG: Tragen Sie hier Ihre Google Cloud Client ID ein!
+        const CLIENT_ID = 'IHRE_CLIENT_ID_HIER_EINTRAGEN.apps.googleusercontent.com'; 
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const FILENAME = 'arbeitszeit_daten.json';
+
+        let tokenClient;
+        let isDriveReady = false;
+        let driveFileId = null;
+
+        // Google API laden
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        async function initializeGapiClient() {
+            try {
+                await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] });
+                // GSI Laden
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: async (resp) => {
+                        if (resp.error !== undefined) {
+                            throw (resp);
+                        }
+                        isDriveReady = true;
+                        document.getElementById('sync-status').innerText = "Verbunden";
+                        await syncWithDrive();
+                    },
+                });
+            } catch (err) {
+                console.log("Drive API Init Fehler. Läuft nur lokal.", err);
+            }
+        }
+
+        function handleAuthClick() {
+            if (!CLIENT_ID || CLIENT_ID.includes('IHRE_CLIENT_ID')) {
+                alert("Bitte hinterlegen Sie erst eine gültige Google Client-ID im Code!");
+                return;
+            }
+            if (!tokenClient) return;
+            if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                tokenClient.requestAccessToken({prompt: ''});
+            }
+        }
+
+        // Synchronisation mit Drive (Laden/Speichern)
+        async function syncWithDrive() {
+            if(!isDriveReady) return;
+            document.getElementById('sync-status').innerText = "Syncing...";
+            
+            try {
+                // Suche nach der Datei
+                let response = await gapi.client.drive.files.list({
+                    q: `name='${FILENAME}' and trashed=false`,
+                    spaces: 'drive',
+                    fields: 'files(id, name)'
+                });
+
+                let files = response.result.files;
+                if (files && files.length > 0) {
+                    driveFileId = files[0].id;
+                    // Datei existiert -> Herunterladen und lokalen Stand überschreiben
+                    let fileData = await gapi.client.drive.files.get({
+                        fileId: driveFileId,
+                        alt: 'media'
+                    });
+                    
+                    let data = fileData.result;
+                    if(data.workData) workData = data.workData;
+                    if(data.templates) templates = data.templates;
+                    if(data.globalTarget) globalTarget = data.globalTarget;
+                    
+                    saveToLocalStorage(); // Lokalen Cache aktualisieren
+                    loadDayData();
+                    renderTemplates();
+                    document.getElementById('sync-status').innerText = "Aktuell";
+                } else {
+                    // Datei existiert nicht -> Erstellen und lokalen Stand hochladen
+                    await saveToDrive();
+                }
+            } catch (err) {
+                console.error("Sync Error", err);
+                document.getElementById('sync-status').innerText = "Fehler";
+            }
+        }
+
+        async function saveToDrive() {
+            if(!isDriveReady) return;
+            document.getElementById('sync-status').innerText = "Speichere...";
+            
+            const fileContent = JSON.stringify({
+                workData: workData,
+                templates: templates,
+                globalTarget: globalTarget
+            });
+            const file = new Blob([fileContent], {type: 'application/json'});
+            const metadata = {
+                'name': FILENAME,
+                'mimeType': 'application/json'
+            };
+
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+            form.append('file', file);
+
+            try {
+                if (driveFileId) {
+                    // Update
+                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`, {
+                        method: 'PATCH',
+                        headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
+                        body: form
+                    });
+                } else {
+                    // Create
+                    let res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST',
+                        headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
+                        body: form
+                    });
+                    let val = await res.json();
+                    driveFileId = val.id;
+                }
+                document.getElementById('sync-status').innerText = "Gespeichert";
+            } catch (error) {
+                console.error("Error saving to drive", error);
+                document.getElementById('sync-status').innerText = "Fehler";
+            }
+        }
+
+        // Hilfsfunktion: GAPI beim Start aufrufen
+        window.onload = function() {
+            if(window.gapi) gapiLoaded();
         };
 
-        // --- 0. VIDEO FEED ---
-        async function startVideoStream() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: { ideal: 1920 }, height: { ideal: 1080 } }, 
-                    audio: false 
-                });
-                const videoElement = document.getElementById('live-video');
-                videoElement.srcObject = stream;
+
+        // ==========================================
+        // APP LOKALE LOGIK & DATEN
+        // ==========================================
+        
+        let currentDate = new Date();
+        let viewMonth = new Date(); // Für die Monatsansicht
+        
+        // Lade Daten aus localStorage als Fallback/Cache
+        let workData = JSON.parse(localStorage.getItem('az_workData')) || {};
+        let templates = JSON.parse(localStorage.getItem('az_templates')) || [];
+        let globalTarget = parseFloat(localStorage.getItem('az_globalTarget')) || 8.0;
+
+        document.getElementById('global-target').value = globalTarget;
+
+        function saveToLocalStorage() {
+            localStorage.setItem('az_workData', JSON.stringify(workData));
+            localStorage.setItem('az_templates', JSON.stringify(templates));
+            localStorage.setItem('az_globalTarget', globalTarget);
+            saveToDrive(); // Versuche ins Drive zu sichern, falls verbunden
+        }
+
+        function saveGlobalTarget() {
+            globalTarget = parseFloat(document.getElementById('global-target').value) || 0;
+            saveToLocalStorage();
+            loadDayData(); // UI aktualisieren, da Target sich geändert hat
+        }
+
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // --- Navigation ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('text-blue-600');
+                el.classList.add('text-gray-400');
+            });
+            
+            document.getElementById('view-' + tabId).classList.add('active');
+            
+            // Highlight aktiver Button
+            const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => btn.getAttribute('onclick').includes(tabId));
+            if(activeBtn) {
+                activeBtn.classList.remove('text-gray-400');
+                activeBtn.classList.add('text-blue-600');
+            }
+
+            if(tabId === 'month') renderMonthView();
+        }
+
+        // --- Tagesansicht Logik ---
+        function initDailyView() {
+            document.getElementById('date-picker').value = formatDate(currentDate);
+            loadDayData();
+            renderTemplates();
+        }
+
+        function changeDate(days) {
+            currentDate.setDate(currentDate.getDate() + days);
+            document.getElementById('date-picker').value = formatDate(currentDate);
+            loadDayData();
+        }
+
+        function loadDayData() {
+            const dateStr = document.getElementById('date-picker').value;
+            currentDate = new Date(dateStr); // Update internes Date
+            const data = workData[dateStr] || { start: '', end: '', pause: '', target: globalTarget };
+            
+            document.getElementById('time-start').value = data.start || '';
+            document.getElementById('time-end').value = data.end || '';
+            document.getElementById('time-pause').value = data.pause || '';
+            document.getElementById('time-target').value = data.target !== undefined ? data.target : globalTarget;
+            
+            calculateNet();
+        }
+
+        function timeToDecimal(timeStr) {
+            if (!timeStr) return 0;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours + (minutes / 60);
+        }
+
+        function calculateNet() {
+            const start = document.getElementById('time-start').value;
+            const end = document.getElementById('time-end').value;
+            const pauseMinutes = parseFloat(document.getElementById('time-pause').value) || 0;
+            const target = parseFloat(document.getElementById('time-target').value) || 0;
+
+            let netDecimal = 0;
+
+            if (start && end) {
+                let startDec = timeToDecimal(start);
+                let endDec = timeToDecimal(end);
                 
-                const placeholder = document.getElementById('video-placeholder');
-                if(placeholder) {
-                    placeholder.style.opacity = '0';
-                    setTimeout(() => placeholder.style.display = 'none', 500);
-                }
-            } catch (err) { console.error("Kamera-Zugriff verweigert:", err); }
-        }
-
-        function saveLabel(ch, value) {
-            localStorage.setItem('label_' + ch, value);
-            if (ch.startsWith('out')) {
-                // Nur den Text-Node aktualisieren, nicht das ganze innerHTML (wichtig wegen FX Badge)
-                const labelSpan = document.getElementById('btnLabel_' + ch);
-                if(labelSpan && labelSpan.firstChild) {
-                    labelSpan.firstChild.textContent = value.split(' ')[0];
-                }
-            }
-        }
-
-        // --- 1. VOLUME & ROUTING ---
-        async function changeVolume(ch, value) {
-            if(!isOBSConnected) return;
-            try {
-                const mulValue = value / 100;
-                await obs.call('SetInputVolume', { inputName: ch, inputVolumeMul: mulValue });
-            } catch(e) { console.warn("Volume Error:", e); }
-        }
-
-        const routingState = {};
-        channels.forEach(ch => routingState[ch] = { A: false, B: false });
-
-        async function toggleRoute(ch, route) {
-            routingState[ch][route] = !routingState[ch][route];
-            const btn = document.getElementById(`btn_${ch}_${route}`);
-            
-            if(routingState[ch][route]) {
-                btn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200');
-                btn.classList.add('bg-brand-600', 'text-white', 'border-brand-700', 'shadow-md');
-            } else {
-                btn.classList.remove('bg-brand-600', 'text-white', 'border-brand-700', 'shadow-md');
-                btn.classList.add('bg-white', 'text-slate-500', 'border-slate-200');
-            }
-
-            if(isOBSConnected) {
-                try {
-                    await obs.call('SetSourceFilterEnabled', {
-                        sourceName: ch,
-                        filterName: 'Monitor ' + route,
-                        filterEnabled: routingState[ch][route]
-                    });
-                } catch(e) { console.error("Routing Error:", e); }
-            }
-        }
-
-        // --- 2. PTT (Push-To-Talk) ---
-        async function handlePTT(ch, isMuted) {
-            const btn = document.getElementById(`ptt-${ch}`);
-            if(btn) btn.setAttribute('data-active', !isMuted);
-
-            if(isOBSConnected) {
-                try {
-                    const inputName = document.getElementById('label_'+ch).value;
-                    await obs.call('SetInputMute', { inputName: inputName, inputMuted: isMuted });
-                } catch(e) { console.warn("PTT Mute Error:", e); }
-            }
-        }
-
-        // --- 3. SPLIT-BUTTON DROPDOWNS (Lokale SFX & FX) ---
-        function toggleDropdown(id) {
-            const drop = document.getElementById(id);
-            document.querySelectorAll('.sfx-dropdown').forEach(el => {
-                if(el.id !== id) el.classList.add('hidden');
-            });
-            drop.classList.toggle('hidden');
-        }
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.dropdown-container')) {
-                document.querySelectorAll('.sfx-dropdown').forEach(el => el.classList.add('hidden'));
-            }
-        });
-
-        // --- 4. PATIENTEN STIMMEN-FILTER ---
-        async function setPatientFilter(patId, filterName) {
-            // Dropdown schließen
-            document.querySelectorAll('.sfx-dropdown').forEach(el => el.classList.add('hidden'));
-
-            // Welcher Input in OBS? (Wir greifen auf die versteckten Werte der Textfelder zu)
-            const inputId = patId === 'p1' ? 'out2' : 'out3'; // out2 = Pat1, out3 = Pat2 in unserem Layout
-            const obsMicName = document.getElementById('label_' + inputId).value; 
-            
-            // UI Badge aktualisieren
-            const badge = document.getElementById(`fx-label-${patId}`);
-            if(filterName === 'Normal') {
-                badge.classList.add('hidden');
-            } else {
-                badge.innerText = filterName.toUpperCase();
-                badge.classList.remove('hidden');
-            }
-
-            if(!isOBSConnected) return;
-
-            try {
-                // Zuerst ALLE speziellen Filter auf diesem Mic deaktivieren
-                await obs.call('SetSourceFilterEnabled', { sourceName: obsMicName, filterName: 'Filter_Maske', filterEnabled: false });
-                await obs.call('SetSourceFilterEnabled', { sourceName: obsMicName, filterName: 'Filter_Kind', filterEnabled: false });
-                await obs.call('SetSourceFilterEnabled', { sourceName: obsMicName, filterName: 'Filter_Senior', filterEnabled: false });
-
-                // Dann den gewünschten Filter aktivieren (falls nicht Normal)
-                if(filterName !== 'Normal') {
-                    await obs.call('SetSourceFilterEnabled', { sourceName: obsMicName, filterName: `Filter_${filterName}`, filterEnabled: true });
-                }
-            } catch(e) { console.warn(`Patient Filter Error (${patId}):`, e); }
-        }
-
-        // --- 5. TABS, SOUNDS & VOG FILTER ---
-        function switchRightTab(tab) {
-            const logTab = document.getElementById('tab-log');
-            const soundsTab = document.getElementById('tab-sounds');
-            const paneLog = document.getElementById('pane-log');
-            const paneSounds = document.getElementById('pane-sounds');
-
-            if (tab === 'log') {
-                paneLog.classList.remove('hidden'); paneSounds.classList.add('hidden');
-                logTab.className = "flex-1 py-1.5 bg-white text-slate-800 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm transition-all";
-                soundsTab.className = "flex-1 py-1.5 text-slate-500 hover:text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all";
-            } else {
-                paneLog.classList.add('hidden'); paneSounds.classList.remove('hidden');
-                soundsTab.className = "flex-1 py-1.5 bg-white text-slate-800 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm transition-all";
-                logTab.className = "flex-1 py-1.5 text-slate-500 hover:text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all";
-            }
-        }
-
-        async function triggerSound(soundName) {
-            document.querySelectorAll('.sfx-dropdown').forEach(el => el.classList.add('hidden'));
-
-            if (isOBSConnected) {
-                try {
-                    await obs.call('TriggerMediaInputAction', { inputName: soundName, mediaAction: 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART' });
-                } catch(e) { console.warn("Sound Error:", e); }
-            } else { alert("OBS nicht verbunden: " + soundName); }
-        }
-
-        async function setVogFilter(filter) {
-            ['Normal', 'Funk', 'Telefon'].forEach(f => {
-                const btn = document.getElementById('btn-vog-' + f);
-                if(f === filter) {
-                    btn.className = "flex-1 py-1.5 bg-slate-800 text-white shadow-sm rounded-lg text-[9px] font-black uppercase tracking-widest transition-all";
-                } else {
-                    btn.className = "flex-1 py-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all";
-                }
-            });
-
-            if(!isOBSConnected) return;
-            const vogMicName = document.getElementById('label_out1').value; 
-
-            try {
-                if(filter === 'Normal') {
-                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Funk', filterEnabled: false });
-                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Telefon', filterEnabled: false });
-                } else if(filter === 'Funk') {
-                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Telefon', filterEnabled: false });
-                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Funk', filterEnabled: true });
-                } else if(filter === 'Telefon') {
-                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Funk', filterEnabled: false });
-                    await obs.call('SetSourceFilterEnabled', { sourceName: vogMicName, filterName: 'Filter_Telefon', filterEnabled: true });
-                }
-            } catch(e) { console.warn("VST Filter Error:", e); }
-        }
-
-        // --- 6. OBS CONNECTION & TIMER ---
-        async function connectOBS() {
-            try {
-                await obs.connect('ws://127.0.0.1:4455', 'medsim2026');
-                isOBSConnected = true;
-                const dot = document.getElementById('obs-dot');
-                const text = document.getElementById('obs-text');
-                const container = document.getElementById('obs-status');
+                if (endDec < startDec) endDec += 24; // Über Mitternacht
                 
-                dot.classList.replace('bg-amber-500', 'bg-emerald-500');
-                dot.classList.remove('animate-pulse');
-                text.innerText = "OBS Bereit";
-                text.classList.replace('text-slate-500', 'text-emerald-700');
-                container.classList.replace('bg-slate-50', 'bg-emerald-50');
-                container.classList.replace('border-slate-200', 'border-emerald-200');
-            } catch (e) { console.warn("OBS Connection Error"); }
+                const pauseDec = pauseMinutes / 60;
+                netDecimal = endDec - startDec - pauseDec;
+                if (netDecimal < 0) netDecimal = 0;
+            }
+
+            document.getElementById('net-hours').innerText = netDecimal.toFixed(2);
+            
+            // Saldo berechnen
+            const saldo = netDecimal - target;
+            const saldoEl = document.getElementById('day-saldo');
+            saldoEl.innerText = (saldo > 0 ? '+' : '') + saldo.toFixed(2) + ' h';
+            
+            if (saldo > 0) saldoEl.className = "text-xl font-bold text-green-500";
+            else if (saldo < 0) saldoEl.className = "text-xl font-bold text-red-500";
+            else saldoEl.className = "text-xl font-bold text-gray-400";
         }
 
-        async function toggleRecording() {
-            try {
-                if(!isRecording) {
-                    if(isOBSConnected) await obs.call('StartRecord');
-                    isRecording = true;
-                    masterMarkers = []; 
-                    document.getElementById('marker-list').innerHTML = ''; 
-                    
-                    document.getElementById('rec-dot').classList.add('animate-pulse');
-                    document.getElementById('btn-rec').classList.replace('bg-slate-50', 'bg-brand-50');
-                    document.getElementById('btn-rec').classList.replace('border-slate-200', 'border-brand-200');
-                    document.getElementById('rec-text').innerText = "STOP";
-                    document.getElementById('rec-text').classList.replace('text-slate-500', 'text-brand-600');
-                    
-                    seconds = 0;
-                    document.getElementById('timer-display').innerText = "00:00:00";
-                    timerInterval = setInterval(() => {
-                        seconds++;
-                        const hrs = Math.floor(seconds / 3600).toString().padStart(2, '0');
-                        const mins = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-                        const secs = (seconds % 60).toString().padStart(2, '0');
-                        document.getElementById('timer-display').innerText = `${hrs}:${mins}:${secs}`;
-                    }, 1000);
-                } else {
-                    if(isOBSConnected) await obs.call('StopRecord');
-                    isRecording = false;
-                    document.getElementById('rec-dot').classList.remove('animate-pulse');
-                    document.getElementById('btn-rec').classList.replace('bg-brand-50', 'bg-slate-50');
-                    document.getElementById('btn-rec').classList.replace('border-brand-200', 'border-slate-200');
-                    document.getElementById('rec-text').innerText = "START";
-                    document.getElementById('rec-text').classList.replace('text-brand-600', 'text-slate-500');
-                    clearInterval(timerInterval);
+        function saveDay() {
+            const dateStr = document.getElementById('date-picker').value;
+            const target = parseFloat(document.getElementById('time-target').value) || 0;
+            const net = parseFloat(document.getElementById('net-hours').innerText) || 0;
+            
+            workData[dateStr] = {
+                start: document.getElementById('time-start').value,
+                end: document.getElementById('time-end').value,
+                pause: document.getElementById('time-pause').value,
+                target: target,
+                net: net,
+                diff: net - target
+            };
+            
+            saveToLocalStorage();
+            
+            // Kurzes Feedback
+            const btn = document.querySelector('#view-daily button.bg-blue-600');
+            const originalText = btn.innerText;
+            btn.innerText = "Gespeichert!";
+            btn.classList.add('bg-green-600');
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove('bg-green-600');
+            }, 1500);
+        }
 
-                    if(masterMarkers.length > 0) {
-                        downloadMasterLog();
-                    }
+        // --- Vorlagen Logik ---
+        function saveTemplate() {
+            const name = document.getElementById('tpl-name').value;
+            const start = document.getElementById('tpl-start').value;
+            const end = document.getElementById('tpl-end').value;
+            const pause = document.getElementById('tpl-pause').value;
+
+            if (!name) { alert("Bitte einen Namen vergeben."); return; }
+
+            templates.push({ id: Date.now(), name, start, end, pause });
+            saveToLocalStorage();
+            
+            // Formular leeren
+            document.getElementById('tpl-name').value = '';
+            document.getElementById('tpl-start').value = '';
+            document.getElementById('tpl-end').value = '';
+            document.getElementById('tpl-pause').value = '30';
+            
+            renderTemplates();
+        }
+
+        function deleteTemplate(id) {
+            if(confirm("Vorlage löschen?")) {
+                templates = templates.filter(t => t.id !== id);
+                saveToLocalStorage();
+                renderTemplates();
+            }
+        }
+
+        function applyTemplate(id) {
+            const tpl = templates.find(t => t.id === id);
+            if (tpl) {
+                document.getElementById('time-start').value = tpl.start;
+                document.getElementById('time-end').value = tpl.end;
+                document.getElementById('time-pause').value = tpl.pause;
+                calculateNet();
+            }
+        }
+
+        function renderTemplates() {
+            // Für die Einstellungsseite
+            const listEl = document.getElementById('templates-list');
+            listEl.innerHTML = templates.length === 0 ? '<p class="text-sm text-gray-400">Noch keine Vorlagen.</p>' : '';
+            
+            // Für die Tagesansicht (Schnellzugriff)
+            const quickEl = document.getElementById('quick-templates');
+            quickEl.innerHTML = '';
+
+            templates.forEach(tpl => {
+                // List Item (Einstellungen)
+                const div = document.createElement('div');
+                div.className = "bg-gray-50 border border-gray-100 p-3 rounded-xl flex justify-between items-center";
+                div.innerHTML = `
+                    <div>
+                        <p class="font-bold text-gray-700 text-sm">${tpl.name}</p>
+                        <p class="text-xs text-gray-500">${tpl.start || '-'} bis ${tpl.end || '-'} (${tpl.pause}m Pause)</p>
+                    </div>
+                    <button onclick="deleteTemplate(${tpl.id})" class="text-red-400 p-2 hover:bg-red-50 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                `;
+                listEl.appendChild(div);
+
+                // Quick Button (Tagesansicht)
+                const btn = document.createElement('button');
+                btn.className = "whitespace-nowrap bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-xl text-sm font-semibold transition-colors";
+                btn.innerText = tpl.name;
+                btn.onclick = () => applyTemplate(tpl.id);
+                quickEl.appendChild(btn);
+            });
+        }
+
+        // --- Monatsübersicht Logik ---
+        function changeMonth(delta) {
+            viewMonth.setMonth(viewMonth.getMonth() + delta);
+            renderMonthView();
+        }
+
+        function renderMonthView() {
+            const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+            document.getElementById('month-display').innerText = `${monthNames[viewMonth.getMonth()]} ${viewMonth.getFullYear()}`;
+
+            const listEl = document.getElementById('month-list');
+            listEl.innerHTML = '';
+
+            const currentPrefix = `${viewMonth.getFullYear()}-${String(viewMonth.getMonth() + 1).padStart(2, '0')}`;
+            
+            let totalNet = 0;
+            let totalTarget = 0;
+            let entries = [];
+
+            // Daten für diesen Monat filtern
+            for (let dateStr in workData) {
+                if (dateStr.startsWith(currentPrefix)) {
+                    entries.push({ date: dateStr, data: workData[dateStr] });
                 }
-            } catch(e) { console.error("Toggle Record Error:", e); }
-        }
+            }
 
-        // --- 7. MARKER LOGIK FÜR REGIE ---
-        function addMarker(type) {
-            if(!isRecording) return; 
+            // Nach Datum sortieren
+            entries.sort((a, b) => a.date.localeCompare(b.date));
 
-            const timeStr = document.getElementById('timer-display').innerText;
-            const list = document.getElementById('marker-list');
-            const emptyState = document.getElementById('empty-log-state');
-            if(emptyState) emptyState.style.display = 'none';
+            if(entries.length === 0) {
+                listEl.innerHTML = '<li class="p-4 text-center text-gray-400 text-sm">Keine Einträge in diesem Monat.</li>';
+            }
 
-            masterMarkers.push({ time: timeStr, type: type });
+            entries.forEach(entry => {
+                const dateObj = new Date(entry.date);
+                const dayName = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"][dateObj.getDay()];
+                const dayNum = dateObj.getDate();
+                
+                totalNet += entry.data.net || 0;
+                totalTarget += entry.data.target || 0;
+                
+                const diff = (entry.data.net || 0) - (entry.data.target || 0);
+                const diffClass = diff > 0 ? "text-green-500" : (diff < 0 ? "text-red-500" : "text-gray-400");
+                const diffStr = (diff > 0 ? '+' : '') + diff.toFixed(2);
 
-            const btn = event.currentTarget;
-            btn.classList.add('scale-95', 'bg-slate-100');
-            setTimeout(() => btn.classList.remove('scale-95', 'bg-slate-100'), 150);
-
-            const div = document.createElement('div');
-            let iconColor = type === 'Achtung' ? 'text-amber-500' : (type === 'Positiv' ? 'text-emerald-500' : 'text-blue-500');
-            let iconPh = type === 'Achtung' ? 'ph-warning' : (type === 'Positiv' ? 'ph-check-circle' : 'ph-map-pin');
-            
-            div.className = "p-2.5 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between animate-[fadeIn_0.3s_ease-out]";
-            div.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i class="ph-fill ${iconPh} ${iconColor} text-base"></i>
-                    <span class="text-slate-800 font-black uppercase text-[9px] tracking-widest">${type}</span>
-                </div>
-                <span class="text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded-md border border-slate-100 font-mono text-[10px] font-black tabular-nums">${timeStr}</span>
-            `;
-            list.prepend(div);
-        }
-
-        function downloadMasterLog() {
-            if(masterMarkers.length === 0) return;
-
-            let logContent = "MOE'S LOG - REGIE\n";
-            logContent += "========================\n\n";
-            
-            masterMarkers.forEach(m => {
-                const shortTime = m.time.substring(3); 
-                logContent += `[${shortTime}] - ${m.type}\n`;
+                const li = document.createElement('li');
+                li.className = "p-3 flex justify-between items-center hover:bg-gray-50 cursor-pointer";
+                li.onclick = () => {
+                    document.getElementById('date-picker').value = entry.date;
+                    switchTab('daily');
+                    loadDayData();
+                };
+                li.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="bg-gray-100 rounded-lg w-10 h-10 flex flex-col justify-center items-center">
+                            <span class="text-[10px] text-gray-500 uppercase leading-none">${dayName}</span>
+                            <span class="font-bold text-gray-800 leading-tight">${dayNum}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-700">${entry.data.start || '?'} - ${entry.data.end || '?'} <span class="text-xs font-normal text-gray-400">(${entry.data.pause}m P.)</span></p>
+                            <p class="text-xs text-gray-500">Soll: ${entry.data.target?.toFixed(2)}h</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-gray-800">${entry.data.net?.toFixed(2)} h</p>
+                        <p class="text-xs font-bold ${diffClass}">${diffStr}</p>
+                    </div>
+                `;
+                listEl.appendChild(li);
             });
 
-            const blob = new Blob([logContent], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            // Summen aktualisieren
+            document.getElementById('month-ist').innerText = totalNet.toFixed(2);
+            document.getElementById('month-soll').innerText = totalTarget.toFixed(2);
             
-            const date = new Date();
-            const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}`;
-            
-            a.href = url;
-            a.download = `Regie_Log_${dateString}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const totalSaldo = totalNet - totalTarget;
+            const saldoEl = document.getElementById('month-saldo');
+            saldoEl.innerText = (totalSaldo > 0 ? '+' : '') + totalSaldo.toFixed(2);
+            if(totalSaldo > 0) saldoEl.className = "font-black text-lg text-green-600";
+            else if(totalSaldo < 0) saldoEl.className = "font-black text-lg text-red-600";
+            else saldoEl.className = "font-black text-lg text-gray-800";
         }
+
+        // Init beim Laden
+        initDailyView();
+
     </script>
 </body>
 </html>
+```
+
+Kopieren Sie diesen Code einfach und fügen Sie ihn in Ihre `index.html` auf GitHub ein. Dann sollte die App wie gewünscht funktionieren!
