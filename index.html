@@ -209,10 +209,22 @@
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                 <h3 class="font-bold text-gray-800">Neue Vorlage</h3>
                 <input type="text" id="tpl-name" placeholder="Name (z.B. Frühschicht)" class="w-full p-3 bg-gray-50 rounded-xl border text-sm">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="time" id="tpl-start" class="p-2 bg-gray-50 border rounded-lg text-sm">
-                    <input type="time" id="tpl-end" class="p-2 bg-gray-50 border rounded-lg text-sm">
+                
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-1">Beginn</label>
+                        <input type="time" id="tpl-start" class="w-full p-2 bg-gray-50 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-1">Ende</label>
+                        <input type="time" id="tpl-end" class="w-full p-2 bg-gray-50 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-1">Pause (Min)</label>
+                        <input type="number" id="tpl-pause" placeholder="30" value="30" class="w-full p-2 bg-gray-50 border rounded-lg text-sm">
+                    </div>
                 </div>
+                
                 <button onclick="saveTemplate()" class="w-full bg-gray-800 text-white font-bold py-2 rounded-xl text-sm">Vorlage speichern</button>
                 <div id="templates-list" class="space-y-2 pt-2"></div>
             </div>
@@ -471,6 +483,7 @@
             const btn = document.querySelector('#view-daily button.bg-blue-600');
             const oldText = btn.innerText; btn.innerText = "Gespeichert!"; btn.classList.add('bg-green-600');
             setTimeout(() => { btn.innerText = oldText; btn.classList.remove('bg-green-600'); }, 1500);
+            renderMonthView(); // Update Kalender sofort
         }
 
         // --- Kalender Logik ---
@@ -539,18 +552,14 @@
                 
                 let dayNumColor = dayOfWeek === 0 ? 'text-red-600' : (dayOfWeek === 6 ? 'text-gray-600' : 'text-gray-800');
 
-                // IMMER Datum und (falls vorhanden) Feiertag/Ferien anzeigen
                 let html = `<div class="flex justify-between items-start w-full">
                     <span class="text-[11px] font-bold ${dayNumColor}">${d}</span>`;
                 
-                if (holiday) {
-                    html += `<span class="text-[6px] font-bold bg-yellow-200 text-yellow-800 px-1 rounded truncate max-w-[35px]" title="${holiday}">${holiday}</span>`;
-                } else if (vacation) {
-                    html += `<span class="text-[6px] font-bold bg-green-200 text-green-800 px-1 rounded truncate max-w-[35px]" title="${vacation}">Ferien</span>`;
-                }
+                if (holiday) html += `<span class="text-[6px] font-bold bg-yellow-200 text-yellow-800 px-1 rounded truncate max-w-[35px]" title="${holiday}">${holiday}</span>`;
+                else if (vacation) html += `<span class="text-[6px] font-bold bg-green-200 text-green-800 px-1 rounded truncate max-w-[35px]" title="${vacation}">Ferien</span>`;
+                
                 html += `</div>`;
                 
-                // Darunter dann die Arbeitszeiten
                 if (data && data.start) {
                     monthAppNet += data.net || 0; 
                     monthAppTarget += data.target || 0;
@@ -585,7 +594,6 @@
             offSaldoInput.value = monthlyOfficialSaldo[monthKey] || '';
             
             const officialSaldoVal = parseFloat(offSaldoInput.value) || 0;
-            
             const diff = appSaldo - officialSaldoVal;
             const diffEl = document.getElementById('month-diff');
             diffEl.innerText = (diff > 0 ? '+' : '') + diff.toFixed(2) + ' h';
@@ -624,25 +632,59 @@
             saveToLocalStorage();
             renderMonthView();
         }
+        
         function saveTemplate() {
             const name = document.getElementById('tpl-name').value;
             if(!name) return;
-            templates.push({ id: Date.now(), name, start: document.getElementById('tpl-start').value, end: document.getElementById('tpl-end').value, pause: document.getElementById('tpl-pause') ? document.getElementById('tpl-pause').value : 30 });
+            const pauseVal = document.getElementById('tpl-pause') ? document.getElementById('tpl-pause').value : 30;
+            
+            templates.push({ 
+                id: Date.now(), 
+                name: name, 
+                start: document.getElementById('tpl-start').value, 
+                end: document.getElementById('tpl-end').value, 
+                pause: pauseVal 
+            });
+            
             document.getElementById('tpl-name').value = '';
-            saveToLocalStorage(); renderTemplates();
+            document.getElementById('tpl-start').value = '';
+            document.getElementById('tpl-end').value = '';
+            if(document.getElementById('tpl-pause')) document.getElementById('tpl-pause').value = '30';
+            
+            saveToLocalStorage(); 
+            renderTemplates();
         }
+        
         function applyTemplate(id) {
             const t = templates.find(x => x.id === id);
-            if(t) { document.getElementById('time-start').value=t.start; document.getElementById('time-end').value=t.end; document.getElementById('time-pause').value=t.pause || 30; calculateNet(); }
+            if(t) { 
+                document.getElementById('time-start').value = t.start || ''; 
+                document.getElementById('time-end').value = t.end || ''; 
+                document.getElementById('time-pause').value = t.pause !== undefined ? t.pause : 30; 
+                calculateNet(); 
+            }
         }
+        
         function renderTemplates() {
             const q = document.getElementById('quick-templates'); q.innerHTML = '';
             const l = document.getElementById('templates-list'); l.innerHTML = '';
+            
+            if(templates.length === 0) {
+                l.innerHTML = '<p class="text-xs text-gray-400">Noch keine Vorlagen.</p>';
+            }
+
             templates.forEach(t => {
-                const b = document.createElement('button'); b.className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap shadow-sm";
-                b.innerText = t.name; b.onclick = () => applyTemplate(t.id); q.appendChild(b);
-                const div = document.createElement('div'); div.className="flex justify-between text-xs bg-gray-50 p-3 rounded-xl border border-gray-100";
-                div.innerHTML = `<div><span class="font-bold block">${t.name}</span><span class="text-gray-500">${t.start}-${t.end}</span></div><button class="text-red-400 hover:bg-red-50 p-2 rounded" onclick="templates=templates.filter(x=>x.id!=${t.id});saveToLocalStorage();renderTemplates();"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
+                const b = document.createElement('button'); 
+                b.className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap shadow-sm transition-colors";
+                b.innerText = t.name; 
+                b.onclick = () => applyTemplate(t.id); 
+                q.appendChild(b);
+                
+                const div = document.createElement('div'); 
+                div.className="flex justify-between items-center text-xs bg-gray-50 p-3 rounded-xl border border-gray-100";
+                const pauseText = t.pause !== undefined ? `${t.pause}m Pause` : '30m Pause';
+                
+                div.innerHTML = `<div><span class="font-bold block text-gray-700">${t.name}</span><span class="text-gray-500">${t.start || '?'} - ${t.end || '?'} (${pauseText})</span></div><button class="text-red-400 hover:bg-red-50 p-2 rounded-lg transition-colors" onclick="templates=templates.filter(x=>x.id!=${t.id});saveToLocalStorage();renderTemplates();"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
                 l.appendChild(div);
             });
         }
