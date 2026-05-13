@@ -18,14 +18,10 @@
     <script src="https://apis.google.com/js/api.js" async defer></script>
 
     <style>
-        /* Versteckt Scrollbars für ein sauberes App-Feeling, lässt aber Scrollen zu */
         ::-webkit-scrollbar { display: none; }
         * { -ms-overflow-style: none; scrollbar-width: none; }
-        
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
-        /* Verhindert Textauswahl beim Tippen auf Buttons */
         button { user-select: none; -webkit-user-select: none; }
     </style>
 </head>
@@ -44,8 +40,7 @@
         
         <!-- ==================== ANSICHT: TAGESERFASSUNG ==================== -->
         <section id="view-daily" class="tab-content active space-y-4">
-            
-            <!-- Datumsauswahl -->
+            <!-- ... (Tagesansicht bleibt unverändert) ... -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                 <button onclick="changeDate(-1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -56,14 +51,9 @@
                 </button>
             </div>
 
-            <!-- Vorlagen Schnellzugriff -->
-            <div id="quick-templates" class="flex gap-2 overflow-x-auto pb-2">
-                <!-- Wird per JS gefüllt -->
-            </div>
+            <div id="quick-templates" class="flex gap-2 overflow-x-auto pb-2"></div>
 
-            <!-- Eingabeformular -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Arbeitsbeginn</label>
@@ -104,11 +94,74 @@
         </section>
 
 
-        <!-- ==================== ANSICHT: MONATSÜBERSICHT ==================== -->
+        <!-- ==================== ANSICHT: MONATSÜBERSICHT & ABGLEICH ==================== -->
         <section id="view-month" class="tab-content space-y-4">
             
-            <!-- Globale Einstellungen -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+            <!-- Monatsauswahl -->
+            <div class="bg-blue-600 text-white p-4 rounded-2xl shadow-md flex justify-between items-center relative z-10">
+                <button onclick="changeMonth(-1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <h2 id="month-display" class="font-bold text-xl">Monat Jahr</h2>
+                <button onclick="changeMonth(1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+            </div>
+
+            <!-- Dashboard: Abgleich -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h3 class="font-bold text-gray-800 border-b pb-2">Monats-Abgleich</h3>
+                
+                <!-- Offizielles Saldo Eingabe -->
+                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-200">
+                    <div>
+                        <p class="text-sm font-bold text-gray-700">Offizielles Saldo (AG)</p>
+                        <p class="text-[10px] text-gray-500">Stand Ende des Monats</p>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <input type="number" step="0.1" id="official-saldo" placeholder="z.B. 12.5" class="w-20 p-2 text-center bg-white rounded-lg border border-gray-300 font-bold focus:border-blue-500 focus:outline-none" onchange="saveOfficialSaldo()">
+                        <span class="text-gray-500 text-sm">h</span>
+                    </div>
+                </div>
+
+                <!-- Vergleich App vs AG -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-3 bg-blue-50 rounded-xl">
+                        <p class="text-xs text-blue-600 font-semibold mb-1">App-Saldo (nur dieser Monat)</p>
+                        <p class="font-black text-xl text-blue-800" id="month-app-saldo">0.00</p>
+                    </div>
+                    <div class="p-3 bg-white border border-gray-200 rounded-xl relative">
+                        <p class="text-xs text-gray-500 font-semibold mb-1">Differenz (App vs. AG)</p>
+                        <p class="font-black text-xl" id="month-diff">0.00</p>
+                        <!-- Hinweis Tooltip (simpel) -->
+                        <p class="text-[9px] text-gray-400 absolute bottom-1 right-2">Sollte 0 sein</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard: Gesamtsaldo -->
+            <div class="bg-gray-800 text-white p-4 rounded-2xl shadow-md">
+                 <h3 class="font-bold text-sm text-gray-300 mb-1">Aktuelles Gesamtsaldo</h3>
+                 <p class="text-[10px] text-gray-400 mb-3">Berechnet aus: Offizielles Saldo Vormonat + App-Saldo laufender Monat</p>
+                 <div class="flex items-end gap-2">
+                     <span class="text-4xl font-black" id="total-saldo">0.00</span>
+                     <span class="text-gray-400 pb-1">h</span>
+                 </div>
+            </div>
+
+            <!-- Statistik & Liste der Einträge -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-4 border-b border-gray-100 flex justify-between text-sm">
+                    <span class="text-gray-500">Ist: <span id="month-ist-sum" class="font-bold text-gray-800">0.00</span>h</span>
+                    <span class="text-gray-500">Soll: <span id="month-soll-sum" class="font-bold text-gray-800">0.00</span>h</span>
+                </div>
+                <ul id="month-list" class="divide-y divide-gray-100">
+                    <!-- Wird per JS gefüllt -->
+                </ul>
+            </div>
+        </section>
+
+
+        <!-- ==================== ANSICHT: EINSTELLUNGEN / VORLAGEN ==================== -->
+        <section id="view-templates" class="tab-content space-y-4">
+             <!-- Globale Einstellungen (Hierhin verschoben, passt besser) -->
+             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
                 <div>
                     <h3 class="font-bold text-gray-800">Standard-Sollzeit</h3>
                     <p class="text-xs text-gray-500">Wird für neue Tage verwendet</p>
@@ -119,47 +172,10 @@
                 </div>
             </div>
 
-            <!-- Monatsauswahl & Statistik -->
-            <div class="bg-blue-600 text-white p-5 rounded-2xl shadow-md relative overflow-hidden">
-                <div class="flex justify-between items-center mb-4 relative z-10">
-                    <button onclick="changeMonth(-1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                    <h2 id="month-display" class="font-bold text-lg">Monat Jahr</h2>
-                    <button onclick="changeMonth(1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
-                </div>
-                
-                <div class="grid grid-cols-3 gap-2 text-center relative z-10">
-                    <div class="bg-blue-700 bg-opacity-50 p-2 rounded-xl">
-                        <p class="text-xs opacity-80">Ist-Stunden</p>
-                        <p class="font-bold text-lg" id="month-ist">0.00</p>
-                    </div>
-                    <div class="bg-blue-700 bg-opacity-50 p-2 rounded-xl">
-                        <p class="text-xs opacity-80">Soll-Stunden</p>
-                        <p class="font-bold text-lg" id="month-soll">0.00</p>
-                    </div>
-                    <div class="bg-white text-blue-800 p-2 rounded-xl shadow-inner">
-                        <p class="text-xs font-semibold">Monats-Saldo</p>
-                        <p class="font-black text-lg" id="month-saldo">0.00</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Liste der Einträge -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <ul id="month-list" class="divide-y divide-gray-100">
-                    <!-- Wird per JS gefüllt -->
-                </ul>
-            </div>
-        </section>
-
-
-        <!-- ==================== ANSICHT: VORLAGEN ==================== -->
-        <section id="view-templates" class="tab-content space-y-4">
-            
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <!-- ... (Vorlagen erstellen bleibt unverändert) ... -->
                 <h3 class="font-bold text-gray-800">Neue Vorlage erstellen</h3>
-                
                 <input type="text" id="tpl-name" placeholder="Name (z.B. Frühschicht)" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500">
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Beginn</label>
@@ -170,12 +186,10 @@
                         <input type="time" id="tpl-end" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200">
                     </div>
                 </div>
-                
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Pause (Min)</label>
                     <input type="number" id="tpl-pause" value="30" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200">
                 </div>
-
                 <button onclick="saveTemplate()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform active:scale-95">
                     Vorlage speichern
                 </button>
@@ -183,12 +197,9 @@
 
             <div>
                 <h3 class="font-bold text-gray-500 text-sm mb-2 px-2">Gespeicherte Vorlagen</h3>
-                <div id="templates-list" class="space-y-2">
-                    <!-- Wird per JS gefüllt -->
-                </div>
+                <div id="templates-list" class="space-y-2"></div>
             </div>
             
-            <!-- Setup Info Bereich -->
             <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-2xl">
                 <h4 class="font-bold text-yellow-800 text-sm mb-1">Google Drive Einrichtung</h4>
                 <p class="text-xs text-yellow-700 mb-2">Damit Cloud-Speicherung funktioniert, müssen Sie im Code die Client-ID hinterlegen.</p>
@@ -196,7 +207,6 @@
                     const CLIENT_ID = 'HIER_EINTRAGEN';
                 </div>
             </div>
-
         </section>
 
     </main>
@@ -213,181 +223,85 @@
                 <span class="text-[10px] font-medium">Monat</span>
             </button>
             <button onclick="switchTab('templates')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-blue-500 transition-colors">
-                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                <span class="text-[10px] font-medium">Vorlagen</span>
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="text-[10px] font-medium">Einstellungen</span>
             </button>
         </div>
     </nav>
 
     <!-- App Logik -->
     <script>
-        // ==========================================
-        // SERVICE WORKER REGISTRIERUNG (Für PWA)
-        // ==========================================
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(registration => {
-                    console.log('ServiceWorker registriert');
-                }).catch(err => {
-                    console.log('ServiceWorker Fehler: ', err);
-                });
-            });
-        }
-
-        // ==========================================
-        // GOOGLE DRIVE API KONFIGURATION
-        // ==========================================
-        // ACHTUNG: Tragen Sie hier Ihre Google Cloud Client ID ein!
+        // --- Service Worker & GAPI (wie zuvor) ---
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Fehler:', err)); }); }
+        
         const CLIENT_ID = 'IHRE_CLIENT_ID_HIER_EINTRAGEN.apps.googleusercontent.com'; 
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         const FILENAME = 'arbeitszeit_daten.json';
 
-        let tokenClient;
-        let isDriveReady = false;
-        let driveFileId = null;
+        let tokenClient; let isDriveReady = false; let driveFileId = null;
 
-        // Google API laden
-        function gapiLoaded() {
-            gapi.load('client', initializeGapiClient);
-        }
-
+        function gapiLoaded() { gapi.load('client', initializeGapiClient); }
         async function initializeGapiClient() {
             try {
                 await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] });
-                // GSI Laden
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CLIENT_ID,
-                    scope: SCOPES,
-                    callback: async (resp) => {
-                        if (resp.error !== undefined) {
-                            throw (resp);
-                        }
-                        isDriveReady = true;
-                        document.getElementById('sync-status').innerText = "Verbunden";
-                        await syncWithDrive();
-                    },
-                });
-            } catch (err) {
-                console.log("Drive API Init Fehler. Läuft nur lokal.", err);
-            }
+                tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: async (resp) => { if (resp.error !== undefined) throw (resp); isDriveReady = true; document.getElementById('sync-status').innerText = "Verbunden"; await syncWithDrive(); },});
+            } catch (err) { console.log("Drive API Init Fehler."); }
         }
-
         function handleAuthClick() {
-            if (!CLIENT_ID || CLIENT_ID.includes('IHRE_CLIENT_ID')) {
-                alert("Bitte hinterlegen Sie erst eine gültige Google Client-ID im Code!");
-                return;
-            }
+            if (!CLIENT_ID || CLIENT_ID.includes('IHRE_CLIENT_ID')) { alert("Bitte Google Client-ID hinterlegen!"); return; }
             if (!tokenClient) return;
-            if (gapi.client.getToken() === null) {
-                tokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-                tokenClient.requestAccessToken({prompt: ''});
-            }
+            if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'});
+            else tokenClient.requestAccessToken({prompt: ''});
         }
-
-        // Synchronisation mit Drive (Laden/Speichern)
         async function syncWithDrive() {
-            if(!isDriveReady) return;
+             if(!isDriveReady) return;
             document.getElementById('sync-status').innerText = "Syncing...";
-            
             try {
-                // Suche nach der Datei
-                let response = await gapi.client.drive.files.list({
-                    q: `name='${FILENAME}' and trashed=false`,
-                    spaces: 'drive',
-                    fields: 'files(id, name)'
-                });
-
+                let response = await gapi.client.drive.files.list({ q: `name='${FILENAME}' and trashed=false`, spaces: 'drive', fields: 'files(id, name)' });
                 let files = response.result.files;
                 if (files && files.length > 0) {
                     driveFileId = files[0].id;
-                    // Datei existiert -> Herunterladen und lokalen Stand überschreiben
-                    let fileData = await gapi.client.drive.files.get({
-                        fileId: driveFileId,
-                        alt: 'media'
-                    });
-                    
+                    let fileData = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
                     let data = fileData.result;
                     if(data.workData) workData = data.workData;
                     if(data.templates) templates = data.templates;
                     if(data.globalTarget) globalTarget = data.globalTarget;
-                    
-                    saveToLocalStorage(); // Lokalen Cache aktualisieren
-                    loadDayData();
-                    renderTemplates();
-                    document.getElementById('sync-status').innerText = "Aktuell";
-                } else {
-                    // Datei existiert nicht -> Erstellen und lokalen Stand hochladen
-                    await saveToDrive();
-                }
-            } catch (err) {
-                console.error("Sync Error", err);
-                document.getElementById('sync-status').innerText = "Fehler";
-            }
+                    if(data.monthlyOfficialSaldo) monthlyOfficialSaldo = data.monthlyOfficialSaldo;
+                    saveToLocalStorage(); loadDayData(); renderTemplates(); document.getElementById('sync-status').innerText = "Aktuell";
+                } else { await saveToDrive(); }
+            } catch (err) { document.getElementById('sync-status').innerText = "Fehler"; }
         }
-
         async function saveToDrive() {
-            if(!isDriveReady) return;
+             if(!isDriveReady) return;
             document.getElementById('sync-status').innerText = "Speichere...";
-            
-            const fileContent = JSON.stringify({
-                workData: workData,
-                templates: templates,
-                globalTarget: globalTarget
-            });
+            const fileContent = JSON.stringify({ workData, templates, globalTarget, monthlyOfficialSaldo });
             const file = new Blob([fileContent], {type: 'application/json'});
-            const metadata = {
-                'name': FILENAME,
-                'mimeType': 'application/json'
-            };
-
+            const metadata = { 'name': FILENAME, 'mimeType': 'application/json' };
             const form = new FormData();
             form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
             form.append('file', file);
-
             try {
-                if (driveFileId) {
-                    // Update
-                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`, {
-                        method: 'PATCH',
-                        headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
-                        body: form
-                    });
+                if (driveFileId) { await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`, { method: 'PATCH', headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }), body: form });
                 } else {
-                    // Create
-                    let res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                        method: 'POST',
-                        headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
-                        body: form
-                    });
-                    let val = await res.json();
-                    driveFileId = val.id;
+                    let res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }), body: form });
+                    let val = await res.json(); driveFileId = val.id;
                 }
                 document.getElementById('sync-status').innerText = "Gespeichert";
-            } catch (error) {
-                console.error("Error saving to drive", error);
-                document.getElementById('sync-status').innerText = "Fehler";
-            }
+            } catch (error) { document.getElementById('sync-status').innerText = "Fehler"; }
         }
-
-        // Hilfsfunktion: GAPI beim Start aufrufen
-        window.onload = function() {
-            if(window.gapi) gapiLoaded();
-        };
+        window.onload = function() { if(window.gapi) gapiLoaded(); };
 
 
-        // ==========================================
-        // APP LOKALE LOGIK & DATEN
-        // ==========================================
-        
+        // --- App Logik ---
         let currentDate = new Date();
-        let viewMonth = new Date(); // Für die Monatsansicht
+        let viewMonthDate = new Date();
         
-        // Lade Daten aus localStorage als Fallback/Cache
         let workData = JSON.parse(localStorage.getItem('az_workData')) || {};
         let templates = JSON.parse(localStorage.getItem('az_templates')) || [];
         let globalTarget = parseFloat(localStorage.getItem('az_globalTarget')) || 8.0;
+        // NEU: Speichert das offizielle Saldo pro Monat (z.B. {"2024-05": 12.5})
+        let monthlyOfficialSaldo = JSON.parse(localStorage.getItem('az_monthlyOfficial')) || {};
 
         document.getElementById('global-target').value = globalTarget;
 
@@ -395,44 +309,32 @@
             localStorage.setItem('az_workData', JSON.stringify(workData));
             localStorage.setItem('az_templates', JSON.stringify(templates));
             localStorage.setItem('az_globalTarget', globalTarget);
-            saveToDrive(); // Versuche ins Drive zu sichern, falls verbunden
+            localStorage.setItem('az_monthlyOfficial', JSON.stringify(monthlyOfficialSaldo));
+            saveToDrive();
         }
 
         function saveGlobalTarget() {
             globalTarget = parseFloat(document.getElementById('global-target').value) || 0;
             saveToLocalStorage();
-            loadDayData(); // UI aktualisieren, da Target sich geändert hat
+            loadDayData();
         }
 
-        function formatDate(date) {
-            return date.toISOString().split('T')[0];
-        }
+        function formatDate(date) { return date.toISOString().split('T')[0]; }
+        function getMonthKey(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; }
 
-        // --- Navigation ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('text-blue-600');
-                el.classList.add('text-gray-400');
-            });
-            
+            document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('text-blue-600'); el.classList.add('text-gray-400'); });
             document.getElementById('view-' + tabId).classList.add('active');
-            
-            // Highlight aktiver Button
             const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => btn.getAttribute('onclick').includes(tabId));
-            if(activeBtn) {
-                activeBtn.classList.remove('text-gray-400');
-                activeBtn.classList.add('text-blue-600');
-            }
-
+            if(activeBtn) { activeBtn.classList.remove('text-gray-400'); activeBtn.classList.add('text-blue-600'); }
             if(tabId === 'month') renderMonthView();
         }
 
-        // --- Tagesansicht Logik ---
+        // --- Tagesansicht ---
         function initDailyView() {
             document.getElementById('date-picker').value = formatDate(currentDate);
-            loadDayData();
-            renderTemplates();
+            loadDayData(); renderTemplates();
         }
 
         function changeDate(days) {
@@ -443,14 +345,12 @@
 
         function loadDayData() {
             const dateStr = document.getElementById('date-picker').value;
-            currentDate = new Date(dateStr); // Update internes Date
+            currentDate = new Date(dateStr);
             const data = workData[dateStr] || { start: '', end: '', pause: '', target: globalTarget };
-            
             document.getElementById('time-start').value = data.start || '';
             document.getElementById('time-end').value = data.end || '';
             document.getElementById('time-pause').value = data.pause || '';
             document.getElementById('time-target').value = data.target !== undefined ? data.target : globalTarget;
-            
             calculateNet();
         }
 
@@ -467,25 +367,19 @@
             const target = parseFloat(document.getElementById('time-target').value) || 0;
 
             let netDecimal = 0;
-
             if (start && end) {
                 let startDec = timeToDecimal(start);
                 let endDec = timeToDecimal(end);
-                
-                if (endDec < startDec) endDec += 24; // Über Mitternacht
-                
+                if (endDec < startDec) endDec += 24;
                 const pauseDec = pauseMinutes / 60;
                 netDecimal = endDec - startDec - pauseDec;
                 if (netDecimal < 0) netDecimal = 0;
             }
 
             document.getElementById('net-hours').innerText = netDecimal.toFixed(2);
-            
-            // Saldo berechnen
             const saldo = netDecimal - target;
             const saldoEl = document.getElementById('day-saldo');
             saldoEl.innerText = (saldo > 0 ? '+' : '') + saldo.toFixed(2) + ' h';
-            
             if (saldo > 0) saldoEl.className = "text-xl font-bold text-green-500";
             else if (saldo < 0) saldoEl.className = "text-xl font-bold text-red-500";
             else saldoEl.className = "text-xl font-bold text-gray-400";
@@ -504,173 +398,189 @@
                 net: net,
                 diff: net - target
             };
-            
             saveToLocalStorage();
             
-            // Kurzes Feedback
             const btn = document.querySelector('#view-daily button.bg-blue-600');
             const originalText = btn.innerText;
             btn.innerText = "Gespeichert!";
             btn.classList.add('bg-green-600');
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.classList.remove('bg-green-600');
-            }, 1500);
+            setTimeout(() => { btn.innerText = originalText; btn.classList.remove('bg-green-600'); }, 1500);
         }
 
-        // --- Vorlagen Logik ---
+        // --- Vorlagen ---
         function saveTemplate() {
             const name = document.getElementById('tpl-name').value;
-            const start = document.getElementById('tpl-start').value;
-            const end = document.getElementById('tpl-end').value;
-            const pause = document.getElementById('tpl-pause').value;
-
             if (!name) { alert("Bitte einen Namen vergeben."); return; }
-
-            templates.push({ id: Date.now(), name, start, end, pause });
+            templates.push({ 
+                id: Date.now(), name, 
+                start: document.getElementById('tpl-start').value, 
+                end: document.getElementById('tpl-end').value, 
+                pause: document.getElementById('tpl-pause').value 
+            });
             saveToLocalStorage();
-            
-            // Formular leeren
-            document.getElementById('tpl-name').value = '';
-            document.getElementById('tpl-start').value = '';
-            document.getElementById('tpl-end').value = '';
-            document.getElementById('tpl-pause').value = '30';
-            
+            document.getElementById('tpl-name').value = ''; document.getElementById('tpl-start').value = ''; document.getElementById('tpl-end').value = ''; document.getElementById('tpl-pause').value = '30';
             renderTemplates();
         }
 
         function deleteTemplate(id) {
-            if(confirm("Vorlage löschen?")) {
-                templates = templates.filter(t => t.id !== id);
-                saveToLocalStorage();
-                renderTemplates();
-            }
+            if(confirm("Vorlage löschen?")) { templates = templates.filter(t => t.id !== id); saveToLocalStorage(); renderTemplates(); }
         }
 
         function applyTemplate(id) {
             const tpl = templates.find(t => t.id === id);
             if (tpl) {
-                document.getElementById('time-start').value = tpl.start;
-                document.getElementById('time-end').value = tpl.end;
-                document.getElementById('time-pause').value = tpl.pause;
-                calculateNet();
+                document.getElementById('time-start').value = tpl.start; document.getElementById('time-end').value = tpl.end; document.getElementById('time-pause').value = tpl.pause; calculateNet();
             }
         }
 
         function renderTemplates() {
-            // Für die Einstellungsseite
             const listEl = document.getElementById('templates-list');
             listEl.innerHTML = templates.length === 0 ? '<p class="text-sm text-gray-400">Noch keine Vorlagen.</p>' : '';
-            
-            // Für die Tagesansicht (Schnellzugriff)
             const quickEl = document.getElementById('quick-templates');
             quickEl.innerHTML = '';
 
             templates.forEach(tpl => {
-                // List Item (Einstellungen)
                 const div = document.createElement('div');
                 div.className = "bg-gray-50 border border-gray-100 p-3 rounded-xl flex justify-between items-center";
-                div.innerHTML = `
-                    <div>
-                        <p class="font-bold text-gray-700 text-sm">${tpl.name}</p>
-                        <p class="text-xs text-gray-500">${tpl.start || '-'} bis ${tpl.end || '-'} (${tpl.pause}m Pause)</p>
-                    </div>
-                    <button onclick="deleteTemplate(${tpl.id})" class="text-red-400 p-2 hover:bg-red-50 rounded-lg">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
-                `;
+                div.innerHTML = `<div><p class="font-bold text-gray-700 text-sm">${tpl.name}</p><p class="text-xs text-gray-500">${tpl.start || '-'} bis ${tpl.end || '-'} (${tpl.pause}m Pause)</p></div>
+                    <button onclick="deleteTemplate(${tpl.id})" class="text-red-400 p-2 hover:bg-red-50 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
                 listEl.appendChild(div);
 
-                // Quick Button (Tagesansicht)
                 const btn = document.createElement('button');
                 btn.className = "whitespace-nowrap bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-xl text-sm font-semibold transition-colors";
-                btn.innerText = tpl.name;
-                btn.onclick = () => applyTemplate(tpl.id);
+                btn.innerText = tpl.name; btn.onclick = () => applyTemplate(tpl.id);
                 quickEl.appendChild(btn);
             });
         }
 
-        // --- Monatsübersicht Logik ---
+        // --- Monatsübersicht & Abgleich ---
         function changeMonth(delta) {
-            viewMonth.setMonth(viewMonth.getMonth() + delta);
+            viewMonthDate.setMonth(viewMonthDate.getMonth() + delta);
             renderMonthView();
+        }
+
+        function saveOfficialSaldo() {
+            const currentMonthKey = getMonthKey(viewMonthDate);
+            const val = document.getElementById('official-saldo').value;
+            if(val === "") {
+                delete monthlyOfficialSaldo[currentMonthKey];
+            } else {
+                monthlyOfficialSaldo[currentMonthKey] = parseFloat(val);
+            }
+            saveToLocalStorage();
+            renderMonthView(); // Update Berechnungen
+        }
+
+        function calculateAppSaldoForMonth(monthPrefix) {
+            let totalNet = 0; let totalTarget = 0;
+            for (let dateStr in workData) {
+                if (dateStr.startsWith(monthPrefix)) {
+                    totalNet += workData[dateStr].net || 0;
+                    totalTarget += workData[dateStr].target || 0;
+                }
+            }
+            return { net: totalNet, target: totalTarget, saldo: totalNet - totalTarget };
         }
 
         function renderMonthView() {
             const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
-            document.getElementById('month-display').innerText = `${monthNames[viewMonth.getMonth()]} ${viewMonth.getFullYear()}`;
+            document.getElementById('month-display').innerText = `${monthNames[viewMonthDate.getMonth()]} ${viewMonthDate.getFullYear()}`;
 
+            const currentMonthKey = getMonthKey(viewMonthDate);
+            
+            // 1. Daten für die Liste (und Summen) aufbereiten
             const listEl = document.getElementById('month-list');
             listEl.innerHTML = '';
-
-            const currentPrefix = `${viewMonth.getFullYear()}-${String(viewMonth.getMonth() + 1).padStart(2, '0')}`;
-            
-            let totalNet = 0;
-            let totalTarget = 0;
             let entries = [];
-
-            // Daten für diesen Monat filtern
             for (let dateStr in workData) {
-                if (dateStr.startsWith(currentPrefix)) {
-                    entries.push({ date: dateStr, data: workData[dateStr] });
-                }
+                if (dateStr.startsWith(currentMonthKey)) { entries.push({ date: dateStr, data: workData[dateStr] }); }
             }
-
-            // Nach Datum sortieren
             entries.sort((a, b) => a.date.localeCompare(b.date));
 
-            if(entries.length === 0) {
-                listEl.innerHTML = '<li class="p-4 text-center text-gray-400 text-sm">Keine Einträge in diesem Monat.</li>';
-            }
+            if(entries.length === 0) { listEl.innerHTML = '<li class="p-4 text-center text-gray-400 text-sm">Keine Einträge in diesem Monat.</li>'; }
 
             entries.forEach(entry => {
                 const dateObj = new Date(entry.date);
                 const dayName = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"][dateObj.getDay()];
                 const dayNum = dateObj.getDate();
-                
-                totalNet += entry.data.net || 0;
-                totalTarget += entry.data.target || 0;
-                
                 const diff = (entry.data.net || 0) - (entry.data.target || 0);
                 const diffClass = diff > 0 ? "text-green-500" : (diff < 0 ? "text-red-500" : "text-gray-400");
                 const diffStr = (diff > 0 ? '+' : '') + diff.toFixed(2);
 
                 const li = document.createElement('li');
                 li.className = "p-3 flex justify-between items-center hover:bg-gray-50 cursor-pointer";
-                li.onclick = () => {
-                    document.getElementById('date-picker').value = entry.date;
-                    switchTab('daily');
-                    loadDayData();
-                };
+                li.onclick = () => { document.getElementById('date-picker').value = entry.date; switchTab('daily'); loadDayData(); };
                 li.innerHTML = `
                     <div class="flex items-center gap-3">
                         <div class="bg-gray-100 rounded-lg w-10 h-10 flex flex-col justify-center items-center">
-                            <span class="text-[10px] text-gray-500 uppercase leading-none">${dayName}</span>
-                            <span class="font-bold text-gray-800 leading-tight">${dayNum}</span>
+                            <span class="text-[10px] text-gray-500 uppercase leading-none">${dayName}</span><span class="font-bold text-gray-800 leading-tight">${dayNum}</span>
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-gray-700">${entry.data.start || '?'} - ${entry.data.end || '?'} <span class="text-xs font-normal text-gray-400">(${entry.data.pause}m P.)</span></p>
-                            <p class="text-xs text-gray-500">Soll: ${entry.data.target?.toFixed(2)}h</p>
+                            <p class="text-sm font-bold text-gray-700">${entry.data.start || '?'} - ${entry.data.end || '?'} <span class="text-xs font-normal text-gray-400">(${entry.data.pause}m)</span></p>
+                            <p class="text-[10px] text-gray-500">Soll: ${entry.data.target?.toFixed(2)}h</p>
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-gray-800">${entry.data.net?.toFixed(2)} h</p>
-                        <p class="text-xs font-bold ${diffClass}">${diffStr}</p>
-                    </div>
-                `;
+                        <p class="font-bold text-gray-800">${entry.data.net?.toFixed(2)} h</p><p class="text-[10px] font-bold ${diffClass}">${diffStr}</p>
+                    </div>`;
                 listEl.appendChild(li);
             });
 
-            // Summen aktualisieren
-            document.getElementById('month-ist').innerText = totalNet.toFixed(2);
-            document.getElementById('month-soll').innerText = totalTarget.toFixed(2);
+            // 2. Berechnungen für das Dashboard
+            const appData = calculateAppSaldoForMonth(currentMonthKey);
             
-            const totalSaldo = totalNet - totalTarget;
-            const saldoEl = document.getElementById('month-saldo');
-            saldoEl.innerText = (totalSaldo > 0 ? '+' : '') + totalSaldo.toFixed(2);
-            if(totalSaldo > 0) saldoEl.className = "font-black text-lg text-green-600";
-            else if(totalSaldo < 0) saldoEl.className = "font-black text-lg text-red-600";
-            else saldoEl.className = "font-black text-lg text-gray-800";
+            // Offizielles Saldo laden/anzeigen
+            const offSaldoInput = document.getElementById('official-saldo');
+            const storedOffSaldo = monthlyOfficialSaldo[currentMonthKey];
+            if(storedOffSaldo !== undefined) {
+                offSaldoInput.value = storedOffSaldo;
+            } else {
+                offSaldoInput.value = '';
+            }
+
+            // App Saldo anzeigen
+            document.getElementById('month-app-saldo').innerText = (appData.saldo > 0 ? '+' : '') + appData.saldo.toFixed(2);
+            document.getElementById('month-ist-sum').innerText = appData.net.toFixed(2);
+            document.getElementById('month-soll-sum').innerText = appData.target.toFixed(2);
+
+            // Differenz berechnen (App vs AG)
+            const diffEl = document.getElementById('month-diff');
+            if (storedOffSaldo !== undefined) {
+                const diffAppVsAg = appData.saldo - storedOffSaldo;
+                diffEl.innerText = (diffAppVsAg > 0 ? '+' : '') + diffAppVsAg.toFixed(2);
+                if (Math.abs(diffAppVsAg) > 0.05) diffEl.className = "font-black text-xl text-red-500"; // Toleranz 3 Minuten
+                else diffEl.className = "font-black text-xl text-green-500";
+            } else {
+                diffEl.innerText = "-";
+                diffEl.className = "font-black text-xl text-gray-300";
+            }
+
+            // 3. Gesamtsaldo berechnen (Vormonat Offiziell + Dieser Monat App)
+            // Finde den Vormonat
+            let prevMonthDate = new Date(viewMonthDate);
+            prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+            const prevMonthKey = getMonthKey(prevMonthDate);
+            
+            let totalSaldo = 0;
+            // Wenn es ein offizielles Saldo für den Vormonat gibt, nutze dieses als Basis
+            if (monthlyOfficialSaldo[prevMonthKey] !== undefined) {
+                 totalSaldo = monthlyOfficialSaldo[prevMonthKey] + appData.saldo;
+            } else {
+                 // Fallback: Wenn kein Vormonats-Saldo vom AG existiert, summiere einfach alle App-Salden bis inkl. diesem Monat
+                 for(let dateStr in workData) {
+                     let entryDate = new Date(dateStr);
+                     // Addiere alles was vor oder im aktuell angezeigten Monat liegt
+                     if(entryDate <= new Date(viewMonthDate.getFullYear(), viewMonthDate.getMonth() + 1, 0)) {
+                         totalSaldo += (workData[dateStr].net || 0) - (workData[dateStr].target || 0);
+                     }
+                 }
+            }
+
+            const totalSaldoEl = document.getElementById('total-saldo');
+            totalSaldoEl.innerText = (totalSaldo > 0 ? '+' : '') + totalSaldo.toFixed(2);
+            if(totalSaldo > 0) totalSaldoEl.className = "text-4xl font-black text-green-400";
+            else if(totalSaldo < 0) totalSaldoEl.className = "text-4xl font-black text-red-400";
+            else totalSaldoEl.className = "text-4xl font-black text-white";
         }
 
         // Init beim Laden
