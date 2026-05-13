@@ -24,10 +24,13 @@
         .tab-content.active { display: block; }
         button { user-select: none; -webkit-user-select: none; }
         
-        /* Kalender-Spezifisches Design - Jetzt mit kräftigeren Farben! */
+        /* Kalender-Spezifisches Design */
         .holiday-bg { background-color: #fef08a; border-color: #eab308; } 
         .vacation-bg { background-color: #dcfce7; border-color: #4ade80; } 
         .weekend-bg { background-color: #f1f5f9; border-color: #cbd5e1; } 
+        
+        /* Rahmen wenn der Pinsel-Modus aktiv ist */
+        .paint-mode-active { border: 2px dashed #6366f1 !important; background-color: #eef2ff !important; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased pb-24">
@@ -114,9 +117,51 @@
                 <button onclick="changeMonth(1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
+            <!-- NEU: Dienstplaner Werkzeuge -->
+            <div>
+                <button onclick="togglePlanner()" class="w-full bg-indigo-50 text-indigo-700 font-bold py-3 px-4 rounded-xl text-sm flex justify-center items-center gap-2 border border-indigo-100 shadow-sm transition-colors hover:bg-indigo-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    Dienstplaner öffnen
+                </button>
+            </div>
+
+            <div id="planner-tools" class="hidden bg-white p-4 rounded-2xl shadow-sm border border-indigo-200 space-y-4">
+                
+                <!-- Tool 1: Paint Mode -->
+                <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <h4 class="font-bold text-indigo-800 text-xs mb-2">1. Schnell-Zuweisung (Zeichen-Modus)</h4>
+                    <p class="text-[10px] text-indigo-600 mb-2 leading-tight">Wählen Sie eine Schicht und tippen Sie einfach auf die Tage im Kalender, um sie einzutragen.</p>
+                    <div class="flex gap-2 items-center">
+                        <select id="paint-template" class="flex-grow p-2 text-xs rounded-lg border border-indigo-200 bg-white focus:outline-none"></select>
+                        <button id="btn-paint-mode" onclick="togglePaintMode()" class="bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors">Aktivieren</button>
+                    </div>
+                </div>
+
+                <!-- Tool 2: Wochen-Muster -->
+                <div class="p-3 border border-gray-200 rounded-xl bg-gray-50">
+                    <h4 class="font-bold text-gray-700 text-xs mb-2">2. Feste Woche (Aktueller Monat)</h4>
+                    <p class="text-[10px] text-gray-500 mb-3 leading-tight">Füllt den kompletten Monat mit diesem Muster.</p>
+                    
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] mb-3">
+                        <div class="flex items-center justify-between"><span class="font-bold text-gray-600">Mo</span><select id="pat-1" class="w-24 p-1 border rounded bg-white pattern-select"></select></div>
+                        <div class="flex items-center justify-between"><span class="font-bold text-gray-600">Di</span><select id="pat-2" class="w-24 p-1 border rounded bg-white pattern-select"></select></div>
+                        <div class="flex items-center justify-between"><span class="font-bold text-gray-600">Mi</span><select id="pat-3" class="w-24 p-1 border rounded bg-white pattern-select"></select></div>
+                        <div class="flex items-center justify-between"><span class="font-bold text-gray-600">Do</span><select id="pat-4" class="w-24 p-1 border rounded bg-white pattern-select"></select></div>
+                        <div class="flex items-center justify-between"><span class="font-bold text-gray-600">Fr</span><select id="pat-5" class="w-24 p-1 border rounded bg-white pattern-select"></select></div>
+                        <div class="flex items-center justify-between"><span class="font-bold text-gray-400">Sa</span><select id="pat-6" class="w-24 p-1 border rounded bg-white pattern-select"></select></div>
+                        <div class="flex items-center justify-between"><span class="font-bold text-red-400">So</span><select id="pat-0" class="w-24 p-1 border rounded bg-white pattern-select"></select></div>
+                    </div>
+                    
+                    <label class="flex items-center gap-2 text-xs text-gray-700 mb-3 cursor-pointer">
+                        <input type="checkbox" id="pat-overwrite" class="w-4 h-4 rounded text-indigo-600"> 
+                        Vorhandene Einträge überschreiben
+                    </label>
+                    <button onclick="applyPattern()" class="w-full bg-gray-800 text-white py-2.5 rounded-xl text-xs font-bold active:scale-95 transition-transform">Muster eintragen</button>
+                </div>
+            </div>
+
             <!-- Kalender Grid -->
-            <div class="bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-                <!-- 8 Spalten: KW + 7 Wochentage -->
+            <div id="calendar-container" class="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 transition-all duration-300">
                 <div class="grid grid-cols-8 gap-1 mb-1">
                     <div class="text-center text-[10px] font-bold text-blue-400">KW</div>
                     <div class="text-center text-[10px] font-bold text-gray-400">Mo</div>
@@ -129,7 +174,6 @@
                 </div>
                 <div id="month-calendar-grid" class="grid grid-cols-8 gap-1"></div>
                 
-                <!-- Legende -->
                 <div class="flex gap-3 justify-center mt-3 pt-2 border-t border-gray-100 text-[10px] text-gray-500">
                     <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#fef08a] border border-[#eab308]"></div>Feiertag</span>
                     <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#dcfce7] border border-[#4ade80]"></div>Ferien</span>
@@ -178,11 +222,10 @@
                 </div>
             </div>
 
-            <!-- Feiertage & Ferien Konfiguration -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
                 <h3 class="font-bold text-gray-800">Feiertage & Ferien laden</h3>
                 <p class="text-[11px] text-gray-500">Wählen Sie Ihr Bundesland. Die App lädt die Daten für das im Kalender ausgewählte Jahr.</p>
-                <select id="state-select" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 text-sm">
+                <select id="state-select" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 text-sm focus:outline-none">
                     <option value="BW">Baden-Württemberg</option>
                     <option value="BY">Bayern</option>
                     <option value="BE">Berlin</option>
@@ -205,27 +248,26 @@
                 </button>
             </div>
 
-            <!-- Vorlagen -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                 <h3 class="font-bold text-gray-800">Neue Vorlage</h3>
-                <input type="text" id="tpl-name" placeholder="Name (z.B. Frühschicht)" class="w-full p-3 bg-gray-50 rounded-xl border text-sm">
+                <input type="text" id="tpl-name" placeholder="Name (z.B. Frühschicht)" class="w-full p-3 bg-gray-50 rounded-xl border text-sm focus:outline-none">
                 
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-[10px] text-gray-500 mb-1">Beginn</label>
-                        <input type="time" id="tpl-start" class="w-full p-2 bg-gray-50 border rounded-lg text-sm">
+                        <input type="time" id="tpl-start" class="w-full p-2 bg-gray-50 border rounded-lg text-sm focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-[10px] text-gray-500 mb-1">Ende</label>
-                        <input type="time" id="tpl-end" class="w-full p-2 bg-gray-50 border rounded-lg text-sm">
+                        <input type="time" id="tpl-end" class="w-full p-2 bg-gray-50 border rounded-lg text-sm focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-[10px] text-gray-500 mb-1">Pause (Min)</label>
-                        <input type="number" id="tpl-pause" placeholder="30" value="30" class="w-full p-2 bg-gray-50 border rounded-lg text-sm">
+                        <input type="number" id="tpl-pause" placeholder="30" value="30" class="w-full p-2 bg-gray-50 border rounded-lg text-sm focus:outline-none">
                     </div>
                 </div>
                 
-                <button onclick="saveTemplate()" class="w-full bg-gray-800 text-white font-bold py-2 rounded-xl text-sm">Vorlage speichern</button>
+                <button onclick="saveTemplate()" class="w-full bg-gray-800 text-white font-bold py-3 rounded-xl text-sm transition-transform active:scale-95">Vorlage speichern</button>
                 <div id="templates-list" class="space-y-2 pt-2"></div>
             </div>
         </section>
@@ -251,16 +293,14 @@
     </nav>
 
     <script>
-        // --- Service Worker ---
         if ('serviceWorker' in navigator) { 
             window.addEventListener('load', () => { 
                 navigator.serviceWorker.register('sw.js').catch(err => {
-                    console.log('Hinweis: Service Worker (Offline-Modus) ist in dieser Vorschau deaktiviert.', err);
+                    console.log('SW in Preview inaktiv. Auf GitHub läufts.');
                 });
             }); 
         }
         
-        // --- Google Drive Logic ---
         const CLIENT_ID = 'IHRE_CLIENT_ID_HIER_EINTRAGEN.apps.googleusercontent.com'; 
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -316,7 +356,6 @@
         }
         window.onload = function() { if(window.gapi) gapiLoaded(); };
 
-
         // --- App Daten ---
         let currentDate = new Date();
         let viewMonthDate = new Date();
@@ -326,6 +365,8 @@
         let monthlyOfficialSaldo = JSON.parse(localStorage.getItem('az_monthlyOfficial')) || {};
         let holidays = JSON.parse(localStorage.getItem('az_holidays')) || {};
         let schoolHolidays = JSON.parse(localStorage.getItem('az_schoolHolidays')) || {};
+        
+        let isPaintMode = false; // Neuer Status für Planer
 
         document.getElementById('global-target').value = globalTarget;
 
@@ -345,6 +386,10 @@
             document.getElementById('view-' + tabId).classList.add('active');
             const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => btn.getAttribute('onclick').includes(tabId));
             if(activeBtn) activeBtn.classList.add('text-blue-600');
+            
+            // Verlasse Paint-Mode wenn Tab gewechselt wird
+            if(tabId !== 'month' && isPaintMode) togglePaintMode();
+            
             if(tabId === 'month') renderMonthView();
         }
 
@@ -356,7 +401,6 @@
             return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
         }
 
-        // --- Feiertage & Ferien API Logik ---
         async function updateHolidays() {
             const state = document.getElementById('state-select').value;
             const year = viewMonthDate.getFullYear(); 
@@ -411,6 +455,36 @@
             }
         }
 
+        // --- Hilfsfunktion für Berechnungen ---
+        function timeToDecimal(timeStr) {
+            if (!timeStr) return 0;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours + (minutes / 60);
+        }
+
+        function calculateNetForValues(start, end, pauseMin) {
+            if (!start || !end) return 0;
+            let startDec = timeToDecimal(start);
+            let endDec = timeToDecimal(end);
+            if (endDec < startDec) endDec += 24;
+            return Math.max(0, endDec - startDec - ((parseFloat(pauseMin)||0) / 60));
+        }
+
+        function calculateNet() {
+            const start = document.getElementById('time-start').value;
+            const end = document.getElementById('time-end').value;
+            const pauseMinutes = document.getElementById('time-pause').value;
+            const target = parseFloat(document.getElementById('time-target').value) || 0;
+            
+            let netDecimal = calculateNetForValues(start, end, pauseMinutes);
+            
+            document.getElementById('net-hours').innerText = netDecimal.toFixed(2);
+            const saldo = netDecimal - target;
+            const el = document.getElementById('day-saldo');
+            el.innerText = (saldo > 0 ? '+' : '') + saldo.toFixed(2) + ' h';
+            el.className = saldo > 0 ? "text-xl font-bold text-green-500" : (saldo < 0 ? "text-xl font-bold text-red-500" : "text-xl font-bold text-gray-400");
+        }
+
         // --- Tageslogik ---
         function changeDate(days) {
             currentDate.setDate(currentDate.getDate() + days);
@@ -425,7 +499,7 @@
             
             document.getElementById('time-start').value = data.start || '';
             document.getElementById('time-end').value = data.end || '';
-            document.getElementById('time-pause').value = data.pause || '';
+            document.getElementById('time-pause').value = data.pause !== undefined ? data.pause : '';
             
             const holidayName = holidays[dateStr];
             const vacationName = schoolHolidays[dateStr];
@@ -436,38 +510,13 @@
             if(holidayName) { holEl.innerText = holidayName; holEl.classList.remove('hidden'); } else { holEl.classList.add('hidden'); }
             if(vacationName) { vacEl.innerText = vacationName; vacEl.classList.remove('hidden'); } else { vacEl.classList.add('hidden'); }
 
-            if (holidayName && !workData[dateStr]) {
+            if (holidayName && (!workData[dateStr] || data.target === undefined)) {
                 document.getElementById('time-target').value = 0;
             } else {
                 document.getElementById('time-target').value = data.target !== undefined ? data.target : globalTarget;
             }
             
             calculateNet(); renderTemplates();
-        }
-
-        function timeToDecimal(timeStr) {
-            if (!timeStr) return 0;
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            return hours + (minutes / 60);
-        }
-
-        function calculateNet() {
-            const start = document.getElementById('time-start').value;
-            const end = document.getElementById('time-end').value;
-            const pauseMinutes = parseFloat(document.getElementById('time-pause').value) || 0;
-            const target = parseFloat(document.getElementById('time-target').value) || 0;
-            let netDecimal = 0;
-            if (start && end) {
-                let startDec = timeToDecimal(start);
-                let endDec = timeToDecimal(end);
-                if (endDec < startDec) endDec += 24;
-                netDecimal = Math.max(0, endDec - startDec - (pauseMinutes / 60));
-            }
-            document.getElementById('net-hours').innerText = netDecimal.toFixed(2);
-            const saldo = netDecimal - target;
-            const el = document.getElementById('day-saldo');
-            el.innerText = (saldo > 0 ? '+' : '') + saldo.toFixed(2) + ' h';
-            el.className = saldo > 0 ? "text-xl font-bold text-green-500" : (saldo < 0 ? "text-xl font-bold text-red-500" : "text-xl font-bold text-gray-400");
         }
 
         function saveDay() {
@@ -483,8 +532,123 @@
             const btn = document.querySelector('#view-daily button.bg-blue-600');
             const oldText = btn.innerText; btn.innerText = "Gespeichert!"; btn.classList.add('bg-green-600');
             setTimeout(() => { btn.innerText = oldText; btn.classList.remove('bg-green-600'); }, 1500);
-            renderMonthView(); // Update Kalender sofort
+            renderMonthView(); 
         }
+
+        // --- DIENSTPLANER LOGIK (NEU) ---
+        function togglePlanner() {
+            const el = document.getElementById('planner-tools');
+            el.classList.toggle('hidden');
+        }
+
+        function togglePaintMode() {
+            isPaintMode = !isPaintMode;
+            const btn = document.getElementById('btn-paint-mode');
+            const container = document.getElementById('calendar-container');
+            
+            if (isPaintMode) {
+                btn.innerText = "Modus aktiv (Beenden)";
+                btn.classList.remove('bg-indigo-600');
+                btn.classList.add('bg-red-500');
+                container.classList.add('paint-mode-active');
+            } else {
+                btn.innerText = "Aktivieren";
+                btn.classList.add('bg-indigo-600');
+                btn.classList.remove('bg-red-500');
+                container.classList.remove('paint-mode-active');
+            }
+        }
+
+        function applyTemplateToDate(dateStr, tplId) {
+            if (!tplId || tplId === "") return; // Nichts tun
+            
+            if (tplId === "delete") {
+                delete workData[dateStr];
+                saveToLocalStorage();
+                return;
+            }
+            
+            const t = templates.find(x => x.id.toString() === tplId.toString());
+            if (t) {
+                const isHoliday = !!holidays[dateStr];
+                const existingData = workData[dateStr] || {};
+                
+                // Behalte das vorhandene Target, oder nutze 0 an Feiertagen, sonst Global
+                let target = existingData.target !== undefined ? existingData.target : (isHoliday ? 0 : globalTarget);
+                let net = calculateNetForValues(t.start, t.end, t.pause);
+                
+                workData[dateStr] = {
+                    start: t.start || '',
+                    end: t.end || '',
+                    pause: t.pause !== undefined ? t.pause : 30,
+                    target: target,
+                    net: net
+                };
+                saveToLocalStorage();
+            }
+        }
+
+        function applyPattern() {
+            const overwrite = document.getElementById('pat-overwrite').checked;
+            
+            // Hole Auswahl für Wochentage (0=So, 1=Mo... 6=Sa)
+            const pattern = {
+                0: document.getElementById('pat-0').value,
+                1: document.getElementById('pat-1').value,
+                2: document.getElementById('pat-2').value,
+                3: document.getElementById('pat-3').value,
+                4: document.getElementById('pat-4').value,
+                5: document.getElementById('pat-5').value,
+                6: document.getElementById('pat-6').value
+            };
+
+            const year = viewMonthDate.getFullYear();
+            const month = viewMonthDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            let changesMade = 0;
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(year, month, d);
+                const dayOfWeek = dateObj.getDay(); 
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                
+                const selectedTplId = pattern[dayOfWeek];
+                
+                if (selectedTplId && selectedTplId !== "") {
+                    // Check ob überschrieben werden darf
+                    const hasEntry = workData[dateStr] && workData[dateStr].start;
+                    if (!hasEntry || overwrite) {
+                        applyTemplateToDate(dateStr, selectedTplId);
+                        changesMade++;
+                    }
+                }
+            }
+
+            if (changesMade > 0) {
+                renderMonthView();
+                alert(`${changesMade} Tage erfolgreich geplant!`);
+            } else {
+                alert("Keine Änderungen vorgenommen (evtl. Haken bei 'Überschreiben' setzen).");
+            }
+        }
+
+        function updatePlannerDropdowns() {
+            let optionsHTML = `<option value="">- Frei / Nichts -</option>`;
+            templates.forEach(t => {
+                optionsHTML += `<option value="${t.id}">${t.name} (${t.start}-${t.end})</option>`;
+            });
+            
+            // Pinsel Dropdown (braucht Löschen-Option)
+            document.getElementById('paint-template').innerHTML = optionsHTML + `<option value="delete" class="text-red-500 font-bold">🗑️ Tag löschen</option>`;
+            
+            // Wochen-Muster Dropdowns
+            for(let i=0; i<=6; i++) {
+                const el = document.getElementById(`pat-${i}`);
+                if(el) el.innerHTML = optionsHTML;
+            }
+        }
+
 
         // --- Kalender Logik ---
         function changeMonth(delta) {
@@ -543,12 +707,24 @@
                 const cell = document.createElement('div');
                 
                 let baseClass = 'bg-white border-gray-200';
-                if (holiday) baseClass = 'holiday-bg';
-                else if (vacation) baseClass = 'vacation-bg';
-                else if (isWeekend) baseClass = 'weekend-bg';
+                if (holiday) baseClass = 'holiday-bg border-yellow-300 shadow-inner';
+                else if (vacation) baseClass = 'vacation-bg border-green-300';
+                else if (isWeekend) baseClass = 'weekend-bg border-gray-300 shadow-inner';
 
                 cell.className = `border rounded-lg p-1 min-h-[65px] flex flex-col cursor-pointer transition-transform hover:scale-105 active:scale-95 shadow-sm ${baseClass}`;
-                cell.onclick = () => { document.getElementById('date-picker').value = dateStr; switchTab('daily'); loadDayData(); };
+                
+                // NEU: Unterscheide Klickverhalten je nach Modus
+                cell.onclick = () => { 
+                    if(isPaintMode) {
+                        const tplId = document.getElementById('paint-template').value;
+                        applyTemplateToDate(dateStr, tplId);
+                        renderMonthView(); // Neuladen
+                    } else {
+                        document.getElementById('date-picker').value = dateStr; 
+                        switchTab('daily'); 
+                        loadDayData(); 
+                    }
+                };
                 
                 let dayNumColor = dayOfWeek === 0 ? 'text-red-600' : (dayOfWeek === 6 ? 'text-gray-600' : 'text-gray-800');
 
@@ -621,7 +797,7 @@
             document.getElementById('total-saldo').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + ' h';
         }
 
-        // --- Restliche Hilfsfunktionen ---
+        // --- Vorlagen Basis Logik ---
         function formatDate(date) { return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0'); }
         function saveGlobalTarget() { globalTarget = parseFloat(document.getElementById('global-target').value); saveToLocalStorage(); }
         function saveOfficialSaldo() { 
@@ -687,6 +863,8 @@
                 div.innerHTML = `<div><span class="font-bold block text-gray-700">${t.name}</span><span class="text-gray-500">${t.start || '?'} - ${t.end || '?'} (${pauseText})</span></div><button class="text-red-400 hover:bg-red-50 p-2 rounded-lg transition-colors" onclick="templates=templates.filter(x=>x.id!=${t.id});saveToLocalStorage();renderTemplates();"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
                 l.appendChild(div);
             });
+            
+            updatePlannerDropdowns(); // Dropdowns im Planer aktualisieren
         }
 
         initDailyView();
