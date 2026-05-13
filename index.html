@@ -67,11 +67,11 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-gray-500 mb-1.5 ml-1">Beginn</label>
-                        <input type="time" id="time-start" class="w-full p-3.5 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-xl font-black text-gray-800 shadow-inner" onchange="calculateNet()">
+                        <input type="time" id="time-start" class="w-full p-3.5 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-xl font-black text-gray-800 shadow-inner" onchange="autoSuggestPause()">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-500 mb-1.5 ml-1">Ende</label>
-                        <input type="time" id="time-end" class="w-full p-3.5 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-xl font-black text-gray-800 shadow-inner" onchange="calculateNet()">
+                        <input type="time" id="time-end" class="w-full p-3.5 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-xl font-black text-gray-800 shadow-inner" onchange="autoSuggestPause()">
                     </div>
                 </div>
 
@@ -468,6 +468,32 @@
             return Math.max(0, endDec - startDec - ((parseFloat(pauseMin)||0) / 60));
         }
 
+        // NEU: Logik nach § 4 Arbeitszeitgesetz (Pause automatisch vorschlagen)
+        function autoSuggestPause() {
+            const start = document.getElementById('time-start').value;
+            const end = document.getElementById('time-end').value;
+
+            if (start && end) {
+                let startDec = timeToDecimal(start);
+                let endDec = timeToDecimal(end);
+                if (endDec < startDec) endDec += 24;
+
+                let grossHours = endDec - startDec;
+                let suggestedPause = 0;
+
+                // ArbZG § 4: > 9h = 45min, > 6h = 30min
+                if (grossHours > 9) {
+                    suggestedPause = 45;
+                } else if (grossHours > 6) {
+                    suggestedPause = 30;
+                }
+
+                document.getElementById('time-pause').value = suggestedPause;
+            }
+            // Danach immer sofort das Netto ausrechnen
+            calculateNet();
+        }
+
         function calculateNet() {
             const start = document.getElementById('time-start').value;
             const end = document.getElementById('time-end').value;
@@ -756,13 +782,10 @@
                 let data = workData[dateStr];
 
                 if (isHoliday) {
-                    // Feiertage heilen, außer sie wurden manuell verändert
                     if (data.target === oldTarget || data.target === 8.0) data.target = 0;
                 } else if (!isNowWorkday) {
-                    // Wochenende heilen, ABER NUR wenn der Nutzer nicht bewusst manuell etwas eingetragen hat!
                     if (data.target === oldTarget || data.target === 8.0) data.target = 0;
                 } else {
-                    // Arbeitstag an neues Soll anpassen (oder heilen, falls es vorher ein freies Wochenende war)
                     if (data.target === oldTarget || data.target === 8.0 || data.target === 0) data.target = newTarget;
                 }
             }
