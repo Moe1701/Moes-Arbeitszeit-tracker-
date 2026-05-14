@@ -1,841 +1,1037 @@
+```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meine Arbeitszeit</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3b82f6">
-    <link rel="apple-touch-icon" href="icon-192.png">
-
+    <title>Zeiterfassung Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
-        ::-webkit-scrollbar { display: none; }
-        * { -ms-overflow-style: none; scrollbar-width: none; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        button, summary { user-select: none; -webkit-user-select: none; }
+        /* Touch-Optimierungen und Verhinderung von Markierungen beim Tippen */
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            user-select: none;
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+        }
+        input, textarea { user-select: text; }
         
-        .holiday-bg { background-color: #fef08a !important; border-color: #eab308 !important; } 
-        .vacation-bg { background-color: #dcfce7 !important; border-color: #4ade80 !important; } 
-        .weekend-bg { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; } 
+        /* Kalender-Zellen Mindesthöhe für bessere Lesbarkeit auf dem Handy */
+        .cal-cell { min-height: 75px; }
         
-        details > summary { list-style: none; }
-        details > summary::-webkit-details-marker { display: none; }
+        /* Etiketten für Feiertage/Ferien */
+        .badge {
+            font-size: 0.6rem;
+            padding: 2px 4px;
+            border-bottom-left-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 90%;
+        }
+        
+        /* Verstecke Scrollbars für sauberes Design */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased pb-[80px]">
+<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- Header -->
-    <header class="bg-blue-600 text-white p-3 shadow-md sticky top-0 z-20 flex justify-center items-center">
-        <h1 class="text-lg font-bold">Zeiterfassung</h1>
+    <!-- Kopfzeile -->
+    <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10 shrink-0">
+        <h1 class="text-xl font-bold" id="app-title">Zeiterfassung</h1>
+        <div id="paint-indicator" class="hidden bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
+            PINSEL AKTIV
+        </div>
     </header>
 
-    <main class="p-3 max-w-md mx-auto">
+    <!-- Hauptinhalt (Scrollbar) -->
+    <main class="flex-1 overflow-y-auto pb-20 relative w-full max-w-2xl mx-auto">
         
-        <!-- ==================== TAB 1: TAGESERFASSUNG ==================== -->
-        <section id="view-daily" class="tab-content active space-y-3">
+        <!-- ================= TAB: HEUTE ================= -->
+        <div id="tab-heute" class="p-4 space-y-4 hidden">
             
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden">
-                <button onclick="changeDate(-1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full z-10 active:scale-95 transition-transform">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+            <!-- Datum-Navigation -->
+            <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm">
+                <button onclick="changeDate(-1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
-                <div class="text-center z-10 flex flex-col items-center">
-                    <input type="date" id="date-picker" class="font-black text-xl text-gray-800 bg-transparent border-none text-center focus:ring-0 p-0" onchange="loadDayData()">
-                    <div class="flex gap-2 mt-0.5">
-                        <span id="holiday-info" class="text-[10px] text-yellow-600 font-bold uppercase tracking-wider hidden"></span>
-                        <span id="vacation-info" class="text-[10px] text-green-600 font-bold uppercase tracking-wider hidden"></span>
-                    </div>
-                </div>
-                <button onclick="changeDate(1)" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full z-10 active:scale-95 transition-transform">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                <input type="date" id="heute-date" class="text-lg font-bold bg-transparent border-none text-center outline-none" onchange="loadDayData()">
+                <button onclick="changeDate(1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
             </div>
 
-            <div id="quick-templates" class="flex gap-2 overflow-x-auto pb-1"></div>
-
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 ml-1">Beginn</label>
-                        <input type="time" id="time-start" class="w-full p-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-lg font-black text-gray-800 shadow-inner" onchange="autoSuggestPause()">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 ml-1">Ende</label>
-                        <input type="time" id="time-end" class="w-full p-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-lg font-black text-gray-800 shadow-inner" onchange="autoSuggestPause()">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 ml-1">Pause (Min)</label>
-                        <input type="number" id="time-pause" placeholder="z.B. 30" class="w-full p-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-base font-bold text-gray-700 shadow-inner" onchange="calculateNet()">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 ml-1">Soll (Std)</label>
-                        <input type="number" step="0.1" id="time-target" class="w-full p-3 bg-blue-50 rounded-xl border-2 border-blue-100 focus:outline-none focus:border-blue-500 text-blue-700 text-base font-black shadow-inner" onchange="calculateNet()">
-                    </div>
-                </div>
-
+            <!-- Netto & Speichern Box (Kompakt nebeneinander) -->
+            <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-blue-500">
                 <div>
-                    <input type="text" id="time-note" placeholder="Bemerkung (optional)..." class="w-full p-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 text-sm font-medium text-gray-700 shadow-inner">
+                    <div class="text-sm text-slate-500 font-semibold mb-1">Netto-Arbeitszeit</div>
+                    <div class="text-5xl font-black text-blue-600" id="heute-netto">0.0h</div>
+                    <div id="heute-diff" class="text-sm font-bold mt-1 text-slate-400">0.0h zum Soll</div>
                 </div>
-
-                <div class="pt-3 border-t-2 border-gray-100 flex justify-between items-center">
-                    <div class="flex flex-col">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Netto / Saldo</p>
-                        <div class="flex items-baseline gap-2">
-                            <p class="text-4xl font-black text-gray-800 leading-none tracking-tight"><span id="net-hours">0.00</span><span class="text-lg font-medium text-gray-400 ml-0.5">h</span></p>
-                            <p id="day-saldo" class="text-lg font-black text-gray-400 leading-none">0.00h</p>
-                        </div>
-                    </div>
-                    <button onclick="saveDay()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition-all active:scale-95 text-base">
-                        Speichern
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- ==================== TAB 2: KALENDER ==================== -->
-        <section id="view-month" class="tab-content space-y-2">
-            
-            <div class="bg-blue-600 text-white py-1.5 px-3 rounded-xl shadow-md flex justify-between items-center">
-                <button onclick="changeMonth(-1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                <h2 id="month-display" class="font-bold text-base">Monat Jahr</h2>
-                <button onclick="changeMonth(1)" class="p-1 hover:bg-blue-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
-            </div>
-
-            <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
-                <div class="grid grid-cols-8 gap-1 mb-1">
-                    <div class="text-center text-[9px] font-bold text-blue-400">KW</div>
-                    <div class="text-center text-[9px] font-bold text-gray-400">Mo</div>
-                    <div class="text-center text-[9px] font-bold text-gray-400">Di</div>
-                    <div class="text-center text-[9px] font-bold text-gray-400">Mi</div>
-                    <div class="text-center text-[9px] font-bold text-gray-400">Do</div>
-                    <div class="text-center text-[9px] font-bold text-gray-400">Fr</div>
-                    <div class="text-center text-[9px] font-bold text-gray-600">Sa</div>
-                    <div class="text-center text-[9px] font-bold text-red-500">So</div>
-                </div>
-                <div id="month-calendar-grid" class="grid grid-cols-8 gap-1"></div>
-                
-                <div class="flex justify-center gap-3 mt-2 pt-2 border-t border-gray-100 text-[9px] text-gray-500">
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#fef08a]"></div>Feiertag</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#dcfce7]"></div>Ferien</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#f1f5f9]"></div>Wochende</span>
-                </div>
-            </div>
-
-            <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 space-y-2.5">
-                <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="bg-gray-50 p-1.5 rounded-xl border border-gray-100 flex flex-col justify-center">
-                        <p class="text-[9px] text-gray-500 uppercase font-bold tracking-wider leading-tight">App<br>(Dieser Monat)</p>
-                        <p class="font-black text-gray-800 text-sm mt-1" id="month-app-saldo">0.00</p>
-                    </div>
-                    <div class="bg-blue-50 p-1.5 rounded-xl border border-blue-200 shadow-inner relative flex flex-col justify-center">
-                        <p class="text-[9px] text-blue-600 uppercase font-black tracking-wider leading-tight">Übertrag<br>(AG Vormonat)</p>
-                        <input type="number" step="0.01" id="official-saldo" class="w-full bg-transparent text-center font-black text-blue-800 focus:outline-none text-sm pt-1" placeholder="0.0" onchange="saveOfficialSaldo()">
-                    </div>
-                    <div class="bg-blue-600 p-1.5 rounded-xl border border-blue-700 flex flex-col justify-center shadow-md">
-                        <p class="text-[9px] text-blue-100 uppercase font-bold tracking-wider leading-tight">Stand<br>Ende Monat</p>
-                        <p class="font-black text-sm text-white mt-1" id="month-diff">0.00</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ==================== TAB 3: PLANER ==================== -->
-        <section id="view-planner" class="tab-content space-y-2">
-            
-            <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-sm flex justify-between items-center">
-                <button onclick="changeMonth(-1)" class="p-1 hover:bg-indigo-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                <h2 id="planner-month-display" class="font-bold text-sm">Monat Jahr</h2>
-                <button onclick="changeMonth(1)" class="p-1 hover:bg-indigo-700 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
-            </div>
-
-            <div class="flex items-center gap-2 bg-indigo-50 p-2 rounded-xl border border-indigo-200 shadow-sm">
-                <span class="text-[11px] font-black text-indigo-800 whitespace-nowrap pl-1">🖌️ Pinsel:</span>
-                <select id="paint-template" class="flex-grow p-2 text-sm font-bold text-indigo-900 rounded-lg border border-indigo-300 bg-white focus:outline-none shadow-inner"></select>
-            </div>
-
-            <details class="bg-white border border-gray-200 rounded-xl shadow-sm group">
-                <summary class="p-3 text-xs font-bold text-gray-700 cursor-pointer outline-none flex justify-between items-center bg-gray-50 rounded-xl group-open:rounded-b-none transition-all">
-                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Feste Muster-Woche</span>
-                    <span class="text-[10px] text-gray-400 font-bold uppercase">Ausklappen ▼</span>
-                </summary>
-                <div class="p-3 border-t border-gray-200 bg-white space-y-3">
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div class="flex items-center gap-2"><span class="w-5 font-bold text-gray-600">Mo</span><select id="pat-1" class="w-full p-1.5 border rounded-lg bg-gray-50 pattern-select font-medium"></select></div>
-                        <div class="flex items-center gap-2"><span class="w-5 font-bold text-gray-600">Di</span><select id="pat-2" class="w-full p-1.5 border rounded-lg bg-gray-50 pattern-select font-medium"></select></div>
-                        <div class="flex items-center gap-2"><span class="w-5 font-bold text-gray-600">Mi</span><select id="pat-3" class="w-full p-1.5 border rounded-lg bg-gray-50 pattern-select font-medium"></select></div>
-                        <div class="flex items-center gap-2"><span class="w-5 font-bold text-gray-600">Do</span><select id="pat-4" class="w-full p-1.5 border rounded-lg bg-gray-50 pattern-select font-medium"></select></div>
-                        <div class="flex items-center gap-2"><span class="w-5 font-bold text-gray-600">Fr</span><select id="pat-5" class="w-full p-1.5 border rounded-lg bg-gray-50 pattern-select font-medium"></select></div>
-                        <div class="flex items-center gap-2"><span class="w-5 font-bold text-gray-400">Sa</span><select id="pat-6" class="w-full p-1.5 border rounded-lg bg-gray-50 pattern-select font-medium"></select></div>
-                        <div class="flex items-center gap-2"><span class="w-5 font-bold text-red-400">So</span><select id="pat-0" class="w-full p-1.5 border rounded-lg bg-gray-50 pattern-select font-medium"></select></div>
-                    </div>
-                    <label class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer pt-1">
-                        <input type="checkbox" id="pat-overwrite" class="w-4 h-4 rounded text-indigo-600"> Überschreiben erlauben
-                    </label>
-                    <button onclick="applyPattern()" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-transform shadow">Gesamten Monat füllen</button>
-                </div>
-            </details>
-
-            <div class="bg-indigo-50/30 p-1.5 rounded-xl border border-indigo-100 shadow-inner">
-                <div class="grid grid-cols-8 gap-0.5 mb-1">
-                    <div class="text-center text-[8px] font-bold text-indigo-400">KW</div>
-                    <div class="text-center text-[8px] font-bold text-gray-500">Mo</div>
-                    <div class="text-center text-[8px] font-bold text-gray-500">Di</div>
-                    <div class="text-center text-[8px] font-bold text-gray-500">Mi</div>
-                    <div class="text-center text-[8px] font-bold text-gray-500">Do</div>
-                    <div class="text-center text-[8px] font-bold text-gray-500">Fr</div>
-                    <div class="text-center text-[8px] font-bold text-gray-400">Sa</div>
-                    <div class="text-center text-[8px] font-bold text-red-400">So</div>
-                </div>
-                <div id="planner-calendar-grid" class="grid grid-cols-8 gap-0.5"></div>
-            </div>
-        </section>
-
-        <!-- ==================== TAB 4: EINSTELLUNGEN ==================== -->
-        <section id="view-settings" class="tab-content space-y-4">
-            
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-                <div>
-                    <h3 class="font-bold text-gray-800 text-sm">Arbeitszeit-Modell</h3>
-                    <p class="text-[10px] text-gray-500 leading-tight">Wochenstunden und reguläre Arbeitstage</p>
-                </div>
-                
-                <div class="flex items-center justify-between bg-blue-50 p-2.5 rounded-xl shadow-inner border border-blue-100">
-                    <span class="text-xs font-bold text-blue-800">Wochenstunden</span>
-                    <div class="flex items-center gap-1">
-                        <input type="number" step="0.5" id="wm-hours" class="w-16 p-1.5 text-center bg-white rounded-lg font-black text-blue-700 text-sm focus:outline-none border border-blue-200" onchange="updateWorkModelPreview()">
-                        <span class="text-xs text-blue-600 font-bold">h</span>
-                    </div>
-                </div>
-
-                <div class="space-y-1.5 pt-1">
-                    <p class="text-[10px] font-bold text-gray-500 uppercase">Reguläre Arbeitstage</p>
-                    <div class="flex justify-between gap-1">
-                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-1" class="peer hidden" value="1" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Mo</div></label>
-                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-2" class="peer hidden" value="2" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Di</div></label>
-                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-3" class="peer hidden" value="3" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Mi</div></label>
-                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-4" class="peer hidden" value="4" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Do</div></label>
-                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-5" class="peer hidden" value="5" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Fr</div></label>
-                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-6" class="peer hidden" value="6" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">Sa</div></label>
-                        <label class="flex-1 cursor-pointer"><input type="checkbox" id="wm-day-0" class="peer hidden" value="0" onchange="updateWorkModelPreview()"><div class="text-center py-2 rounded-lg border border-gray-200 text-[11px] font-bold text-gray-400 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-colors">So</div></label>
-                    </div>
-                </div>
-
-                <button id="btn-save-model" onclick="saveWorkModel()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-sm shadow-md active:scale-95 transition-transform mt-2">
-                    Modell speichern & Anwenden
+                <button onclick="saveDay()" class="bg-blue-600 text-white w-20 h-20 rounded-2xl shadow-lg flex flex-col justify-center items-center active:scale-95 transition-transform">
+                    <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span class="text-sm font-bold">Speichern</span>
                 </button>
             </div>
 
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-                <div>
-                    <h3 class="font-bold text-gray-800 text-sm">Ferien & Feiertage laden</h3>
-                    <p class="text-[10px] text-gray-500">Lädt die Daten für das im Kalender gewählte Jahr.</p>
-                </div>
-                <div class="flex gap-2">
-                    <select id="state-select" class="flex-grow p-2.5 bg-gray-50 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 focus:outline-none shadow-inner">
-                        <option value="BW">Baden-Württemberg</option><option value="BY">Bayern</option><option value="BE">Berlin</option>
-                        <option value="BB">Brandenburg</option><option value="HB">Bremen</option><option value="HH">Hamburg</option>
-                        <option value="HE">Hessen</option><option value="MV">Meck.-Vorpommern</option><option value="NI">Niedersachsen</option>
-                        <option value="NW" selected>Nordrhein-Westfalen</option><option value="RP">Rheinland-Pfalz</option>
-                        <option value="SL">Saarland</option><option value="SN">Sachsen</option><option value="ST">Sachsen-Anhalt</option>
-                        <option value="SH">Schleswig-Holstein</option><option value="TH">Thüringen</option>
-                    </select>
-                    <button onclick="updateHolidays()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-95">Laden</button>
+            <!-- Vorlagen Schnellzugriff -->
+            <div class="space-y-2">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Vorlagen</div>
+                <div class="flex gap-2 overflow-x-auto pb-2" id="heute-templates">
+                    <!-- Wird dynamisch gefüllt -->
                 </div>
             </div>
 
-            <!-- LOKALES BACKUP SYSTEM -->
-            <div class="bg-gray-800 p-4 rounded-2xl shadow-md border border-gray-700 space-y-3 text-white">
-                <div>
-                    <h3 class="font-bold text-sm">Lokales Backup & Transfer</h3>
-                    <p class="text-[10px] text-gray-400 leading-tight mt-1">Übertragen Sie Ihre Daten als Code per WhatsApp, Mail oder Notizen auf ein neues Gerät. Keine Cloud nötig!</p>
+            <!-- Zeiten Eingabe (Größere Felder) -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-3 rounded-xl shadow-sm">
+                    <label class="block text-xs font-bold text-slate-400 mb-1">Beginn</label>
+                    <input type="time" id="heute-begin" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" onchange="autoSuggestBreak(); calculateNetto()">
                 </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm">
+                    <label class="block text-xs font-bold text-slate-400 mb-1">Ende</label>
+                    <input type="time" id="heute-end" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" onchange="autoSuggestBreak(); calculateNetto()">
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                    <label class="block text-xs font-bold text-slate-400 mb-1">Pause (Min)</label>
+                    <input type="number" id="heute-pause" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" onchange="calculateNetto()" placeholder="0">
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                    <label class="block text-xs font-bold text-slate-400 mb-1">Soll (Std)</label>
+                    <input type="number" step="0.1" id="heute-soll" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" onchange="calculateNetto()">
+                </div>
+            </div>
+
+            <!-- Bemerkung Feld -->
+            <div class="bg-white p-3 rounded-xl shadow-sm">
+                <label class="block text-xs font-bold text-slate-400 mb-1">Bemerkung (optional)</label>
+                <input type="text" id="heute-remark" class="w-full text-base bg-slate-50 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" placeholder="Krank, Urlaub, Notizen...">
+            </div>
+
+            <button onclick="clearDay()" class="w-full p-4 mt-2 text-red-500 font-bold bg-red-50 rounded-xl">Eintrag löschen</button>
+
+        </div>
+
+        <!-- ================= TAB: KALENDER ================= -->
+        <div id="tab-kalender" class="p-2 space-y-3 hidden">
+            
+            <!-- Monat Navigation -->
+            <div class="flex justify-between items-center bg-blue-600 text-white p-3 rounded-xl shadow-md">
+                <button onclick="changeMonth(-1)" class="p-2 bg-blue-500 rounded-lg"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <div class="text-lg font-bold" id="cal-month-title">Mai 2026</div>
+                <button onclick="changeMonth(1)" class="p-2 bg-blue-500 rounded-lg"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+            </div>
+
+            <!-- Kalender Grid -->
+            <div class="bg-white p-2 rounded-xl shadow-sm">
+                <div class="grid grid-cols-7 gap-1 mb-1 text-center text-xs font-bold text-slate-400">
+                    <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
+                </div>
+                <div id="cal-grid" class="grid grid-cols-7 gap-1">
+                    <!-- Wird dynamisch generiert -->
+                </div>
+                <div class="mt-3 flex justify-center gap-3 text-[10px] text-slate-400">
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-yellow-300 rounded-full"></div> Feiertag</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-green-200 rounded-full"></div> Ferien</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-slate-100 border border-slate-200 rounded-full"></div> Wochenende</span>
+                </div>
+            </div>
+
+            <!-- Saldo Übersicht (Korrigierte Logik) -->
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4 border border-blue-100">
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="p-3 bg-slate-50 rounded-lg">
+                        <div class="text-xs font-bold text-slate-500">App (Dieser Monat)</div>
+                        <div class="text-xl font-bold" id="saldo-app">0.00 h</div>
+                    </div>
+                    <div class="p-3 bg-blue-50 rounded-lg border border-blue-100 relative">
+                        <div class="text-xs font-bold text-blue-600">Übertrag (AG Vormonat)</div>
+                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-xl font-bold bg-transparent text-center outline-none text-blue-800" value="0" onchange="saveAGSaldo()">
+                        <svg class="w-3 h-3 text-blue-400 absolute top-2 right-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </div>
+                </div>
+                <div class="bg-indigo-600 p-4 rounded-xl text-white flex justify-between items-center shadow-md">
+                    <div>
+                        <div class="text-sm font-bold opacity-90">Stand Ende Monat</div>
+                        <div class="text-xs opacity-75">Übertrag + App-Saldo</div>
+                    </div>
+                    <div class="text-3xl font-black" id="saldo-total">+0.00 h</div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- ================= TAB: PLANER ================= -->
+        <div id="tab-planer" class="p-4 space-y-6 hidden">
+            
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4 border-l-4 border-indigo-500">
+                <h2 class="font-bold text-indigo-700 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+                    Schnell-Zuweisung (Pinsel)
+                </h2>
+                <p class="text-xs text-slate-500">Vorlage wählen, aktivieren und im Kalender auf die Tage tippen.</p>
                 
-                <div class="space-y-2 pt-1">
-                    <button onclick="exportData()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs shadow transition-all flex justify-center items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-                        Backup-Code kopieren / teilen
-                    </button>
+                <select id="paint-template" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold">
+                    <!-- Dynamisch -->
+                </select>
+                
+                <button id="btn-paint-toggle" onclick="togglePaintMode()" class="w-full py-3 rounded-lg font-bold bg-indigo-100 text-indigo-700 transition-colors">
+                    Pinsel Aktivieren
+                </button>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-slate-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Wochen-Muster
+                    </h2>
                     
-                    <div class="relative mt-2">
-                        <textarea id="import-box" rows="2" placeholder="Sicherungscode hier einfügen..." class="w-full p-2 bg-gray-900 rounded-xl border border-gray-600 text-[10px] font-mono text-gray-300 focus:outline-none focus:border-blue-400"></textarea>
-                        <button onclick="importData()" class="absolute bottom-2 right-2 bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] shadow transition-all">Wiederherstellen</button>
+                    <!-- Feiertagsschutz Toggle -->
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <span class="text-xs font-bold text-slate-500">Feiertage schützen</span>
+                        <input type="checkbox" id="protect-holidays" class="sr-only" checked onchange="saveSettings()">
+                        <div class="w-10 h-5 bg-slate-300 rounded-full relative transition-colors" id="toggle-bg">
+                            <div class="w-4 h-4 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform" id="toggle-dot"></div>
+                        </div>
+                    </label>
+                </div>
+                
+                <p class="text-xs text-slate-500 mb-2">Füllt den aktuell im Kalender angezeigten Monat mit diesem Muster.</p>
+
+                <div class="space-y-2" id="pattern-container">
+                    <!-- Mo-So Dropdowns -->
+                </div>
+
+                <div class="flex items-center gap-2 mb-2 mt-4">
+                    <input type="checkbox" id="overwrite-pattern" class="w-4 h-4 text-blue-600 rounded">
+                    <label for="overwrite-pattern" class="text-xs font-bold text-slate-600">Bestehende Einträge überschreiben</label>
+                </div>
+
+                <button onclick="applyPattern()" class="w-full py-3 rounded-lg font-bold bg-blue-600 text-white shadow-md active:bg-blue-700">
+                    Muster im Monat eintragen
+                </button>
+            </div>
+
+        </div>
+
+        <!-- ================= TAB: SETUP ================= -->
+        <div id="tab-setup" class="p-4 space-y-6 hidden">
+            
+            <!-- Arbeitszeitmodell -->
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
+                <h2 class="font-bold text-lg border-b pb-2">Arbeitszeit-Modell</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Vertragl. Wochenstunden</label>
+                        <input type="number" id="set-weekly-hours" class="w-full p-2 bg-slate-50 border rounded-lg font-bold" value="40" onchange="saveSettings()">
                     </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Tägliches Soll (Auto)</label>
+                        <div id="calc-daily-soll" class="p-2 text-blue-600 font-bold bg-blue-50 rounded-lg text-center">8.0 h</div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">Reguläre Arbeitstage</label>
+                    <div class="flex justify-between gap-1">
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500" data-day="1" onclick="toggleWorkDay(1)">Mo</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500" data-day="2" onclick="toggleWorkDay(2)">Di</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500" data-day="3" onclick="toggleWorkDay(3)">Mi</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500" data-day="4" onclick="toggleWorkDay(4)">Do</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500" data-day="5" onclick="toggleWorkDay(5)">Fr</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent" data-day="6" onclick="toggleWorkDay(6)">Sa</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent" data-day="0" onclick="toggleWorkDay(0)">So</button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-2">Änderungen hier aktualisieren automatisch alle Standard-Tage in der Vergangenheit, an denen Sie das Soll nicht manuell überschrieben haben.</p>
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-                <h3 class="font-bold text-gray-800 text-sm">Neue Vorlage</h3>
-                <input type="text" id="tpl-name" placeholder="Name (z.B. Frühschicht)" class="w-full p-3 bg-gray-50 rounded-xl border-2 border-gray-100 text-sm font-bold focus:outline-none focus:border-blue-500 shadow-inner">
-                <div class="grid grid-cols-3 gap-2">
-                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 ml-1">Beginn</label><input type="time" id="tpl-start" class="w-full p-2 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold shadow-inner"></div>
-                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 ml-1">Ende</label><input type="time" id="tpl-end" class="w-full p-2 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold shadow-inner"></div>
-                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 ml-1">Pause (Min)</label><input type="number" id="tpl-pause" value="30" class="w-full p-2 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold shadow-inner text-center"></div>
+            <!-- Vorlagen Verwaltung -->
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
+                <h2 class="font-bold text-lg border-b pb-2">Vorlagen verwalten</h2>
+                <div class="grid grid-cols-4 gap-2">
+                    <input type="text" id="tpl-name" placeholder="Name" class="col-span-4 p-2 bg-slate-50 border rounded-lg text-sm font-bold">
+                    <input type="time" id="tpl-begin" class="col-span-2 p-2 bg-slate-50 border rounded-lg text-sm">
+                    <input type="time" id="tpl-end" class="col-span-2 p-2 bg-slate-50 border rounded-lg text-sm">
+                    <input type="number" id="tpl-pause" placeholder="Pause (Min)" class="col-span-2 p-2 bg-slate-50 border rounded-lg text-sm">
+                    <button onclick="addTemplate()" class="col-span-2 bg-indigo-600 text-white font-bold rounded-lg text-sm">Speichern</button>
                 </div>
-                <button onclick="saveTemplate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm shadow-md active:scale-95 transition-transform mt-1">Vorlage speichern</button>
-                
-                <div class="pt-3 border-t-2 border-gray-100 mt-4">
-                    <p class="text-[10px] font-bold text-gray-400 mb-3 uppercase tracking-wider">Ihre Vorlagen:</p>
-                    <div id="templates-list" class="space-y-2"></div>
+                <div id="setup-templates-list" class="space-y-2 mt-4">
+                    <!-- Vorlagen Liste -->
                 </div>
             </div>
-        </section>
+
+            <!-- Feiertage & Ferien -->
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
+                <h2 class="font-bold text-lg border-b pb-2">Bundesland (Feiertage/Ferien)</h2>
+                <select id="state-select" class="w-full p-3 bg-slate-50 border rounded-lg font-bold" onchange="saveSettings()">
+                    <option value="BW">Baden-Württemberg</option>
+                    <option value="BY">Bayern</option>
+                    <option value="BE">Berlin</option>
+                    <option value="BB">Brandenburg</option>
+                    <option value="HB">Bremen</option>
+                    <option value="HH">Hamburg</option>
+                    <option value="HE">Hessen</option>
+                    <option value="MV">Mecklenburg-Vorpommern</option>
+                    <option value="NI">Niedersachsen</option>
+                    <option value="NW">Nordrhein-Westfalen</option>
+                    <option value="RP">Rheinland-Pfalz</option>
+                    <option value="SL">Saarland</option>
+                    <option value="SN">Sachsen</option>
+                    <option value="ST">Sachsen-Anhalt</option>
+                    <option value="SH">Schleswig-Holstein</option>
+                    <option value="TH">Thüringen</option>
+                </select>
+                <button onclick="fetchHolidays()" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-lg shadow-sm">
+                    Jahresdaten jetzt aktualisieren
+                </button>
+            </div>
+
+            <!-- Lokales Backup (Messenger) -->
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
+                <h2 class="font-bold text-lg border-b pb-2 text-blue-800">Lokales Backup</h2>
+                <p class="text-xs text-slate-500">Ihre Daten bleiben sicher auf diesem Gerät. Um sie auf ein neues Handy zu übertragen, generieren Sie hier einen Backup-Code.</p>
+                
+                <button onclick="exportData()" class="w-full py-3 bg-slate-800 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    Backup-Code kopieren / teilen
+                </button>
+                
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Code hier einfügen zum Wiederherstellen:</label>
+                    <textarea id="import-data" class="w-full p-2 bg-slate-50 border rounded-lg text-xs font-mono h-20" placeholder="eyJkYXRh..."></textarea>
+                    <button onclick="importData()" class="w-full mt-2 py-3 bg-red-100 text-red-700 font-bold rounded-lg">
+                        Daten Wiederherstellen
+                    </button>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="pt-8">
+                <button onclick="if(confirm('Wirklich ALLES löschen? Dieser Schritt kann nicht rückgängig gemacht werden!')) { localStorage.clear(); location.reload(); }" class="w-full py-3 text-red-400 font-bold text-sm">
+                    App komplett zurücksetzen
+                </button>
+            </div>
+
+        </div>
 
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 pb-safe z-30 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
-        <div class="grid grid-cols-4 h-[68px] max-w-md mx-auto">
-            <button onclick="switchTab('daily')" class="nav-btn active flex flex-col items-center justify-center w-full h-full text-blue-600 transition-colors">
-                <svg class="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span class="text-[10px] font-bold">Heute</span>
-            </button>
-            <button onclick="switchTab('month')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 transition-colors">
-                <svg class="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span class="text-[10px] font-bold">Kalender</span>
-            </button>
-            <button onclick="switchTab('planner')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 transition-colors">
-                <svg class="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                <span class="text-[10px] font-bold">Planer</span>
-            </button>
-            <button onclick="switchTab('settings')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 transition-colors">
-                <svg class="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span class="text-[10px] font-bold">Setup</span>
-            </button>
-        </div>
+    <nav class="bg-white border-t border-slate-200 flex justify-around p-2 pb-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4" data-target="tab-heute">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="text-[10px] font-bold">Heute</span>
+        </button>
+        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4" data-target="tab-kalender">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span class="text-[10px] font-bold">Kalender</span>
+        </button>
+        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4" data-target="tab-planer">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            <span class="text-[10px] font-bold">Planer</span>
+        </button>
+        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4" data-target="tab-setup">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span class="text-[10px] font-bold">Setup</span>
+        </button>
     </nav>
 
     <script>
-        if ('serviceWorker' in navigator) { 
-            window.addEventListener('load', () => { 
-                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Preview Mode'));
-            }); 
-        }
+        // --- STATUS & DATEN ---
+        let db = {
+            entries: {},
+            templates: [
+                { id: 1, name: "Früh", begin: "06:00", end: "14:30", pause: 30 },
+                { id: 2, name: "Spät", begin: "14:00", end: "22:30", pause: 30 }
+            ],
+            settings: {
+                state: "NW",
+                agSaldo: 0.0,
+                model: {
+                    hours: 40,
+                    days: [1, 2, 3, 4, 5] // Mo-Fr
+                },
+                protectHolidays: true
+            },
+            holidays: {} // Format: "YYYY-MM-DD": { name, isSchool }
+        };
 
-        // --- App Daten ---
-        let currentDate = new Date();
-        let viewMonthDate = new Date();
-        let workData = JSON.parse(localStorage.getItem('az_workData')) || {};
-        let templates = JSON.parse(localStorage.getItem('az_templates')) || [];
-        let monthlyOfficialSaldo = JSON.parse(localStorage.getItem('az_monthlyOfficial')) || {};
-        let holidays = JSON.parse(localStorage.getItem('az_holidays')) || {};
-        let schoolHolidays = JSON.parse(localStorage.getItem('az_schoolHolidays')) || {};
-        
-        let workModel = JSON.parse(localStorage.getItem('az_workModel')) || null;
-        if (!workModel) {
-            let oldTarget = parseFloat(localStorage.getItem('az_globalTarget'));
-            workModel = { hours: oldTarget ? oldTarget * 5 : 40, days: [1,2,3,4,5] };
-        }
+        let currentViewDate = new Date(); // Für Kalender/Planer Ansicht
+        let selectedDate = new Date();    // Für "Heute" Tab Ansicht
+        let paintModeActive = false;
 
-        function saveToLocalStorage() {
-            localStorage.setItem('az_workData', JSON.stringify(workData));
-            localStorage.setItem('az_templates', JSON.stringify(templates));
-            localStorage.setItem('az_workModel', JSON.stringify(workModel));
-            localStorage.setItem('az_monthlyOfficial', JSON.stringify(monthlyOfficialSaldo));
-            localStorage.setItem('az_holidays', JSON.stringify(holidays));
-            localStorage.setItem('az_schoolHolidays', JSON.stringify(schoolHolidays));
-        }
-
-        // --- BACKUP & TRANSFER SYSTEM ---
-        async function exportData() {
-            const allData = {
-                workData, templates, workModel, monthlyOfficialSaldo, holidays, schoolHolidays
-            };
-            // Daten in einen kompakten Base64 String umwandeln
-            const backupCode = btoa(encodeURIComponent(JSON.stringify(allData)));
-            
-            // Versuchen das native Share-Menü des Handys zu öffnen
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'Arbeitszeit Backup',
-                        text: backupCode,
-                    });
-                } catch (err) {
-                    copyToClipboard(backupCode);
-                }
-            } else {
-                copyToClipboard(backupCode);
+        // --- INIT ---
+        function init() {
+            // Lade Daten aus localStorage
+            const saved = localStorage.getItem('zeiterfassung_db');
+            if (saved) {
+                try { 
+                    db = { ...db, ...JSON.parse(saved) }; 
+                    if(!db.settings.model) db.settings.model = { hours: 40, days: [1,2,3,4,5] }; // Fallback alt
+                    if(db.settings.protectHolidays === undefined) db.settings.protectHolidays = true;
+                } catch(e) { console.error("Parse Error"); }
             }
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert("Backup-Code in die Zwischenablage kopiert! Fügen Sie ihn z.B. in eine Mail an sich selbst ein.");
-            }).catch(() => {
-                prompt("Bitte diesen Code kopieren:", text);
-            });
-        }
-
-        function importData() {
-            const code = document.getElementById('import-box').value.trim();
-            if(!code) return alert("Bitte fügen Sie einen Backup-Code ein.");
             
-            try {
-                const decoded = JSON.parse(decodeURIComponent(atob(code)));
-                if(decoded.workData) {
-                    if(confirm("ACHTUNG: Dies überschreibt alle aktuellen Daten auf diesem Gerät. Fortfahren?")) {
-                        workData = decoded.workData || {};
-                        templates = decoded.templates || [];
-                        workModel = decoded.workModel || { hours: 40, days: [1,2,3,4,5] };
-                        monthlyOfficialSaldo = decoded.monthlyOfficialSaldo || {};
-                        holidays = decoded.holidays || {};
-                        schoolHolidays = decoded.schoolHolidays || {};
-                        
-                        saveToLocalStorage();
-                        document.getElementById('import-box').value = '';
-                        alert("Daten erfolgreich wiederhergestellt!");
-                        window.location.reload();
-                    }
-                } else {
-                    alert("Ungültiger Backup-Code.");
-                }
-            } catch(e) {
-                alert("Code konnte nicht gelesen werden. Evtl. unvollständig kopiert?");
-            }
-        }
-
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('text-blue-600', 'active', 'text-indigo-600');
-                if(tabId === 'planner') {
-                   if(el.getAttribute('onclick').includes(tabId)) el.classList.add('text-indigo-600', 'active');
-                   else el.classList.add('text-gray-400');
-                } else {
-                   if(el.getAttribute('onclick').includes(tabId)) el.classList.add('text-blue-600', 'active');
-                   else el.classList.add('text-gray-400');
-                }
-            });
-            document.getElementById('view-' + tabId).classList.add('active');
-            if(tabId === 'month' || tabId === 'planner') renderMonthViews();
-        }
-
-        function getISOWeekNumber(d) {
-            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            const dayNum = date.getUTCDay() || 7;
-            date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
-            return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
-        }
-
-        async function updateHolidays() {
-            const state = document.getElementById('state-select').value;
-            const year = viewMonthDate.getFullYear(); 
-            const btn = document.querySelector('[onclick="updateHolidays()"]');
-            btn.innerText = "Lade...";
+            // Setze heutiges Datum
+            document.getElementById('heute-date').value = selectedDate.toISOString().split('T')[0];
             
-            try {
-                const resF = await fetch(`https://openholidaysapi.org/PublicHolidays?countryIsoCode=DE&languageIsoCode=DE&validFrom=${year}-01-01&validTo=${year}-12-31&subdivisionCode=DE-${state}`);
-                const dataF = await resF.json();
-                if (Array.isArray(dataF)) dataF.forEach(h => { holidays[h.startDate] = h.name[0].text; });
+            updateSetupUI();
+            loadDayData();
+            switchTab('heute');
+        }
 
-                const resS = await fetch(`https://openholidaysapi.org/SchoolHolidays?countryIsoCode=DE&languageIsoCode=DE&validFrom=${year}-01-01&validTo=${year}-12-31&subdivisionCode=DE-${state}`);
-                const dataS = await resS.json();
-                if (Array.isArray(dataS)) {
-                    dataS.forEach(ferien => {
-                        let loopDate = new Date(ferien.startDate);
-                        let endDate = new Date(ferien.endDate);
-                        const name = ferien.name[0].text;
-                        while(loopDate <= endDate) {
-                            schoolHolidays[formatDate(loopDate)] = name;
-                            loopDate.setDate(loopDate.getDate() + 1);
-                        }
-                    });
-                }
-                saveToLocalStorage();
-                btn.className = "bg-green-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md";
-                btn.innerText = "OK!";
-                setTimeout(() => { btn.className = "bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all"; btn.innerText = "Laden"; }, 2000);
-                renderMonthViews(); loadDayData();
-            } catch (e) {
-                btn.className = "bg-red-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md"; btn.innerText = "Fehler";
-            }
+        function saveData() {
+            localStorage.setItem('zeiterfassung_db', JSON.stringify(db));
+        }
+
+        // --- HILFSFUNKTIONEN ---
+        function getDailySoll(dateString) {
+            let date = new Date(dateString);
+            let day = date.getDay(); // 0 = So, 1 = Mo ...
+            
+            // Gesetzliche Feiertage geben 0h Soll, wenn "Feiertage schützen" nicht aktiv beachtet werden muss?
+            // Nein, laut Arbeitsrecht werden Feiertage bezahlt. Aber um Minusstunden am Wochenende zu vermeiden:
+            // Wir machen es simpel: Ist es ein regulärer Arbeitstag laut Profil?
+            let isWorkDay = db.settings.model.days.includes(day);
+            
+            if (!isWorkDay) return 0.0;
+            
+            let hoursPerDay = db.settings.model.hours / db.settings.model.days.length;
+            return parseFloat(hoursPerDay.toFixed(2));
         }
 
         function timeToDecimal(timeStr) {
             if (!timeStr) return 0;
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            return hours + (minutes / 60);
+            let [h, m] = timeStr.split(':').map(Number);
+            return h + (m / 60);
         }
 
-        function calculateNetForValues(start, end, pauseMin) {
-            if (!start || !end) return 0;
-            let startDec = timeToDecimal(start);
-            let endDec = timeToDecimal(end);
-            if (endDec < startDec) endDec += 24;
-            return Math.max(0, endDec - startDec - ((parseFloat(pauseMin)||0) / 60));
+        function calculateMinutes(begin, end) {
+            if (!begin || !end) return 0;
+            let [h1, m1] = begin.split(':').map(Number);
+            let [h2, m2] = end.split(':').map(Number);
+            let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+            if (diff < 0) diff += 24 * 60; // Nachtschicht
+            return diff;
         }
 
-        function autoSuggestPause() {
-            const start = document.getElementById('time-start').value;
-            const end = document.getElementById('time-end').value;
+        // --- NAVIGATION ---
+        function switchTab(tabName) {
+            document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('text-blue-600');
+                b.classList.add('text-slate-400');
+            });
+            
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-slate-400');
+            document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
+            
+            document.getElementById('app-title').innerText = tabName.charAt(0).toUpperCase() + tabName.slice(1);
 
-            if (start && end) {
-                let startDec = timeToDecimal(start);
-                let endDec = timeToDecimal(end);
-                if (endDec < startDec) endDec += 24;
-
-                let grossHours = endDec - startDec;
-                let suggestedPause = 0;
-
-                if (grossHours > 9) suggestedPause = 45;
-                else if (grossHours > 6) suggestedPause = 30;
-
-                document.getElementById('time-pause').value = suggestedPause;
+            // Tab-spezifische Updates
+            if (tabName === 'kalender') renderCalendar();
+            if (tabName === 'heute') loadDayData();
+            if (tabName === 'planer') {
+                renderPatternDropdowns();
+                renderPaintTemplateDropdown();
+                updateToggleUI();
             }
-            calculateNet();
+            if (tabName !== 'planer' && paintModeActive) {
+                togglePaintMode(true); // Ausschalten wenn Tab verlassen wird
+            }
         }
 
-        function calculateNet() {
-            const start = document.getElementById('time-start').value;
-            const end = document.getElementById('time-end').value;
-            const pauseMinutes = document.getElementById('time-pause').value;
-            const target = parseFloat(document.getElementById('time-target').value) || 0;
-            
-            let netDecimal = calculateNetForValues(start, end, pauseMinutes);
-            document.getElementById('net-hours').innerText = netDecimal.toFixed(2);
-            
-            const saldo = netDecimal - target;
-            const el = document.getElementById('day-saldo');
-            el.innerText = (saldo > 0 ? '+' : '') + saldo.toFixed(2) + ' h';
-            el.className = saldo > 0 ? "text-lg font-black text-green-500 leading-none" : (saldo < 0 ? "text-lg font-black text-red-500 leading-none" : "text-lg font-black text-gray-400 leading-none");
-        }
-
+        // --- HEUTE TAB LOGIK ---
         function changeDate(days) {
-            currentDate.setDate(currentDate.getDate() + days);
-            document.getElementById('date-picker').value = formatDate(currentDate);
+            selectedDate.setDate(selectedDate.getDate() + days);
+            document.getElementById('heute-date').value = selectedDate.toISOString().split('T')[0];
             loadDayData();
         }
 
-        function getDailyTarget(dateObj, dateStr) {
-            if (holidays[dateStr]) return 0;
-            const dayOfWeek = dateObj.getDay();
-            if (workModel.days.includes(dayOfWeek) && workModel.days.length > 0) {
-                return workModel.hours / workModel.days.length;
-            }
-            return 0; 
+        function loadDayData() {
+            let dStr = document.getElementById('heute-date').value;
+            selectedDate = new Date(dStr);
+            let entry = db.entries[dStr] || { begin: '', end: '', pause: '', soll: getDailySoll(dStr), remark: '' };
+            
+            document.getElementById('heute-begin').value = entry.begin;
+            document.getElementById('heute-end').value = entry.end;
+            document.getElementById('heute-pause').value = entry.pause || '';
+            document.getElementById('heute-soll').value = entry.soll;
+            document.getElementById('heute-remark').value = entry.remark || '';
+            
+            renderHeuteTemplates();
+            calculateNetto();
         }
 
-        function loadDayData() {
-            const dateStr = document.getElementById('date-picker').value;
-            currentDate = new Date(dateStr);
-            const data = workData[dateStr] || { start: '', end: '', pause: '', target: undefined, note: '' };
-            
-            document.getElementById('time-start').value = data.start || '';
-            document.getElementById('time-end').value = data.end || '';
-            document.getElementById('time-pause').value = data.pause !== undefined ? data.pause : '';
-            document.getElementById('time-note').value = data.note || '';
-            
-            const holEl = document.getElementById('holiday-info');
-            const vacEl = document.getElementById('vacation-info');
-            if(holidays[dateStr]) { holEl.innerText = holidays[dateStr]; holEl.classList.remove('hidden'); } else { holEl.classList.add('hidden'); }
-            if(schoolHolidays[dateStr]) { vacEl.innerText = "Ferien"; vacEl.classList.remove('hidden'); } else { vacEl.classList.add('hidden'); }
+        // Arbeitsrecht-Logik (Auto Pause)
+        function autoSuggestBreak() {
+            let begin = document.getElementById('heute-begin').value;
+            let end = document.getElementById('heute-end').value;
+            if(!begin || !end) return;
 
-            if (data.target !== undefined) {
-                document.getElementById('time-target').value = data.target;
+            let diffMin = calculateMinutes(begin, end);
+            let suggestedPause = 0;
+            if(diffMin > 9 * 60) suggestedPause = 45;
+            else if(diffMin > 6 * 60) suggestedPause = 30;
+
+            document.getElementById('heute-pause').value = suggestedPause;
+        }
+
+        function calculateNetto() {
+            let begin = document.getElementById('heute-begin').value;
+            let end = document.getElementById('heute-end').value;
+            let pause = parseFloat(document.getElementById('heute-pause').value) || 0;
+            let soll = parseFloat(document.getElementById('heute-soll').value) || 0;
+
+            let nettoStr = "0.0h";
+            let diffStr = "";
+            let isPositive = false;
+
+            if (begin && end) {
+                let bruttoMin = calculateMinutes(begin, end);
+                let nettoStd = (bruttoMin - pause) / 60;
+                if (nettoStd < 0) nettoStd = 0;
+                
+                nettoStr = nettoStd.toFixed(2) + "h";
+                let diff = nettoStd - soll;
+                isPositive = diff >= 0;
+                diffStr = (diff > 0 ? "+" : "") + diff.toFixed(2) + "h " + (diff >= 0 ? "Überstunden" : "Minusstunden");
             } else {
-                document.getElementById('time-target').value = getDailyTarget(currentDate, dateStr);
+                // Nur Soll eingetragen, aber keine Ist-Zeit = Minusstunden in Höhe des Solls
+                if (soll > 0) {
+                    diffStr = "-" + soll.toFixed(2) + "h Minusstunden";
+                } else {
+                    diffStr = "0.00h zum Soll";
+                    isPositive = true;
+                }
             }
-            
-            calculateNet(); renderTemplates();
+
+            document.getElementById('heute-netto').innerText = nettoStr;
+            let diffEl = document.getElementById('heute-diff');
+            diffEl.innerText = diffStr;
+            diffEl.className = "text-sm font-bold mt-1 " + (isPositive ? "text-emerald-500" : "text-red-400");
         }
 
         function saveDay() {
-            const dateStr = document.getElementById('date-picker').value;
-            workData[dateStr] = {
-                start: document.getElementById('time-start').value,
-                end: document.getElementById('time-end').value,
-                pause: document.getElementById('time-pause').value,
-                target: parseFloat(document.getElementById('time-target').value) || 0,
-                net: parseFloat(document.getElementById('net-hours').innerText) || 0,
-                note: document.getElementById('time-note').value
-            };
-            saveToLocalStorage();
-            const btn = document.querySelector('#view-daily button.bg-blue-600');
-            const oldText = btn.innerText; btn.innerText = "Gespeichert!"; btn.classList.add('bg-green-600');
-            setTimeout(() => { btn.innerText = oldText; btn.classList.remove('bg-green-600'); }, 1000);
-            renderMonthViews(); 
+            let dStr = document.getElementById('heute-date').value;
+            let begin = document.getElementById('heute-begin').value;
+            let end = document.getElementById('heute-end').value;
+            let soll = parseFloat(document.getElementById('heute-soll').value) || 0;
+            let pause = parseFloat(document.getElementById('heute-pause').value) || 0;
+            let remark = document.getElementById('heute-remark').value.trim();
+
+            if (!begin && !end && soll === 0 && !remark) {
+                delete db.entries[dStr];
+            } else {
+                db.entries[dStr] = { begin, end, pause, soll, remark };
+            }
+            saveData();
+            
+            // Kleines Feedback
+            let btn = document.querySelector('#tab-heute button[onclick="saveDay()"]');
+            let oldHtml = btn.innerHTML;
+            btn.innerHTML = `<svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-sm font-bold">Gespeichert</span>`;
+            btn.classList.add('bg-emerald-500');
+            btn.classList.remove('bg-blue-600');
+            setTimeout(() => {
+                btn.innerHTML = oldHtml;
+                btn.classList.remove('bg-emerald-500');
+                btn.classList.add('bg-blue-600');
+            }, 1000);
         }
 
-        function applyTemplateToDate(dateStr, tplId) {
-            if (!tplId || tplId === "") return;
-            if (tplId === "delete") { delete workData[dateStr]; saveToLocalStorage(); return; }
+        function clearDay() {
+            document.getElementById('heute-begin').value = '';
+            document.getElementById('heute-end').value = '';
+            document.getElementById('heute-pause').value = '';
+            document.getElementById('heute-remark').value = '';
+            document.getElementById('heute-soll').value = getDailySoll(document.getElementById('heute-date').value);
+            calculateNetto();
+            saveDay();
+        }
+
+        function renderHeuteTemplates() {
+            let c = document.getElementById('heute-templates');
+            c.innerHTML = '';
+            db.templates.forEach(t => {
+                let b = document.createElement('button');
+                b.className = "px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-bold text-sm shadow-sm whitespace-nowrap active:bg-indigo-100 border border-indigo-100";
+                b.innerText = t.name;
+                b.onclick = () => {
+                    document.getElementById('heute-begin').value = t.begin;
+                    document.getElementById('heute-end').value = t.end;
+                    document.getElementById('heute-pause').value = t.pause || 30;
+                    calculateNetto();
+                };
+                c.appendChild(b);
+            });
+        }
+
+        // --- KALENDER TAB LOGIK ---
+        function changeMonth(m) {
+            currentViewDate.setMonth(currentViewDate.getMonth() + m);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            let year = currentViewDate.getFullYear();
+            let month = currentViewDate.getMonth();
             
-            const t = templates.find(x => x.id.toString() === tplId.toString());
-            if (t) {
-                const dateObj = new Date(dateStr);
-                const existingData = workData[dateStr] || {};
-                let target = existingData.target !== undefined ? existingData.target : getDailyTarget(dateObj, dateStr);
-                let net = calculateNetForValues(t.start, t.end, t.pause);
-                workData[dateStr] = { start: t.start || '', end: t.end || '', pause: t.pause !== undefined ? t.pause : 30, target: target, net: net, note: existingData.note || '' };
-                saveToLocalStorage();
+            document.getElementById('cal-month-title').innerText = currentViewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
+            
+            let grid = document.getElementById('cal-grid');
+            grid.innerHTML = '';
+
+            let firstDay = new Date(year, month, 1).getDay();
+            firstDay = firstDay === 0 ? 7 : firstDay; // So=7
+            let daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Auffüllen vorne
+            for (let i = 1; i < firstDay; i++) {
+                grid.innerHTML += `<div class="bg-transparent"></div>`;
             }
+
+            let appTotalDiff = 0;
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                let dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                let dateObj = new Date(dStr);
+                let dayOfWeek = dateObj.getDay();
+                let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                
+                let entry = db.entries[dStr];
+                let holiday = db.holidays[dStr];
+                
+                // Berechne Netto & Diff für diesen Tag
+                let netStd = 0;
+                let daySoll = entry && entry.soll !== undefined ? entry.soll : getDailySoll(dStr);
+                
+                if (entry && entry.begin && entry.end) {
+                    let bMin = calculateMinutes(entry.begin, entry.end);
+                    netStd = (bMin - (entry.pause || 0)) / 60;
+                    if(netStd < 0) netStd = 0;
+                }
+                
+                let dayDiff = netStd - daySoll;
+                
+                // Wir zählen die Differenz nur, wenn ein Eintrag existiert ODER es ein Arbeitstag mit Soll > 0 ist, der schon in der Vergangenheit liegt.
+                // Für Einfachheit zählen wir hier stumpf alle Tage im Monat:
+                // Wenn wir in der Zukunft sind und kein Eintrag da ist, werten wir es als 0 Diff, um das Konto nicht virtuell mit Minusstunden zu füllen
+                let isFuture = dateObj > new Date();
+                if(!entry && isFuture) {
+                    dayDiff = 0;
+                } else if (!entry && !isFuture && daySoll > 0) {
+                    // Tag in Vergangenheit, nichts eingetragen -> Minusstunden!
+                    dayDiff = -daySoll;
+                }
+                
+                appTotalDiff += dayDiff;
+
+                // Styling
+                let bgClass = "bg-white border-slate-100";
+                if (isWeekend) bgClass = "bg-slate-50 border-slate-200";
+                
+                let badgeHtml = "";
+                if (holiday) {
+                    if (holiday.isSchool) {
+                        badgeHtml = `<div class="absolute top-0 right-0 badge bg-green-200 text-green-800 font-bold" title="${holiday.name}">Ferien</div>`;
+                    } else {
+                        badgeHtml = `<div class="absolute top-0 right-0 badge bg-yellow-300 text-yellow-900 font-bold" title="${holiday.name}">Feiertag</div>`;
+                        bgClass = "bg-yellow-50 border-yellow-200"; // Leichter Gelbstich
+                    }
+                }
+
+                let textHtml = "";
+                let hasRemark = entry && entry.remark ? `<div class="absolute bottom-1 right-1 text-xs">💬</div>` : '';
+
+                if (entry && entry.begin && entry.end) {
+                    let diffColor = dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
+                    textHtml = `
+                        <div class="text-[10px] text-slate-500 mt-1 leading-tight">${entry.begin}<br>${entry.end}</div>
+                        <div class="text-xs font-black ${diffColor} mt-1">${netStd.toFixed(1)}h</div>
+                    `;
+                }
+
+                // Klick Event (Paint oder Heute Ansicht)
+                let cellHtml = `
+                    <div class="cal-cell relative p-1 border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
+                         onclick="handleCellClick('${dStr}')">
+                        ${badgeHtml}
+                        <div class="text-sm font-bold ${isWeekend ? 'text-slate-400' : 'text-slate-800'}">${i}</div>
+                        ${textHtml}
+                        ${hasRemark}
+                    </div>
+                `;
+                grid.innerHTML += cellHtml;
+            }
+
+            // Update Saldo Board
+            let agSaldo = parseFloat(db.settings.agSaldo || 0);
+            let total = agSaldo + appTotalDiff;
+            
+            document.getElementById('saldo-app').innerText = (appTotalDiff > 0 ? '+' : '') + appTotalDiff.toFixed(2) + " h";
+            document.getElementById('saldo-app').className = "text-xl font-bold " + (appTotalDiff >= 0 ? "text-emerald-600" : "text-red-500");
+            
+            document.getElementById('saldo-ag').value = agSaldo;
+            
+            document.getElementById('saldo-total').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + " h";
+        }
+
+        function handleCellClick(dStr) {
+            if (paintModeActive) {
+                // Pinsel Modus
+                let tplId = document.getElementById('paint-template').value;
+                if (!tplId) return;
+                
+                // Feiertagsschutz prüfen
+                if (db.settings.protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) {
+                    return; // Ignorieren
+                }
+
+                if (tplId === "clear") {
+                    delete db.entries[dStr];
+                } else {
+                    let t = db.templates.find(x => x.id == tplId);
+                    if (t) {
+                        let e = db.entries[dStr] || {};
+                        db.entries[dStr] = {
+                            begin: t.begin,
+                            end: t.end,
+                            pause: t.pause || 30,
+                            soll: e.soll !== undefined ? e.soll : getDailySoll(dStr),
+                            remark: e.remark || ''
+                        };
+                    }
+                }
+                saveData();
+                renderCalendar();
+            } else {
+                // Normales Verhalten -> Gehe zu Heute
+                document.getElementById('heute-date').value = dStr;
+                switchTab('heute');
+            }
+        }
+
+        function saveAGSaldo() {
+            db.settings.agSaldo = parseFloat(document.getElementById('saldo-ag').value) || 0;
+            saveData();
+            renderCalendar();
+        }
+
+        // --- PLANER TAB LOGIK ---
+        function togglePaintMode(forceOff = false) {
+            paintModeActive = forceOff ? false : !paintModeActive;
+            let btn = document.getElementById('btn-paint-toggle');
+            let ind = document.getElementById('paint-indicator');
+            
+            if (paintModeActive) {
+                btn.innerText = "Pinsel Aktiv (Klicken zum Beenden)";
+                btn.className = "w-full py-3 rounded-lg font-bold bg-red-500 text-white shadow-md transition-colors";
+                ind.classList.remove('hidden');
+                switchTab('kalender'); // Springe direkt zum Kalender!
+            } else {
+                btn.innerText = "Pinsel Aktivieren";
+                btn.className = "w-full py-3 rounded-lg font-bold bg-indigo-100 text-indigo-700 transition-colors";
+                ind.classList.add('hidden');
+            }
+        }
+
+        function renderPaintTemplateDropdown() {
+            let s = document.getElementById('paint-template');
+            s.innerHTML = `<option value="">-- Bitte wählen --</option><option value="clear" class="font-bold text-red-500">Tag leeren (Löschen)</option>`;
+            db.templates.forEach(t => {
+                s.innerHTML += `<option value="${t.id}">${t.name} (${t.begin} - ${t.end})</option>`;
+            });
+        }
+
+        function renderPatternDropdowns() {
+            let c = document.getElementById('pattern-container');
+            c.innerHTML = '';
+            const days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+            
+            let tplOptions = `<option value="">- Frei / Nichts -</option>`;
+            db.templates.forEach(t => { tplOptions += `<option value="${t.id}">${t.name}</option>`; });
+
+            days.forEach((d, i) => {
+                c.innerHTML += `
+                    <div class="flex items-center justify-between p-2 bg-slate-50 border rounded-lg">
+                        <span class="text-sm font-bold w-24">${d}</span>
+                        <select id="pat-day-${i+1}" class="p-2 border rounded-md text-sm font-bold bg-white w-full max-w-[200px]">
+                            ${tplOptions}
+                        </select>
+                    </div>
+                `;
+            });
+            // Letzter Tag (Sonntag) hat ID 0 im JS Date, aber hier im UI logischer als 7 gelöst, beim Speichern mappen wir.
         }
 
         function applyPattern() {
-            const overwrite = document.getElementById('pat-overwrite').checked;
-            const pattern = { 0: document.getElementById('pat-0').value, 1: document.getElementById('pat-1').value, 2: document.getElementById('pat-2').value, 3: document.getElementById('pat-3').value, 4: document.getElementById('pat-4').value, 5: document.getElementById('pat-5').value, 6: document.getElementById('pat-6').value };
-            const year = viewMonthDate.getFullYear(); const month = viewMonthDate.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            let changes = 0;
+            let year = currentViewDate.getFullYear();
+            let month = currentViewDate.getMonth();
+            let daysInMonth = new Date(year, month + 1, 0).getDate();
+            let overwrite = document.getElementById('overwrite-pattern').checked;
+            let protectHolidays = db.settings.protectHolidays;
 
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateObj = new Date(year, month, d);
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const tplId = pattern[dateObj.getDay()];
-                
-                if (tplId && tplId !== "") {
-                    if (!workData[dateStr] || !workData[dateStr].start || overwrite) {
-                        applyTemplateToDate(dateStr, tplId); changes++;
+            let pattern = {};
+            for(let i=1; i<=7; i++) {
+                let jsDay = i === 7 ? 0 : i; // Sonntag ist 0 in JS
+                pattern[jsDay] = document.getElementById(`pat-day-${i}`).value;
+            }
+
+            let count = 0;
+            for (let i = 1; i <= daysInMonth; i++) {
+                let dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                let dateObj = new Date(dStr);
+                let dayOfWeek = dateObj.getDay();
+                let tplId = pattern[dayOfWeek];
+
+                // Feiertagsschutz
+                if (protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) {
+                    continue; // An gesetzlichen Feiertagen überspringen
+                }
+
+                if (tplId) {
+                    let existing = db.entries[dStr];
+                    if (!existing || overwrite) {
+                        let t = db.templates.find(x => x.id == tplId);
+                        if (t) {
+                            db.entries[dStr] = {
+                                begin: t.begin,
+                                end: t.end,
+                                pause: t.pause || 30,
+                                soll: existing && existing.soll !== undefined ? existing.soll : getDailySoll(dStr),
+                                remark: existing ? existing.remark : ''
+                            };
+                            count++;
+                        }
                     }
                 }
             }
-            if (changes > 0) { renderMonthViews(); alert(`${changes} Tage befüllt!`); }
+            saveData();
+            alert(`${count} Schichten eingetragen!`);
+            switchTab('kalender');
         }
 
-        function updatePlannerDropdowns() {
-            let optionsHTML = `<option value="">- Nichts tun -</option>`;
-            templates.forEach(t => { optionsHTML += `<option value="${t.id}">${t.name}</option>`; });
-            document.getElementById('paint-template').innerHTML = optionsHTML + `<option value="delete" class="text-red-500 font-bold">🗑️ Schicht löschen</option>`;
-            for(let i=0; i<=6; i++) {
-                const el = document.getElementById(`pat-${i}`);
-                if(el) el.innerHTML = optionsHTML;
-            }
-        }
-
-        function changeMonth(delta) {
-            viewMonthDate.setMonth(viewMonthDate.getMonth() + delta);
-            renderMonthViews();
-        }
-
-        function createCellHtml(d, dayOfWeek, holiday, vacation, data, isPlanner) {
-            let dayNumColor = dayOfWeek === 0 ? 'text-red-500' : (dayOfWeek === 6 ? 'text-gray-500' : 'text-gray-800');
-            let textSize = isPlanner ? 'text-[9px]' : 'text-sm';
-            let badgeClass = isPlanner ? 'text-[5px] px-[2px] py-[1px] leading-none' : 'text-[8px] px-1 py-[2px] leading-none';
-            let noteIcon = (data && data.note) ? `<span class="${isPlanner?'text-[6px]':'text-[10px]'} ml-0.5">💬</span>` : '';
-
-            let html = `<div class="flex justify-between items-start w-full mb-0.5">
-                <span class="${textSize} font-bold flex items-center ${dayNumColor} leading-none">${d}${noteIcon}</span>`;
+        // --- SETUP TAB LOGIK ---
+        function updateSetupUI() {
+            document.getElementById('set-weekly-hours').value = db.settings.model.hours;
+            document.getElementById('state-select').value = db.settings.state || "NW";
             
-            if (holiday) html += `<span class="${badgeClass} font-bold bg-yellow-200 text-yellow-800 rounded truncate max-w-[40px]" title="${holiday}">${isPlanner?'FT':holiday}</span>`;
-            else if (vacation) html += `<span class="${badgeClass} font-bold bg-green-200 text-green-800 rounded truncate max-w-[40px]" title="${vacation}">Ferien</span>`;
-            
-            html += `</div>`;
-            
-            if (data && data.start) {
-                const diff = data.net - data.target;
-                const colorClass = diff > 0 ? 'text-green-600' : (diff < 0 ? 'text-red-500' : 'text-blue-600');
-                let timeSize = isPlanner ? 'text-[7.5px]' : 'text-[12px]';
-                let netSize = isPlanner ? 'text-[8.5px]' : 'text-base';
-                
-                html += `<div class="flex-grow flex flex-col justify-end pb-0.5">
-                            <div class="font-bold text-center ${timeSize} text-gray-800 leading-none mb-0.5">${data.start}-${data.end}</div>
-                            <div class="text-center ${colorClass} font-black ${netSize} leading-none">${data.net.toFixed(1)}h</div>
-                         </div>`;
-            }
-            return html;
-        }
-
-        function renderMonthViews() {
-            const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
-            const year = viewMonthDate.getFullYear(); const month = viewMonthDate.getMonth();
-            const monthText = `${monthNames[month]} ${year}`;
-            
-            document.getElementById('month-display').innerText = monthText;
-            document.getElementById('planner-month-display').innerText = monthText;
-
-            const gridMonth = document.getElementById('month-calendar-grid');
-            const gridPlanner = document.getElementById('planner-calendar-grid');
-            gridMonth.innerHTML = ''; gridPlanner.innerHTML = '';
-
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            let firstDay = new Date(year, month, 1).getDay();
-            firstDay = (firstDay === 0) ? 6 : firstDay - 1; 
-            
-            const firstDateObj = new Date(year, month, 1);
-            let currentKW = getISOWeekNumber(firstDateObj);
-            
-            const createKwCell = (kw, isPlanner) => {
-                let kwCell = document.createElement('div');
-                kwCell.className = `flex items-center justify-center bg-blue-50/50 text-blue-400 font-black rounded-lg border border-blue-50 ${isPlanner ? 'text-[8px] min-h-[42px]' : 'text-[10px] min-h-[75px]'}`;
-                kwCell.innerText = kw; return kwCell;
-            };
-
-            gridMonth.appendChild(createKwCell(currentKW, false));
-            gridPlanner.appendChild(createKwCell(currentKW, true));
-
-            for (let i = 0; i < firstDay; i++) {
-                let emM = document.createElement('div'); emM.className = "bg-gray-50/50 rounded-lg min-h-[75px]";
-                let emP = document.createElement('div'); emP.className = "bg-gray-50/50 rounded-lg min-h-[42px]";
-                gridMonth.appendChild(emM); gridPlanner.appendChild(emP);
-            }
-
-            let monthAppNet = 0; let monthAppTarget = 0;
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateObj = new Date(year, month, d);
-                const dayOfWeek = dateObj.getDay(); 
-                const isMonday = dayOfWeek === 1;
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                
-                if (isMonday && d !== 1) {
-                    currentKW = getISOWeekNumber(dateObj);
-                    gridMonth.appendChild(createKwCell(currentKW, false));
-                    gridPlanner.appendChild(createKwCell(currentKW, true));
-                }
-
-                const data = workData[dateStr];
-                const holiday = holidays[dateStr];
-                const vacation = schoolHolidays[dateStr];
-                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-                let baseClass = 'bg-white border-gray-100';
-                if (holiday) baseClass = 'holiday-bg';
-                else if (vacation) baseClass = 'vacation-bg';
-                else if (isWeekend) baseClass = 'weekend-bg';
-
-                if (data && data.start) { monthAppNet += data.net || 0; monthAppTarget += data.target || 0; }
-
-                let cellM = document.createElement('div');
-                cellM.className = `border rounded-xl p-1.5 min-h-[75px] flex flex-col cursor-pointer transition-transform hover:scale-105 active:scale-95 shadow-sm ${baseClass}`;
-                cellM.onclick = () => { document.getElementById('date-picker').value = dateStr; switchTab('daily'); loadDayData(); };
-                cellM.innerHTML = createCellHtml(d, dayOfWeek, holiday, vacation, data, false);
-                gridMonth.appendChild(cellM);
-
-                let cellP = document.createElement('div');
-                cellP.className = `border rounded p-0.5 min-h-[42px] flex flex-col cursor-pointer active:scale-90 active:bg-indigo-100 transition-all shadow-sm ${baseClass} hover:border-indigo-300`;
-                cellP.onclick = () => { 
-                    const tplId = document.getElementById('paint-template').value;
-                    applyTemplateToDate(dateStr, tplId); renderMonthViews(); 
-                };
-                cellP.innerHTML = createCellHtml(d, dayOfWeek, holiday, vacation, data, true);
-                gridPlanner.appendChild(cellP);
-            }
-
-            const lastDayOfWeek = (new Date(year, month, daysInMonth).getDay() + 6) % 7; 
-            for(let i = 0; i < 6 - lastDayOfWeek; i++) {
-                let emM = document.createElement('div'); emM.className = "bg-gray-50/50 rounded-lg min-h-[75px]";
-                let emP = document.createElement('div'); emP.className = "bg-gray-50/50 rounded-lg min-h-[42px]";
-                gridMonth.appendChild(emM); gridPlanner.appendChild(emP);
-            }
-
-            const appSaldo = monthAppNet - monthAppTarget;
-            document.getElementById('month-app-saldo').innerText = (appSaldo > 0 ? '+' : '') + appSaldo.toFixed(2) + ' h';
-            
-            const monthKey = `${year}-${String(month+1).padStart(2,'0')}`;
-            const offSaldoInput = document.getElementById('official-saldo');
-            offSaldoInput.value = monthlyOfficialSaldo[monthKey] || '';
-            
-            const carryoverVal = parseFloat(offSaldoInput.value) || 0;
-            const endOfMonthTotal = appSaldo + carryoverVal;
-            
-            const diffEl = document.getElementById('month-diff');
-            diffEl.innerText = (endOfMonthTotal > 0 ? '+' : '') + endOfMonthTotal.toFixed(2) + ' h';
-            diffEl.className = endOfMonthTotal < 0 ? "font-black text-sm text-red-200 mt-1" : "font-black text-sm text-white mt-1";
-        }
-
-        function formatDate(date) { return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0'); }
-        
-        function renderSettingsUI() {
-            document.getElementById('wm-hours').value = workModel.hours;
-            for(let i=0; i<=6; i++) { document.getElementById('wm-day-'+i).checked = workModel.days.includes(i); }
-            updateWorkModelPreview();
-        }
-
-        function updateWorkModelPreview() {
-            const h = parseFloat(document.getElementById('wm-hours').value) || 0;
-            let dCount = 0;
-            for(let i=0; i<=6; i++) { if(document.getElementById('wm-day-'+i).checked) dCount++; }
-            const target = dCount > 0 ? (h / dCount) : 0;
-        }
-
-        function saveWorkModel() {
-            const newHours = parseFloat(document.getElementById('wm-hours').value) || 0;
-            let newDays = [];
-            for(let i=0; i<=6; i++) { if(document.getElementById('wm-day-'+i).checked) newDays.push(i); }
-            
-            const oldTarget = workModel.days.length > 0 ? (workModel.hours / workModel.days.length) : 0;
-            const newTarget = newDays.length > 0 ? (newHours / newDays.length) : 0;
-            
-            workModel = { hours: newHours, days: newDays };
-
-            for (let dateStr in workData) {
-                const dObj = new Date(dateStr);
-                const dayOfWeek = dObj.getDay();
-                const isNowWorkday = newDays.includes(dayOfWeek);
-                const isHoliday = !!holidays[dateStr];
-                
-                let data = workData[dateStr];
-
-                if (isHoliday) {
-                    if (data.target === oldTarget || data.target === 8.0) data.target = 0;
-                } else if (!isNowWorkday) {
-                    if (data.target === oldTarget || data.target === 8.0) data.target = 0;
+            // Buttons für Arbeitstage anmalen
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                let d = parseInt(btn.getAttribute('data-day'));
+                if (db.settings.model.days.includes(d)) {
+                    btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500";
                 } else {
-                    if (data.target === oldTarget || data.target === 8.0 || data.target === 0) data.target = newTarget;
+                    btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent";
+                }
+            });
+            
+            // Calc Info
+            let daily = (db.settings.model.hours / Math.max(1, db.settings.model.days.length)).toFixed(2);
+            document.getElementById('calc-daily-soll').innerText = daily + " h";
+
+            // Toggle UI Feiertagsschutz
+            document.getElementById('protect-holidays').checked = db.settings.protectHolidays;
+            updateToggleUI();
+
+            renderSetupTemplates();
+        }
+
+        function toggleWorkDay(dayInt) {
+            let idx = db.settings.model.days.indexOf(dayInt);
+            if(idx > -1) {
+                db.settings.model.days.splice(idx, 1);
+            } else {
+                db.settings.model.days.push(dayInt);
+            }
+            saveSettings();
+        }
+
+        function saveSettings() {
+            let alterSollWert = db.settings.model.hours / Math.max(1, db.settings.model.days.length);
+
+            db.settings.model.hours = parseFloat(document.getElementById('set-weekly-hours').value) || 40;
+            db.settings.state = document.getElementById('state-select').value;
+            db.settings.protectHolidays = document.getElementById('protect-holidays').checked;
+            
+            let neuerSollWert = db.settings.model.hours / Math.max(1, db.settings.model.days.length);
+
+            // MAGIC: Aktualisiere alte Standard-Tage
+            // Wenn in den Entries das Soll genau dem "alten Standard-Soll" entspricht, updaten wir es auf das neue.
+            // (Damit werden manuelle Änderungen, wie z.B. 0h an einem Urlaubstag, nicht überschrieben).
+            if (alterSollWert !== neuerSollWert) {
+                for (let dateStr in db.entries) {
+                    let entry = db.entries[dateStr];
+                    let dateObj = new Date(dateStr);
+                    let isWorkDay = db.settings.model.days.includes(dateObj.getDay());
+                    
+                    // Nur an regulären Arbeitstagen updaten, und nur wenn es vorher dem Standard entsprach
+                    if (isWorkDay && Math.abs(entry.soll - alterSollWert) < 0.01) {
+                        entry.soll = parseFloat(neuerSollWert.toFixed(2));
+                    }
+                    // Wenn es nun KEIN Arbeitstag mehr ist (z.B. Samstag abgewählt), setze auf 0
+                    if (!isWorkDay && entry.soll > 0 && Math.abs(entry.soll - alterSollWert) < 0.01) {
+                        entry.soll = 0;
+                    }
                 }
             }
 
-            saveToLocalStorage(); loadDayData(); renderMonthViews(); 
-            
-            const btn = document.getElementById('btn-save-model');
-            btn.innerText = "Gespeichert!";
-            btn.classList.add('bg-green-600'); btn.classList.remove('bg-blue-600');
-            setTimeout(() => { btn.innerText = "Modell speichern & Anwenden"; btn.classList.add('bg-blue-600'); btn.classList.remove('bg-green-600'); }, 1500);
+            saveData();
+            updateSetupUI();
         }
 
-        function saveOfficialSaldo() { 
-            const key = `${viewMonthDate.getFullYear()}-${String(viewMonthDate.getMonth()+1).padStart(2,'0')}`;
-            const val = document.getElementById('official-saldo').value;
-            let parsedVal = parseFloat(val.replace(',', '.')); 
-            if(isNaN(parsedVal)) delete monthlyOfficialSaldo[key]; else monthlyOfficialSaldo[key] = parsedVal;
-            saveToLocalStorage(); renderMonthViews();
+        function updateToggleUI() {
+            let isChecked = document.getElementById('protect-holidays').checked;
+            let bg = document.getElementById('toggle-bg');
+            let dot = document.getElementById('toggle-dot');
+            if (isChecked) {
+                bg.classList.remove('bg-slate-300'); bg.classList.add('bg-blue-500');
+                dot.style.transform = 'translateX(20px)';
+            } else {
+                bg.classList.remove('bg-blue-500'); bg.classList.add('bg-slate-300');
+                dot.style.transform = 'translateX(0)';
+            }
         }
-        
-        function saveTemplate() {
-            const name = document.getElementById('tpl-name').value;
-            if(!name) return;
-            const pauseVal = document.getElementById('tpl-pause').value || 30;
-            templates.push({ id: Date.now(), name: name, start: document.getElementById('tpl-start').value, end: document.getElementById('tpl-end').value, pause: pauseVal });
-            document.getElementById('tpl-name').value = ''; document.getElementById('tpl-start').value = ''; document.getElementById('tpl-end').value = '';
-            saveToLocalStorage(); renderTemplates();
-        }
-        
-        function applyTemplate(id) {
-            const t = templates.find(x => x.id === id);
-            if(t) { document.getElementById('time-start').value = t.start || ''; document.getElementById('time-end').value = t.end || ''; document.getElementById('time-pause').value = t.pause !== undefined ? t.pause : 30; calculateNet(); }
-        }
-        
-        function renderTemplates() {
-            const q = document.getElementById('quick-templates'); q.innerHTML = '';
-            const l = document.getElementById('templates-list'); l.innerHTML = '';
-            
-            if(templates.length === 0) l.innerHTML = '<p class="text-[10px] text-gray-400 font-bold uppercase">Noch keine Vorlagen.</p>';
 
-            templates.forEach(t => {
-                const b = document.createElement('button'); 
-                b.className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-5 py-2 rounded-xl text-sm font-bold whitespace-nowrap shadow-sm active:scale-95 transition-transform";
-                b.innerText = t.name; b.onclick = () => applyTemplate(t.id); q.appendChild(b);
-                
-                const div = document.createElement('div'); 
-                div.className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm";
-                div.innerHTML = `<div><span class="font-black block text-gray-700 text-sm">${t.name}</span><span class="text-xs font-bold text-gray-500">${t.start || '?'} - ${t.end || '?'} (${t.pause}m P)</span></div><button class="text-red-400 p-2 hover:bg-red-50 rounded-lg transition-colors" onclick="templates=templates.filter(x=>x.id!=${t.id});saveToLocalStorage();renderTemplates();"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
-                l.appendChild(div);
+        function addTemplate() {
+            let name = document.getElementById('tpl-name').value;
+            let begin = document.getElementById('tpl-begin').value;
+            let end = document.getElementById('tpl-end').value;
+            let pause = document.getElementById('tpl-pause').value;
+            if (name && begin && end) {
+                db.templates.push({ id: Date.now(), name, begin, end, pause: parseInt(pause)||0 });
+                saveData();
+                renderSetupTemplates();
+                document.getElementById('tpl-name').value = '';
+                document.getElementById('tpl-begin').value = '';
+                document.getElementById('tpl-end').value = '';
+                document.getElementById('tpl-pause').value = '';
+            }
+        }
+
+        function deleteTemplate(id) {
+            db.templates = db.templates.filter(t => t.id !== id);
+            saveData();
+            renderSetupTemplates();
+        }
+
+        function renderSetupTemplates() {
+            let c = document.getElementById('setup-templates-list');
+            c.innerHTML = '';
+            db.templates.forEach(t => {
+                c.innerHTML += `
+                    <div class="flex justify-between items-center p-3 bg-slate-50 border rounded-lg">
+                        <div>
+                            <div class="font-bold text-sm">${t.name}</div>
+                            <div class="text-xs text-slate-500">${t.begin} - ${t.end} (${t.pause || 0}m Pause)</div>
+                        </div>
+                        <button onclick="deleteTemplate(${t.id})" class="text-red-500 p-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
             });
-            updatePlannerDropdowns();
         }
 
-        renderSettingsUI();
-        initDailyView();
-        function initDailyView() { document.getElementById('date-picker').value = formatDate(currentDate); loadDayData(); }
+        // --- BACKUP / EXPORT / IMPORT ---
+        function exportData() {
+            let dataStr = btoa(encodeURIComponent(JSON.stringify(db)));
+            
+            // Versuche es direkt in die Zwischenablage zu kopieren
+            if(navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(dataStr).then(() => {
+                    alert("Backup-Code in die Zwischenablage kopiert! Fügen Sie ihn z.B. in eine Mail, Notizen oder WhatsApp ein.");
+                });
+            } else {
+                // Fallback: Zeige es im Textfeld an
+                let ta = document.getElementById('import-data');
+                ta.value = dataStr;
+                ta.select();
+                document.execCommand('copy');
+                alert("Backup-Code wurde in das Textfeld unten geschrieben und markiert. Bitte manuell kopieren.");
+            }
+        }
+
+        function importData() {
+            let dataStr = document.getElementById('import-data').value.trim();
+            if(!dataStr) return;
+            
+            try {
+                let parsed = JSON.parse(decodeURIComponent(atob(dataStr)));
+                if(parsed && parsed.entries) {
+                    if(confirm("Dies überschreibt alle aktuellen Daten. Fortfahren?")) {
+                        db = parsed;
+                        saveData();
+                        alert("Daten erfolgreich wiederhergestellt!");
+                        location.reload();
+                    }
+                } else {
+                    alert("Ungültiger Code (Falsches Format).");
+                }
+            } catch(e) {
+                alert("Fehler beim Importieren. Code ist beschädigt.");
+            }
+        }
+
+        // --- FEIERTAGE API (OpenHolidaysAPI) ---
+        async function fetchHolidays() {
+            let btn = document.querySelector('button[onclick="fetchHolidays()"]');
+            btn.innerText = "Lädt...";
+            btn.classList.add("opacity-50");
+
+            let year = new Date().getFullYear();
+            let state = db.settings.state;
+
+            try {
+                // Feiertage laden (Jahreswechsel = wir laden diesjährig + nächstes Jahr)
+                await loadAPIHolidays(year, state, false);
+                await loadAPIHolidays(year + 1, state, false);
+                
+                // Schulferien laden
+                await loadAPIHolidays(year, state, true);
+                await loadAPIHolidays(year + 1, state, true);
+
+                saveData();
+                alert("Feiertage und Ferien wurden erfolgreich aktualisiert!");
+            } catch (e) {
+                alert("Fehler beim Abrufen der Daten. Bitte prüfen Sie Ihre Internetverbindung.");
+            }
+
+            btn.innerText = "Jahresdaten jetzt aktualisieren";
+            btn.classList.remove("opacity-50");
+        }
+
+        async function loadAPIHolidays(year, state, isSchool) {
+            let typeUrl = isSchool ? "SchoolHolidays" : "PublicHolidays";
+            let url = `https://openholidaysapi.org/${typeUrl}?countryIsoCode=DE&languageIsoCode=DE&validFrom=${year}-01-01&validTo=${year}-12-31&subdivisionCode=DE-${state}`;
+            
+            let res = await fetch(url);
+            let data = await res.json();
+            
+            data.forEach(item => {
+                let name = item.name[0].text;
+                let start = new Date(item.startDate);
+                let end = new Date(item.endDate);
+                
+                // Trage jeden Tag der Periode ins Dictionary ein
+                for(let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+                    let dStr = dt.toISOString().split('T')[0];
+                    // Feiertage überschreiben Ferien, falls sie sich am selben Tag überschneiden
+                    if (!db.holidays[dStr] || (!isSchool && db.holidays[dStr].isSchool)) {
+                        db.holidays[dStr] = { name: name, isSchool: isSchool };
+                    }
+                }
+            });
+        }
+
+        // Start
+        init();
     </script>
 </body>
 </html>
+
+
+```
