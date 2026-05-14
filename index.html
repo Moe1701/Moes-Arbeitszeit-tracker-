@@ -3,27 +3,27 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <!-- Wichtig: maximum-scale=1.0 verhindert das automatische Zoomen beim Tippen in Felder -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Zeiterfassung Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
     <style>
         /* Touch-Optimierungen für Smartphones */
         body { 
             -webkit-tap-highlight-color: transparent; 
             user-select: none;
             font-family: system-ui, -apple-system, sans-serif;
-            background-color: #f1f5f9; /* Helles, freundliches Grau-Blau */
-            height: 100dvh; /* Nutzt die exakte sichtbare Displayhöhe inkl. Browser-Leiste */
+            background-color: #f1f5f9;
+            height: 100dvh; /* Exakte sichtbare Displayhöhe */
         }
         input, textarea, select { user-select: text; }
         
-        /* Dynamische Kalender-Zellen für optimale Platznutzung */
+        /* Dynamische Kalender-Zellen: Höhe wird jetzt vom CSS Grid diktiert */
         .cal-cell { 
-            min-height: 9vh; /* Passt sich der Displayhöhe an */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            height: 100%;
+            width: 100%;
         }
         
         /* Kompakte Etiketten für Feiertage/Ferien */
@@ -37,13 +37,13 @@
             max-width: 100%;
         }
         
-        /* Verstecke Scrollbars komplett für sauberes App-Feeling */
+        /* Verstecke Scrollbars komplett */
         ::-webkit-scrollbar { width: 0px; background: transparent; display: none; }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col overflow-hidden">
 
-    <!-- Kopfzeile (Kompakt) -->
+    <!-- Kopfzeile -->
     <header class="bg-blue-600 text-white p-3 shadow-md flex justify-between items-center z-10 shrink-0">
         <h1 class="text-lg font-bold" id="app-title">Heute</h1>
         <div id="paint-indicator" class="hidden bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse shadow-sm">
@@ -51,7 +51,7 @@
         </div>
     </header>
 
-    <!-- Hauptinhalt (Nimmt den restlichen Platz ein) -->
+    <!-- Hauptinhalt -->
     <main class="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative">
         
         <!-- ================= TAB: HEUTE (Scrollfrei optimiert) ================= -->
@@ -68,28 +68,28 @@
                 </button>
             </div>
 
-            <!-- Netto & Speichern Box (Groß, aber platzsparend nebeneinander) -->
+            <!-- Netto & Speichern Box -->
             <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-blue-500 shrink-0">
                 <div>
                     <div class="text-xs text-slate-500 font-bold mb-1 uppercase tracking-wide">Netto-Arbeitszeit</div>
                     <div class="text-5xl font-black text-blue-600" id="heute-netto">0.0h</div>
                     <div id="heute-diff" class="text-xs font-bold mt-1 text-slate-400">0.0h zum Soll</div>
                 </div>
-                <button onclick="saveDay()" class="bg-blue-600 text-white w-[80px] h-[80px] rounded-2xl shadow-lg flex flex-col justify-center items-center active:scale-95 transition-transform">
+                <button onclick="saveDay()" class="bg-blue-600 text-white w-[80px] h-[80px] rounded-2xl shadow-lg flex flex-col justify-center items-center active:scale-95 transition-transform shrink-0">
                     <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     <span class="text-[11px] font-bold">Speichern</span>
                 </button>
             </div>
 
-            <!-- Vorlagen Schnellzugriff (Horizontale Liste) -->
+            <!-- Vorlagen Schnellzugriff -->
             <div class="shrink-0">
                 <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="heute-templates">
-                    <!-- Wird dynamisch gefüllt -->
+                    <!-- Dynamisch -->
                 </div>
             </div>
 
-            <!-- Zeiten Eingabe (Kompaktes Grid, Felder füllen Platz) -->
-            <div class="grid grid-cols-2 gap-2 flex-1">
+            <!-- Zeiten Eingabe (Nimmt flexibel Platz ein) -->
+            <div class="grid grid-cols-2 gap-2 flex-1 min-h-0">
                 <div class="bg-white p-2 rounded-xl shadow-sm flex flex-col justify-center">
                     <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Beginn</label>
                     <input type="time" id="heute-begin" class="w-full text-2xl font-bold bg-slate-50 p-1 rounded-lg outline-none text-center" onchange="autoSuggestBreak(); calculateNetto()">
@@ -113,57 +113,62 @@
                 <input type="text" id="heute-remark" class="w-full text-sm font-medium bg-slate-50 p-2 rounded-lg outline-none text-slate-700 placeholder-slate-400" placeholder="💬 Bemerkung (Krank, Urlaub, Notizen...)">
             </div>
 
-            <!-- Löschen Button (Ganz unten) -->
+            <!-- Löschen Button -->
             <button onclick="clearDay()" class="w-full p-3 text-red-500 font-bold bg-red-50 rounded-xl shrink-0 active:bg-red-100">
                 Tageseintrag leeren
             </button>
 
         </div>
 
-        <!-- ================= TAB: KALENDER ================= -->
-        <div id="tab-kalender" class="p-3 space-y-3 hidden">
+        <!-- ================= TAB: KALENDER (100% Scrollfrei Flex-Layout) ================= -->
+        <div id="tab-kalender" class="p-2 h-full flex flex-col gap-2 hidden">
             
-            <!-- Monat Navigation -->
-            <div class="flex justify-between items-center bg-blue-600 text-white p-2.5 rounded-xl shadow-sm">
+            <!-- Monat Navigation (Feste Höhe) -->
+            <div class="flex justify-between items-center bg-blue-600 text-white p-2 rounded-xl shadow-sm shrink-0">
                 <button onclick="changeMonth(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                 <div class="text-base font-bold" id="cal-month-title">Mai 2026</div>
                 <button onclick="changeMonth(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
-            <!-- Kalender Grid -->
-            <div class="bg-white p-2 rounded-xl shadow-sm">
-                <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-slate-400 uppercase">
+            <!-- Kalender Grid Container (Teilt sich dynamisch den restlichen Platz) -->
+            <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0">
+                
+                <!-- Wochentage -->
+                <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-slate-400 uppercase shrink-0">
                     <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
                 </div>
-                <div id="cal-grid" class="grid grid-cols-7 gap-1">
+                
+                <!-- Das eigentliche Grid (Exakt 6 Zeilen, füllt den Platz aus) -->
+                <div id="cal-grid" class="grid grid-cols-7 gap-1 grid-rows-6 flex-1 min-h-0">
                     <!-- Wird dynamisch generiert -->
                 </div>
-                <div class="mt-2 flex justify-center gap-3 text-[10px] text-slate-500 font-medium">
+                
+                <!-- Legende -->
+                <div class="mt-2 flex justify-center gap-3 text-[9px] text-slate-500 font-medium shrink-0">
                     <span class="flex items-center gap-1"><div class="w-2 h-2 bg-yellow-300 rounded-full"></div> Feiertag</span>
                     <span class="flex items-center gap-1"><div class="w-2 h-2 bg-green-300 rounded-full"></div> Ferien</span>
                     <span class="flex items-center gap-1"><div class="w-2 h-2 bg-slate-200 rounded-full"></div> Wochenende</span>
                 </div>
             </div>
 
-            <!-- Saldo Übersicht (Korrigierte Logik, Freundliche Farben) -->
-            <div class="bg-white p-3 rounded-xl shadow-sm space-y-3 border border-blue-100">
-                <div class="grid grid-cols-2 gap-3 text-center">
-                    <div class="p-2 bg-slate-50 rounded-lg border border-slate-100">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">App (Monat)</div>
-                        <div class="text-xl font-bold" id="saldo-app">0.00 h</div>
+            <!-- Saldo Übersicht (Feste Höhe ganz unten) -->
+            <div class="bg-white p-2 rounded-xl shadow-sm space-y-2 border border-blue-100 shrink-0">
+                <div class="grid grid-cols-2 gap-2 text-center">
+                    <div class="p-1 bg-slate-50 rounded-lg border border-slate-100">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">App (Monat)</div>
+                        <div class="text-lg font-bold" id="saldo-app">0.00 h</div>
                     </div>
-                    <div class="p-2 bg-indigo-50 rounded-lg border border-indigo-100 relative">
-                        <div class="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">Übertrag (AG)</div>
-                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-xl font-bold bg-transparent text-center outline-none text-indigo-700" value="0" onchange="saveAGSaldo()">
+                    <div class="p-1 bg-indigo-50 rounded-lg border border-indigo-100 relative">
+                        <div class="text-[9px] font-bold text-indigo-500 uppercase tracking-wide">Übertrag (AG)</div>
+                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-lg font-bold bg-transparent text-center outline-none text-indigo-700" value="0" onchange="saveAGSaldo()">
                     </div>
                 </div>
-                <!-- Kein Schwarz mehr! Schönes Indigo für den Endstand -->
-                <div class="bg-indigo-600 p-3 rounded-xl text-white flex justify-between items-center shadow-md">
+                <div class="bg-indigo-600 p-2 rounded-xl text-white flex justify-between items-center shadow-md">
                     <div>
                         <div class="text-sm font-bold">Stand Ende Monat</div>
-                        <div class="text-[10px] opacity-80">Aktuelles Gesamtsaldo</div>
+                        <div class="text-[9px] opacity-80">Aktuelles Gesamtsaldo</div>
                     </div>
-                    <div class="text-2xl font-black tracking-tight" id="saldo-total">+0.00 h</div>
+                    <div class="text-xl font-black tracking-tight" id="saldo-total">+0.00 h</div>
                 </div>
             </div>
             
@@ -281,7 +286,7 @@
                 </button>
             </div>
 
-            <!-- Lokales Backup (Kein Schwarz mehr) -->
+            <!-- Lokales Backup -->
             <div class="bg-indigo-50 p-4 rounded-xl shadow-sm space-y-3 border border-indigo-100">
                 <h2 class="font-bold text-indigo-800 border-b border-indigo-200 pb-2 text-sm">Daten sichern & übertragen</h2>
                 
@@ -303,7 +308,7 @@
 
     </main>
 
-    <!-- Bottom Navigation (Groß und leicht zu treffen) -->
+    <!-- Bottom Navigation -->
     <nav class="bg-white border-t border-slate-200 flex justify-around p-1 pb-4 shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] z-20">
         <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4 rounded-lg active:bg-slate-50" data-target="tab-heute">
             <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -393,6 +398,13 @@
             });
             
             document.getElementById('tab-' + tabName).classList.remove('hidden');
+            // Bei Kalender und Heute Flex-Layout anwenden
+            if(tabName === 'kalender' || tabName === 'heute') {
+                document.getElementById('tab-' + tabName).style.display = 'flex';
+            } else {
+                document.getElementById('tab-' + tabName).style.display = 'block';
+            }
+
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-slate-400');
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
             
@@ -547,12 +559,16 @@
             firstDay = firstDay === 0 ? 7 : firstDay; 
             let daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            for (let i = 1; i < firstDay; i++) {
-                grid.innerHTML += `<div class="bg-transparent"></div>`;
-            }
-
+            let totalCells = 0;
             let appTotalDiff = 0;
 
+            // Leere Zellen VOR dem 1. des Monats
+            for (let i = 1; i < firstDay; i++) {
+                grid.innerHTML += `<div class="bg-transparent"></div>`;
+                totalCells++;
+            }
+
+            // Tage des Monats generieren
             for (let i = 1; i <= daysInMonth; i++) {
                 let dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                 let dateObj = new Date(dStr);
@@ -594,33 +610,42 @@
                 }
 
                 let textHtml = "";
-                let hasRemark = entry && entry.remark ? `<div class="absolute bottom-1 right-1 text-xs">💬</div>` : '';
+                let hasRemark = entry && entry.remark ? `<div class="absolute bottom-0 right-1 text-xs">💬</div>` : '';
 
                 if (entry && entry.begin && entry.end) {
                     let diffColor = dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
                     textHtml = `
-                        <div class="text-[9px] text-slate-500 mt-0.5 leading-tight text-center">${entry.begin}<br>${entry.end}</div>
-                        <div class="text-[11px] font-black ${diffColor} mt-0.5 text-center">${netStd.toFixed(1)}h</div>
+                        <div class="text-[8px] text-slate-500 mt-0.5 leading-tight text-center">${entry.begin}<br>${entry.end}</div>
+                        <div class="text-[10px] font-black ${diffColor} mt-0.5 text-center">${netStd.toFixed(1)}h</div>
                     `;
                 }
 
                 let cellHtml = `
-                    <div class="cal-cell relative p-1 border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
+                    <div class="cal-cell relative p-0.5 border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
                          onclick="handleCellClick('${dStr}')">
                         ${badgeHtml}
-                        <div class="text-xs font-bold text-center ${isWeekend ? 'text-slate-400' : 'text-slate-800'}">${i}</div>
+                        <div class="text-[10px] font-bold text-center ${isWeekend ? 'text-slate-400' : 'text-slate-800'}">${i}</div>
                         ${textHtml}
                         ${hasRemark}
                     </div>
                 `;
                 grid.innerHTML += cellHtml;
+                totalCells++;
             }
 
+            // Das Grid auffüllen, damit wir IMMER exakt 42 Zellen (6 Zeilen) haben
+            // Dadurch springt das Layout nicht bei kurzen/langen Monaten
+            while(totalCells < 42) {
+                grid.innerHTML += `<div class="bg-transparent"></div>`;
+                totalCells++;
+            }
+
+            // Saldo aktualisieren
             let agSaldo = parseFloat(db.settings.agSaldo || 0);
             let total = agSaldo + appTotalDiff;
             
             document.getElementById('saldo-app').innerText = (appTotalDiff > 0 ? '+' : '') + appTotalDiff.toFixed(2) + " h";
-            document.getElementById('saldo-app').className = "text-xl font-bold " + (appTotalDiff >= 0 ? "text-emerald-500" : "text-red-500");
+            document.getElementById('saldo-app').className = "text-lg font-bold " + (appTotalDiff >= 0 ? "text-emerald-500" : "text-red-500");
             document.getElementById('saldo-ag').value = agSaldo;
             document.getElementById('saldo-total').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + " h";
         }
@@ -934,6 +959,5 @@
     </script>
 </body>
 </html>
-
 
 ```
