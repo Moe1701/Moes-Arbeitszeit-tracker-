@@ -397,27 +397,33 @@
         }
 
         function switchTab(tabName) {
-            document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
+            // === DER FIX: 100% SICHERES AUFRÄUMEN ALLER TABS ===
+            // 1. Alle Tabs verstecken und Inline-Styles hart auf "none" setzen.
+            document.querySelectorAll('main > div').forEach(d => {
+                d.style.display = 'none';
+            });
+            
+            // 2. Button-Farben zurücksetzen
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.classList.remove('text-blue-600');
                 b.classList.add('text-slate-400');
             });
             
+            // 3. Nur den gewählten Tab einblenden
             let targetTab = document.getElementById('tab-' + tabName);
-            targetTab.classList.remove('hidden');
             
-            // Für "planer", "kalender" und "heute" sicherstellen, dass flex an ist
             if(tabName === 'planer' || tabName === 'heute' || tabName === 'kalender') {
-                targetTab.style.display = 'flex';
+                targetTab.style.display = 'flex'; // Diese 3 brauchen Flexbox für das scrollfreie Layout
             } else {
-                targetTab.style.display = 'block';
+                targetTab.style.display = 'block'; // Setup darf normal scrollen
             }
             
+            // 4. Aktiven Button einfärben und Titel anpassen
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-slate-400');
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
-            
             document.getElementById('app-title').innerText = tabName.charAt(0).toUpperCase() + tabName.slice(1);
 
+            // 5. Inhalte laden
             if (tabName === 'kalender') renderCalendar();
             if (tabName === 'heute') loadDayData();
             if (tabName === 'planer') {
