@@ -27,19 +27,8 @@
         .cal-cell { 
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             height: 100%;
             width: 100%;
-        }
-        
-        .badge {
-            font-size: 0.55rem;
-            padding: 2px 4px;
-            border-bottom-left-radius: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
         }
         
         ::-webkit-scrollbar { width: 0px; background: transparent; display: none; }
@@ -69,6 +58,11 @@
                 <button onclick="changeDate(1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg active:bg-blue-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
+            </div>
+
+            <!-- NEU: Feiertags-Banner in der Tagesansicht -->
+            <div id="heute-holiday-banner" class="hidden text-center text-[11px] font-bold p-1.5 rounded-lg shrink-0 shadow-sm mt-[-4px]">
+                <!-- Wird dynamisch befüllt -->
             </div>
 
             <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-blue-500 shrink-0">
@@ -166,10 +160,9 @@
             
         </div>
 
-        <!-- ================= TAB: PLANER (Kompakter & Scrollfrei) ================= -->
+        <!-- ================= TAB: PLANER ================= -->
         <div id="tab-planer" class="p-2 space-y-3 hidden flex-col h-full">
             
-            <!-- Pinsel Block (Kompakter auf einer Zeile) -->
             <div class="bg-white p-3 rounded-xl shadow-sm space-y-2 border-l-4 border-indigo-500 shrink-0">
                 <h2 class="font-bold text-indigo-700 flex items-center gap-1.5 text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
@@ -185,7 +178,6 @@
                 </div>
             </div>
 
-            <!-- Automatisches Muster (2-spaltig für Platzersparnis) -->
             <div class="bg-white p-3 rounded-xl shadow-sm flex-1 flex flex-col min-h-0">
                 
                 <div class="flex justify-between items-center mb-2 shrink-0">
@@ -194,7 +186,6 @@
                         Automatisches Muster
                     </h2>
                     
-                    <!-- Feiertagsschutz Toggle -->
                     <label class="flex items-center gap-1.5 cursor-pointer">
                         <span class="text-[9px] font-bold text-slate-400 uppercase">Feiertage frei</span>
                         <input type="checkbox" id="protect-holidays" class="sr-only" checked onchange="saveSettings()">
@@ -204,12 +195,10 @@
                     </label>
                 </div>
 
-                <!-- 2-Spaltiges Layout für die Wochentage -->
                 <div class="grid grid-cols-2 gap-2 flex-1 content-start" id="pattern-container">
                     <!-- Mo-So Dropdowns -->
                 </div>
 
-                <!-- Aktionen unten (Eine Zeile) -->
                 <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 shrink-0">
                     <label class="flex items-center gap-2 cursor-pointer p-1">
                         <input type="checkbox" id="overwrite-pattern" class="w-4 h-4 text-blue-600 rounded">
@@ -303,7 +292,7 @@
 
     </main>
 
-    <!-- Bottom Navigation (Schlanker & Kompakter!) -->
+    <!-- Bottom Navigation -->
     <nav class="bg-white border-t border-slate-200 flex justify-around p-1 pb-2 shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] z-20">
         <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/4 rounded-lg active:bg-slate-50" data-target="tab-heute">
             <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -397,33 +386,27 @@
         }
 
         function switchTab(tabName) {
-            // === DER FIX: 100% SICHERES AUFRÄUMEN ALLER TABS ===
-            // 1. Alle Tabs verstecken und Inline-Styles hart auf "none" setzen.
             document.querySelectorAll('main > div').forEach(d => {
                 d.style.display = 'none';
             });
             
-            // 2. Button-Farben zurücksetzen
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.classList.remove('text-blue-600');
                 b.classList.add('text-slate-400');
             });
             
-            // 3. Nur den gewählten Tab einblenden
             let targetTab = document.getElementById('tab-' + tabName);
             
             if(tabName === 'planer' || tabName === 'heute' || tabName === 'kalender') {
-                targetTab.style.display = 'flex'; // Diese 3 brauchen Flexbox für das scrollfreie Layout
+                targetTab.style.display = 'flex';
             } else {
-                targetTab.style.display = 'block'; // Setup darf normal scrollen
+                targetTab.style.display = 'block';
             }
             
-            // 4. Aktiven Button einfärben und Titel anpassen
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-slate-400');
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
             document.getElementById('app-title').innerText = tabName.charAt(0).toUpperCase() + tabName.slice(1);
 
-            // 5. Inhalte laden
             if (tabName === 'kalender') renderCalendar();
             if (tabName === 'heute') loadDayData();
             if (tabName === 'planer') {
@@ -446,6 +429,18 @@
             let dStr = document.getElementById('heute-date').value;
             selectedDate = new Date(dStr);
             let entry = db.entries[dStr] || { begin: '', end: '', pause: '', soll: getDailySoll(dStr), remark: '' };
+            let hol = db.holidays[dStr];
+            
+            // Feiertags-Banner im Heute Tab aktualisieren
+            let banner = document.getElementById('heute-holiday-banner');
+            if (hol) {
+                banner.innerText = (hol.isSchool ? "🎒 " : "🎉 ") + hol.name;
+                banner.className = "text-center text-[11px] font-bold p-1.5 rounded-lg shrink-0 shadow-sm mt-[-4px] mb-1 " + 
+                                   (hol.isSchool ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700");
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
             
             document.getElementById('heute-begin').value = entry.begin;
             document.getElementById('heute-end').value = entry.end;
@@ -611,13 +606,16 @@
                 let bgClass = "bg-white border-slate-100";
                 if (isWeekend) bgClass = "bg-slate-50 border-slate-200";
                 
-                let badgeHtml = "";
+                // --- NEUE FEIERTAGS ANZEIGE IM KALENDER (Text statt Badge) ---
+                let holidayNameHtml = "";
                 if (holiday) {
+                    // Klammern entfernen um Text kürzer zu machen, falls vorhanden
+                    let shortName = holiday.name.replace(" (regional)", "").replace(" (Feiertag)", "");
                     if (holiday.isSchool) {
-                        badgeHtml = `<div class="absolute top-0 right-0 badge bg-green-200 text-green-800 font-bold" title="${holiday.name}">Ferien</div>`;
+                        holidayNameHtml = `<div class="text-[6.5px] leading-none font-bold text-green-600 w-full text-center truncate px-0.5 mt-0.5" title="${holiday.name}">${shortName}</div>`;
                     } else {
-                        badgeHtml = `<div class="absolute top-0 right-0 badge bg-yellow-300 text-yellow-900 font-bold" title="${holiday.name}">Feiertag</div>`;
                         bgClass = "bg-yellow-50 border-yellow-200"; 
+                        holidayNameHtml = `<div class="text-[6.5px] leading-none font-bold text-yellow-600 w-full text-center truncate px-0.5 mt-0.5" title="${holiday.name}">${shortName}</div>`;
                     }
                 }
 
@@ -627,17 +625,19 @@
                 if (entry && entry.begin && entry.end) {
                     let diffColor = dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
                     textHtml = `
-                        <div class="text-[8px] text-slate-500 mt-0.5 leading-tight text-center">${entry.begin}<br>${entry.end}</div>
+                        <div class="text-[8px] text-slate-500 leading-tight text-center">${entry.begin}<br>${entry.end}</div>
                         <div class="text-[10px] font-black ${diffColor} mt-0.5 text-center">${netStd.toFixed(1)}h</div>
                     `;
                 }
 
                 let cellHtml = `
-                    <div class="cal-cell relative p-0.5 border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
+                    <div class="cal-cell relative p-0.5 border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden flex flex-col justify-start" 
                          onclick="handleCellClick('${dStr}')">
-                        ${badgeHtml}
                         <div class="text-[10px] font-bold text-center ${isWeekend ? 'text-slate-400' : 'text-slate-800'}">${i}</div>
-                        ${textHtml}
+                        ${holidayNameHtml}
+                        <div class="mt-auto">
+                            ${textHtml}
+                        </div>
                         ${hasRemark}
                     </div>
                 `;
@@ -724,9 +724,8 @@
             let tplOptions = `<option value="">- Frei -</option>`;
             db.templates.forEach(t => { tplOptions += `<option value="${t.id}">${t.name}</option>`; });
 
-            // Im Grid rendern
             days.forEach((d, i) => {
-                let extraClass = i === 6 ? "col-span-2 md:col-span-1" : ""; // Sonntag nimmt 2 Spalten ein (um die Lücke im 2er-Grid zu schließen)
+                let extraClass = i === 6 ? "col-span-2 md:col-span-1" : "";
                 c.innerHTML += `
                     <div class="flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-100 rounded-lg ${extraClass}">
                         <span class="text-[11px] font-bold w-5 text-slate-500">${d}</span>
