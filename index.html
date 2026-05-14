@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -61,7 +60,7 @@
                 </button>
             </div>
 
-            <!-- Netto & Speichern Box (Kompakt nebeneinander) -->
+            <!-- Netto & Speichern Box -->
             <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-blue-500">
                 <div>
                     <div class="text-sm text-slate-500 font-semibold mb-1">Netto-Arbeitszeit</div>
@@ -76,13 +75,13 @@
 
             <!-- Vorlagen Schnellzugriff -->
             <div class="space-y-2">
-                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Vorlagen</div>
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Vorlagen anwenden</div>
                 <div class="flex gap-2 overflow-x-auto pb-2" id="heute-templates">
                     <!-- Wird dynamisch gefüllt -->
                 </div>
             </div>
 
-            <!-- Zeiten Eingabe (Größere Felder) -->
+            <!-- Zeiten Eingabe -->
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-white p-3 rounded-xl shadow-sm">
                     <label class="block text-xs font-bold text-slate-400 mb-1">Beginn</label>
@@ -102,6 +101,24 @@
                 </div>
             </div>
 
+            <!-- Klassifizierung & Zusatzzeit (NEU) -->
+            <div class="bg-white p-3 rounded-xl shadow-sm space-y-3 border-l-4 border-indigo-400">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1">Abrechnungs-Kategorie (Hauptzeit)</label>
+                    <input type="text" id="heute-type" class="w-full text-sm font-bold text-indigo-700 bg-indigo-50 p-2 rounded-lg outline-none" placeholder="z.B. Regulär, Frühschicht...">
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100">
+                    <div class="col-span-1">
+                        <label class="block text-xs font-bold text-slate-400 mb-1">+ Stunden</label>
+                        <input type="number" step="0.1" id="heute-extra-time" class="w-full text-sm font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-400" placeholder="0.0" onchange="calculateNetto()">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 mb-1">Zusatz-Zweck</label>
+                        <input type="text" id="heute-extra-type" class="w-full text-sm font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-400" placeholder="z.B. Betriebsrat">
+                    </div>
+                </div>
+            </div>
+
             <!-- Bemerkung Feld -->
             <div class="bg-white p-3 rounded-xl shadow-sm">
                 <label class="block text-xs font-bold text-slate-400 mb-1">Bemerkung (optional)</label>
@@ -115,14 +132,12 @@
         <!-- ================= TAB: KALENDER ================= -->
         <div id="tab-kalender" class="p-2 space-y-3 hidden">
             
-            <!-- Monat Navigation -->
             <div class="flex justify-between items-center bg-blue-600 text-white p-3 rounded-xl shadow-md">
                 <button onclick="changeMonth(-1)" class="p-2 bg-blue-500 rounded-lg"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                 <div class="text-lg font-bold" id="cal-month-title">Mai 2026</div>
                 <button onclick="changeMonth(1)" class="p-2 bg-blue-500 rounded-lg"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
-            <!-- Kalender Grid -->
             <div class="bg-white p-2 rounded-xl shadow-sm">
                 <div class="grid grid-cols-7 gap-1 mb-1 text-center text-xs font-bold text-slate-400">
                     <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
@@ -133,11 +148,10 @@
                 <div class="mt-3 flex justify-center gap-3 text-[10px] text-slate-400">
                     <span class="flex items-center gap-1"><div class="w-2 h-2 bg-yellow-300 rounded-full"></div> Feiertag</span>
                     <span class="flex items-center gap-1"><div class="w-2 h-2 bg-green-200 rounded-full"></div> Ferien</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-slate-100 border border-slate-200 rounded-full"></div> Wochenende</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-slate-200 border border-slate-300 rounded-full"></div> Wochenende</span>
                 </div>
             </div>
 
-            <!-- Saldo Übersicht (Korrigierte Logik) -->
             <div class="bg-white p-4 rounded-xl shadow-sm space-y-4 border border-blue-100">
                 <div class="grid grid-cols-2 gap-4 text-center">
                     <div class="p-3 bg-slate-50 rounded-lg">
@@ -187,7 +201,6 @@
                         Wochen-Muster
                     </h2>
                     
-                    <!-- Feiertagsschutz Toggle -->
                     <label class="flex items-center gap-2 cursor-pointer">
                         <span class="text-xs font-bold text-slate-500">Feiertage schützen</span>
                         <input type="checkbox" id="protect-holidays" class="sr-only" checked onchange="saveSettings()">
@@ -197,8 +210,6 @@
                     </label>
                 </div>
                 
-                <p class="text-xs text-slate-500 mb-2">Füllt den aktuell im Kalender angezeigten Monat mit diesem Muster.</p>
-
                 <div class="space-y-2" id="pattern-container">
                     <!-- Mo-So Dropdowns -->
                 </div>
@@ -209,16 +220,55 @@
                 </div>
 
                 <button onclick="applyPattern()" class="w-full py-3 rounded-lg font-bold bg-blue-600 text-white shadow-md active:bg-blue-700">
-                    Muster im Monat eintragen
+                    Muster eintragen
                 </button>
             </div>
+        </div>
 
+        <!-- ================= TAB: AUSWERTUNG ================= -->
+        <div id="tab-auswertung" class="p-4 space-y-4 hidden">
+            
+            <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm">
+                <h2 class="font-bold text-slate-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Zeit-Analysen
+                </h2>
+                <select id="stat-year" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm font-bold text-indigo-600 outline-none" onchange="renderAuswertung()">
+                    <!-- Wird dynamisch gefüllt -->
+                </select>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-white p-3 rounded-xl shadow-sm text-center border-b-4 border-indigo-400">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ø Tag</div>
+                    <div class="text-xl font-black text-slate-700 mt-1" id="stat-avg-day">0.0h</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm text-center border-b-4 border-blue-400">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ø Woche</div>
+                    <div class="text-xl font-black text-slate-700 mt-1" id="stat-avg-week">0.0h</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm text-center border-b-4 border-emerald-400">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ø Monat</div>
+                    <div class="text-xl font-black text-slate-700 mt-1" id="stat-avg-month">0.0h</div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Aufschlüsselung nach Tätigkeit</h3>
+                    <p class="text-xs text-slate-400 mt-1">Geleistete Stunden pro Vorlage & Zusatz-Kategorie</p>
+                </div>
+                
+                <div id="stat-breakdown" class="space-y-4 pt-2 border-t border-slate-100">
+                    <!-- Progress bars werden dynamisch generiert -->
+                </div>
+            </div>
+            
         </div>
 
         <!-- ================= TAB: SETUP ================= -->
         <div id="tab-setup" class="p-4 space-y-6 hidden">
             
-            <!-- Arbeitszeitmodell -->
             <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg border-b pb-2">Arbeitszeit-Modell</h2>
                 <div class="grid grid-cols-2 gap-4">
@@ -242,11 +292,9 @@
                         <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent" data-day="6" onclick="toggleWorkDay(6)">Sa</button>
                         <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent" data-day="0" onclick="toggleWorkDay(0)">So</button>
                     </div>
-                    <p class="text-[10px] text-slate-400 mt-2">Änderungen hier aktualisieren automatisch alle Standard-Tage in der Vergangenheit, an denen Sie das Soll nicht manuell überschrieben haben.</p>
                 </div>
             </div>
 
-            <!-- Vorlagen Verwaltung -->
             <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg border-b pb-2">Vorlagen verwalten</h2>
                 <div class="grid grid-cols-4 gap-2">
@@ -261,7 +309,6 @@
                 </div>
             </div>
 
-            <!-- Feiertage & Ferien -->
             <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg border-b pb-2">Bundesland (Feiertage/Ferien)</h2>
                 <select id="state-select" class="w-full p-3 bg-slate-50 border rounded-lg font-bold" onchange="saveSettings()">
@@ -287,28 +334,22 @@
                 </button>
             </div>
 
-            <!-- Lokales Backup (Messenger) -->
             <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
                 <h2 class="font-bold text-lg border-b pb-2 text-blue-800">Lokales Backup</h2>
-                <p class="text-xs text-slate-500">Ihre Daten bleiben sicher auf diesem Gerät. Um sie auf ein neues Handy zu übertragen, generieren Sie hier einen Backup-Code.</p>
-                
                 <button onclick="exportData()" class="w-full py-3 bg-slate-800 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                     Backup-Code kopieren / teilen
                 </button>
-                
                 <div class="pt-4 border-t border-slate-100">
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Code hier einfügen zum Wiederherstellen:</label>
-                    <textarea id="import-data" class="w-full p-2 bg-slate-50 border rounded-lg text-xs font-mono h-20" placeholder="eyJkYXRh..."></textarea>
+                    <textarea id="import-data" class="w-full p-2 bg-slate-50 border rounded-lg text-xs font-mono h-20" placeholder="Code hier einfügen..."></textarea>
                     <button onclick="importData()" class="w-full mt-2 py-3 bg-red-100 text-red-700 font-bold rounded-lg">
                         Daten Wiederherstellen
                     </button>
                 </div>
             </div>
 
-            <!-- Danger Zone -->
             <div class="pt-8">
-                <button onclick="if(confirm('Wirklich ALLES löschen? Dieser Schritt kann nicht rückgängig gemacht werden!')) { localStorage.clear(); location.reload(); }" class="w-full py-3 text-red-400 font-bold text-sm">
+                <button onclick="if(confirm('Wirklich ALLES löschen?')) { localStorage.clear(); location.reload(); }" class="w-full py-3 text-red-400 font-bold text-sm">
                     App komplett zurücksetzen
                 </button>
             </div>
@@ -319,19 +360,23 @@
 
     <!-- Bottom Navigation -->
     <nav class="bg-white border-t border-slate-200 flex justify-around p-2 pb-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4" data-target="tab-heute">
+        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/5" data-target="tab-heute">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span class="text-[10px] font-bold">Heute</span>
         </button>
-        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4" data-target="tab-kalender">
+        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/5" data-target="tab-kalender">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <span class="text-[10px] font-bold">Kalender</span>
         </button>
-        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4" data-target="tab-planer">
+        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/5" data-target="tab-planer">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
             <span class="text-[10px] font-bold">Planer</span>
         </button>
-        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4" data-target="tab-setup">
+        <button onclick="switchTab('auswertung')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/5" data-target="tab-auswertung">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+            <span class="text-[10px] font-bold">Statistik</span>
+        </button>
+        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/5" data-target="tab-setup">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             <span class="text-[10px] font-bold">Setup</span>
         </button>
@@ -350,32 +395,31 @@
                 agSaldo: 0.0,
                 model: {
                     hours: 40,
-                    days: [1, 2, 3, 4, 5] // Mo-Fr
+                    days: [1, 2, 3, 4, 5]
                 },
                 protectHolidays: true
             },
-            holidays: {} // Format: "YYYY-MM-DD": { name, isSchool }
+            holidays: {} 
         };
 
-        let currentViewDate = new Date(); // Für Kalender/Planer Ansicht
-        let selectedDate = new Date();    // Für "Heute" Tab Ansicht
+        let currentViewDate = new Date();
+        let selectedDate = new Date();
         let paintModeActive = false;
 
         // --- INIT ---
         function init() {
-            // Lade Daten aus localStorage
             const saved = localStorage.getItem('zeiterfassung_db');
             if (saved) {
                 try { 
                     db = { ...db, ...JSON.parse(saved) }; 
-                    if(!db.settings.model) db.settings.model = { hours: 40, days: [1,2,3,4,5] }; // Fallback alt
+                    if(!db.settings.model) db.settings.model = { hours: 40, days: [1,2,3,4,5] };
                     if(db.settings.protectHolidays === undefined) db.settings.protectHolidays = true;
                 } catch(e) { console.error("Parse Error"); }
             }
             
-            // Setze heutiges Datum
             document.getElementById('heute-date').value = selectedDate.toISOString().split('T')[0];
             
+            updateStatYears();
             updateSetupUI();
             loadDayData();
             switchTab('heute');
@@ -388,15 +432,9 @@
         // --- HILFSFUNKTIONEN ---
         function getDailySoll(dateString) {
             let date = new Date(dateString);
-            let day = date.getDay(); // 0 = So, 1 = Mo ...
-            
-            // Gesetzliche Feiertage geben 0h Soll, wenn "Feiertage schützen" nicht aktiv beachtet werden muss?
-            // Nein, laut Arbeitsrecht werden Feiertage bezahlt. Aber um Minusstunden am Wochenende zu vermeiden:
-            // Wir machen es simpel: Ist es ein regulärer Arbeitstag laut Profil?
+            let day = date.getDay(); 
             let isWorkDay = db.settings.model.days.includes(day);
-            
             if (!isWorkDay) return 0.0;
-            
             let hoursPerDay = db.settings.model.hours / db.settings.model.days.length;
             return parseFloat(hoursPerDay.toFixed(2));
         }
@@ -416,6 +454,15 @@
             return diff;
         }
 
+        function getWeekNumber(d) {
+            let date = new Date(d.getTime());
+            date.setHours(0, 0, 0, 0);
+            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+            let week1 = new Date(date.getFullYear(), 0, 4);
+            let wk = 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            return date.getFullYear() + "-W" + wk;
+        }
+
         // --- NAVIGATION ---
         function switchTab(tabName) {
             document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
@@ -430,16 +477,16 @@
             
             document.getElementById('app-title').innerText = tabName.charAt(0).toUpperCase() + tabName.slice(1);
 
-            // Tab-spezifische Updates
             if (tabName === 'kalender') renderCalendar();
             if (tabName === 'heute') loadDayData();
+            if (tabName === 'auswertung') renderAuswertung();
             if (tabName === 'planer') {
                 renderPatternDropdowns();
                 renderPaintTemplateDropdown();
                 updateToggleUI();
             }
             if (tabName !== 'planer' && paintModeActive) {
-                togglePaintMode(true); // Ausschalten wenn Tab verlassen wird
+                togglePaintMode(true); 
             }
         }
 
@@ -453,19 +500,22 @@
         function loadDayData() {
             let dStr = document.getElementById('heute-date').value;
             selectedDate = new Date(dStr);
-            let entry = db.entries[dStr] || { begin: '', end: '', pause: '', soll: getDailySoll(dStr), remark: '' };
+            let entry = db.entries[dStr] || { begin: '', end: '', pause: '', soll: getDailySoll(dStr), remark: '', type: '', extraTime: '', extraType: '' };
             
-            document.getElementById('heute-begin').value = entry.begin;
-            document.getElementById('heute-end').value = entry.end;
+            document.getElementById('heute-begin').value = entry.begin || '';
+            document.getElementById('heute-end').value = entry.end || '';
             document.getElementById('heute-pause').value = entry.pause || '';
             document.getElementById('heute-soll').value = entry.soll;
             document.getElementById('heute-remark').value = entry.remark || '';
+            
+            document.getElementById('heute-type').value = entry.type || '';
+            document.getElementById('heute-extra-time').value = entry.extraTime || '';
+            document.getElementById('heute-extra-type').value = entry.extraType || '';
             
             renderHeuteTemplates();
             calculateNetto();
         }
 
-        // Arbeitsrecht-Logik (Auto Pause)
         function autoSuggestBreak() {
             let begin = document.getElementById('heute-begin').value;
             let end = document.getElementById('heute-end').value;
@@ -484,22 +534,27 @@
             let end = document.getElementById('heute-end').value;
             let pause = parseFloat(document.getElementById('heute-pause').value) || 0;
             let soll = parseFloat(document.getElementById('heute-soll').value) || 0;
+            let extra = parseFloat(document.getElementById('heute-extra-time').value) || 0;
 
             let nettoStr = "0.0h";
             let diffStr = "";
             let isPositive = false;
+            let nettoStd = 0;
 
             if (begin && end) {
                 let bruttoMin = calculateMinutes(begin, end);
-                let nettoStd = (bruttoMin - pause) / 60;
+                nettoStd = (bruttoMin - pause) / 60;
                 if (nettoStd < 0) nettoStd = 0;
-                
+            }
+            
+            nettoStd += extra; // Zusatzzeit addieren
+
+            if ((begin && end) || extra > 0) {
                 nettoStr = nettoStd.toFixed(2) + "h";
                 let diff = nettoStd - soll;
                 isPositive = diff >= 0;
                 diffStr = (diff > 0 ? "+" : "") + diff.toFixed(2) + "h " + (diff >= 0 ? "Überstunden" : "Minusstunden");
             } else {
-                // Nur Soll eingetragen, aber keine Ist-Zeit = Minusstunden in Höhe des Solls
                 if (soll > 0) {
                     diffStr = "-" + soll.toFixed(2) + "h Minusstunden";
                 } else {
@@ -521,15 +576,19 @@
             let soll = parseFloat(document.getElementById('heute-soll').value) || 0;
             let pause = parseFloat(document.getElementById('heute-pause').value) || 0;
             let remark = document.getElementById('heute-remark').value.trim();
+            let type = document.getElementById('heute-type').value.trim();
+            let extraTime = document.getElementById('heute-extra-time').value.trim();
+            let extraType = document.getElementById('heute-extra-type').value.trim();
 
-            if (!begin && !end && soll === 0 && !remark) {
+            // Nur speichern wenn irgendwas relevantes eingegeben wurde
+            if (!begin && !end && soll === 0 && !remark && (!extraTime || parseFloat(extraTime) === 0)) {
                 delete db.entries[dStr];
             } else {
-                db.entries[dStr] = { begin, end, pause, soll, remark };
+                db.entries[dStr] = { begin, end, pause, soll, remark, type, extraTime, extraType };
             }
             saveData();
+            updateStatYears(); // Für Dropdown in der Auswertung
             
-            // Kleines Feedback
             let btn = document.querySelector('#tab-heute button[onclick="saveDay()"]');
             let oldHtml = btn.innerHTML;
             btn.innerHTML = `<svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-sm font-bold">Gespeichert</span>`;
@@ -547,6 +606,9 @@
             document.getElementById('heute-end').value = '';
             document.getElementById('heute-pause').value = '';
             document.getElementById('heute-remark').value = '';
+            document.getElementById('heute-type').value = '';
+            document.getElementById('heute-extra-time').value = '';
+            document.getElementById('heute-extra-type').value = '';
             document.getElementById('heute-soll').value = getDailySoll(document.getElementById('heute-date').value);
             calculateNetto();
             saveDay();
@@ -563,6 +625,7 @@
                     document.getElementById('heute-begin').value = t.begin;
                     document.getElementById('heute-end').value = t.end;
                     document.getElementById('heute-pause').value = t.pause || 30;
+                    document.getElementById('heute-type').value = t.name; // Typ automatisch setzen!
                     calculateNetto();
                 };
                 c.appendChild(b);
@@ -585,10 +648,9 @@
             grid.innerHTML = '';
 
             let firstDay = new Date(year, month, 1).getDay();
-            firstDay = firstDay === 0 ? 7 : firstDay; // So=7
+            firstDay = firstDay === 0 ? 7 : firstDay;
             let daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            // Auffüllen vorne
             for (let i = 1; i < firstDay; i++) {
                 grid.innerHTML += `<div class="bg-transparent"></div>`;
             }
@@ -604,32 +666,31 @@
                 let entry = db.entries[dStr];
                 let holiday = db.holidays[dStr];
                 
-                // Berechne Netto & Diff für diesen Tag
                 let netStd = 0;
                 let daySoll = entry && entry.soll !== undefined ? entry.soll : getDailySoll(dStr);
                 
-                if (entry && entry.begin && entry.end) {
-                    let bMin = calculateMinutes(entry.begin, entry.end);
-                    netStd = (bMin - (entry.pause || 0)) / 60;
-                    if(netStd < 0) netStd = 0;
+                if (entry) {
+                    if (entry.begin && entry.end) {
+                        let bMin = calculateMinutes(entry.begin, entry.end);
+                        let mNet = (bMin - (entry.pause || 0)) / 60;
+                        if(mNet > 0) netStd += mNet;
+                    }
+                    if (entry.extraTime) {
+                        netStd += parseFloat(entry.extraTime) || 0;
+                    }
                 }
                 
                 let dayDiff = netStd - daySoll;
-                
-                // Wir zählen die Differenz nur, wenn ein Eintrag existiert ODER es ein Arbeitstag mit Soll > 0 ist, der schon in der Vergangenheit liegt.
-                // Für Einfachheit zählen wir hier stumpf alle Tage im Monat:
-                // Wenn wir in der Zukunft sind und kein Eintrag da ist, werten wir es als 0 Diff, um das Konto nicht virtuell mit Minusstunden zu füllen
                 let isFuture = dateObj > new Date();
+                
                 if(!entry && isFuture) {
                     dayDiff = 0;
                 } else if (!entry && !isFuture && daySoll > 0) {
-                    // Tag in Vergangenheit, nichts eingetragen -> Minusstunden!
                     dayDiff = -daySoll;
                 }
                 
                 appTotalDiff += dayDiff;
 
-                // Styling
                 let bgClass = "bg-white border-slate-100";
                 if (isWeekend) bgClass = "bg-slate-50 border-slate-200";
                 
@@ -639,22 +700,22 @@
                         badgeHtml = `<div class="absolute top-0 right-0 badge bg-green-200 text-green-800 font-bold" title="${holiday.name}">Ferien</div>`;
                     } else {
                         badgeHtml = `<div class="absolute top-0 right-0 badge bg-yellow-300 text-yellow-900 font-bold" title="${holiday.name}">Feiertag</div>`;
-                        bgClass = "bg-yellow-50 border-yellow-200"; // Leichter Gelbstich
+                        bgClass = "bg-yellow-50 border-yellow-200"; 
                     }
                 }
 
                 let textHtml = "";
                 let hasRemark = entry && entry.remark ? `<div class="absolute bottom-1 right-1 text-xs">💬</div>` : '';
 
-                if (entry && entry.begin && entry.end) {
+                if (entry && (entry.begin || entry.extraTime)) {
                     let diffColor = dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
+                    let timeLine = entry.begin ? `${entry.begin}<br>${entry.end}` : `<span class="text-indigo-500">+ Zusatz</span>`;
                     textHtml = `
-                        <div class="text-[10px] text-slate-500 mt-1 leading-tight">${entry.begin}<br>${entry.end}</div>
+                        <div class="text-[10px] text-slate-500 mt-1 leading-tight">${timeLine}</div>
                         <div class="text-xs font-black ${diffColor} mt-1">${netStd.toFixed(1)}h</div>
                     `;
                 }
 
-                // Klick Event (Paint oder Heute Ansicht)
                 let cellHtml = `
                     <div class="cal-cell relative p-1 border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
                          onclick="handleCellClick('${dStr}')">
@@ -667,28 +728,21 @@
                 grid.innerHTML += cellHtml;
             }
 
-            // Update Saldo Board
             let agSaldo = parseFloat(db.settings.agSaldo || 0);
             let total = agSaldo + appTotalDiff;
             
             document.getElementById('saldo-app').innerText = (appTotalDiff > 0 ? '+' : '') + appTotalDiff.toFixed(2) + " h";
             document.getElementById('saldo-app').className = "text-xl font-bold " + (appTotalDiff >= 0 ? "text-emerald-600" : "text-red-500");
-            
             document.getElementById('saldo-ag').value = agSaldo;
-            
             document.getElementById('saldo-total').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + " h";
         }
 
         function handleCellClick(dStr) {
             if (paintModeActive) {
-                // Pinsel Modus
                 let tplId = document.getElementById('paint-template').value;
                 if (!tplId) return;
                 
-                // Feiertagsschutz prüfen
-                if (db.settings.protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) {
-                    return; // Ignorieren
-                }
+                if (db.settings.protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) return;
 
                 if (tplId === "clear") {
                     delete db.entries[dStr];
@@ -700,15 +754,17 @@
                             begin: t.begin,
                             end: t.end,
                             pause: t.pause || 30,
+                            type: t.name, // Wichtig für Auswertung!
                             soll: e.soll !== undefined ? e.soll : getDailySoll(dStr),
-                            remark: e.remark || ''
+                            remark: e.remark || '',
+                            extraTime: e.extraTime || '',
+                            extraType: e.extraType || ''
                         };
                     }
                 }
                 saveData();
                 renderCalendar();
             } else {
-                // Normales Verhalten -> Gehe zu Heute
                 document.getElementById('heute-date').value = dStr;
                 switchTab('heute');
             }
@@ -718,6 +774,109 @@
             db.settings.agSaldo = parseFloat(document.getElementById('saldo-ag').value) || 0;
             saveData();
             renderCalendar();
+        }
+
+        // --- AUSWERTUNG TAB LOGIK (NEU) ---
+        function updateStatYears() {
+            let years = new Set();
+            for (let dStr in db.entries) {
+                years.add(dStr.substring(0, 4));
+            }
+            let currentY = new Date().getFullYear().toString();
+            years.add(currentY);
+            
+            let sel = document.getElementById('stat-year');
+            let currentVal = sel.value;
+            sel.innerHTML = `<option value="all">Gesamt (Alle Zeiten)</option>`;
+            Array.from(years).sort().reverse().forEach(y => {
+                sel.innerHTML += `<option value="${y}">Jahr ${y}</option>`;
+            });
+            
+            if (currentVal && Array.from(years).includes(currentVal) || currentVal === 'all') {
+                sel.value = currentVal;
+            } else {
+                sel.value = currentY; // Default aktuelles Jahr
+            }
+        }
+
+        function renderAuswertung() {
+            let yearFilter = document.getElementById('stat-year').value;
+            
+            let totalHours = 0;
+            let daysWorked = 0;
+            let weeks = new Set();
+            let months = new Set();
+            let buckets = {};
+
+            for (let dStr in db.entries) {
+                if (yearFilter !== 'all' && !dStr.startsWith(yearFilter)) continue;
+
+                let e = db.entries[dStr];
+                let mainNet = 0;
+                
+                if (e.begin && e.end) {
+                    let min = calculateMinutes(e.begin, e.end);
+                    mainNet = Math.max(0, (min - (e.pause || 0)) / 60);
+                }
+                
+                let extra = parseFloat(e.extraTime) || 0;
+                let dayTotal = mainNet + extra;
+
+                if (dayTotal > 0) {
+                    totalHours += dayTotal;
+                    daysWorked++;
+                    
+                    let d = new Date(dStr);
+                    weeks.add(getWeekNumber(d));
+                    months.add(dStr.substring(0, 7));
+
+                    // Eimer für Balkendiagramm befüllen
+                    if (mainNet > 0) {
+                        let type = e.type ? e.type : "Reguläre Arbeitszeit";
+                        buckets[type] = (buckets[type] || 0) + mainNet;
+                    }
+                    if (extra > 0) {
+                        let eType = e.extraType ? e.extraType : "Zusatzzeit (Unbenannt)";
+                        buckets[eType] = (buckets[eType] || 0) + extra;
+                    }
+                }
+            }
+
+            // Durchschnittliche Berechnungen
+            document.getElementById('stat-avg-day').innerText = daysWorked ? (totalHours / daysWorked).toFixed(1) + "h" : "0.0h";
+            document.getElementById('stat-avg-week').innerText = weeks.size ? (totalHours / weeks.size).toFixed(1) + "h" : "0.0h";
+            document.getElementById('stat-avg-month').innerText = months.size ? (totalHours / months.size).toFixed(1) + "h" : "0.0h";
+
+            // Balkendiagramme Rendern
+            let container = document.getElementById('stat-breakdown');
+            container.innerHTML = '';
+            
+            // Absteigend sortieren
+            let sortedBuckets = Object.entries(buckets).sort((a, b) => b[1] - a[1]);
+            let maxHours = sortedBuckets.length > 0 ? sortedBuckets[0][1] : 0;
+
+            if (sortedBuckets.length === 0) {
+                container.innerHTML = '<div class="text-sm text-slate-400 text-center py-4">Keine erfassten Zeiten für diesen Zeitraum.</div>';
+            }
+
+            sortedBuckets.forEach(([name, hours], index) => {
+                let pct = maxHours > 0 ? (hours / maxHours) * 100 : 0;
+                // Unterschiedliche Farben für verschiedene Vorlagen
+                let colors = ['bg-indigo-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500'];
+                let color = colors[index % colors.length];
+
+                container.innerHTML += `
+                    <div>
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-xs font-bold text-slate-700 truncate pr-2">${name}</span>
+                            <span class="text-sm font-black text-slate-600 whitespace-nowrap">${hours.toFixed(1)} h</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div class="${color} h-2 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
         }
 
         // --- PLANER TAB LOGIK ---
@@ -730,7 +889,7 @@
                 btn.innerText = "Pinsel Aktiv (Klicken zum Beenden)";
                 btn.className = "w-full py-3 rounded-lg font-bold bg-red-500 text-white shadow-md transition-colors";
                 ind.classList.remove('hidden');
-                switchTab('kalender'); // Springe direkt zum Kalender!
+                switchTab('kalender'); 
             } else {
                 btn.innerText = "Pinsel Aktivieren";
                 btn.className = "w-full py-3 rounded-lg font-bold bg-indigo-100 text-indigo-700 transition-colors";
@@ -764,7 +923,6 @@
                     </div>
                 `;
             });
-            // Letzter Tag (Sonntag) hat ID 0 im JS Date, aber hier im UI logischer als 7 gelöst, beim Speichern mappen wir.
         }
 
         function applyPattern() {
@@ -776,7 +934,7 @@
 
             let pattern = {};
             for(let i=1; i<=7; i++) {
-                let jsDay = i === 7 ? 0 : i; // Sonntag ist 0 in JS
+                let jsDay = i === 7 ? 0 : i; 
                 pattern[jsDay] = document.getElementById(`pat-day-${i}`).value;
             }
 
@@ -787,10 +945,7 @@
                 let dayOfWeek = dateObj.getDay();
                 let tplId = pattern[dayOfWeek];
 
-                // Feiertagsschutz
-                if (protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) {
-                    continue; // An gesetzlichen Feiertagen überspringen
-                }
+                if (protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) continue;
 
                 if (tplId) {
                     let existing = db.entries[dStr];
@@ -801,8 +956,11 @@
                                 begin: t.begin,
                                 end: t.end,
                                 pause: t.pause || 30,
+                                type: t.name, // Speichere Namen für Auswertung
                                 soll: existing && existing.soll !== undefined ? existing.soll : getDailySoll(dStr),
-                                remark: existing ? existing.remark : ''
+                                remark: existing ? existing.remark : '',
+                                extraTime: existing ? existing.extraTime : '',
+                                extraType: existing ? existing.extraType : ''
                             };
                             count++;
                         }
@@ -819,7 +977,6 @@
             document.getElementById('set-weekly-hours').value = db.settings.model.hours;
             document.getElementById('state-select').value = db.settings.state || "NW";
             
-            // Buttons für Arbeitstage anmalen
             document.querySelectorAll('.day-btn').forEach(btn => {
                 let d = parseInt(btn.getAttribute('data-day'));
                 if (db.settings.model.days.includes(d)) {
@@ -829,11 +986,9 @@
                 }
             });
             
-            // Calc Info
             let daily = (db.settings.model.hours / Math.max(1, db.settings.model.days.length)).toFixed(2);
             document.getElementById('calc-daily-soll').innerText = daily + " h";
 
-            // Toggle UI Feiertagsschutz
             document.getElementById('protect-holidays').checked = db.settings.protectHolidays;
             updateToggleUI();
 
@@ -842,11 +997,8 @@
 
         function toggleWorkDay(dayInt) {
             let idx = db.settings.model.days.indexOf(dayInt);
-            if(idx > -1) {
-                db.settings.model.days.splice(idx, 1);
-            } else {
-                db.settings.model.days.push(dayInt);
-            }
+            if(idx > -1) db.settings.model.days.splice(idx, 1);
+            else db.settings.model.days.push(dayInt);
             saveSettings();
         }
 
@@ -859,20 +1011,15 @@
             
             let neuerSollWert = db.settings.model.hours / Math.max(1, db.settings.model.days.length);
 
-            // MAGIC: Aktualisiere alte Standard-Tage
-            // Wenn in den Entries das Soll genau dem "alten Standard-Soll" entspricht, updaten wir es auf das neue.
-            // (Damit werden manuelle Änderungen, wie z.B. 0h an einem Urlaubstag, nicht überschrieben).
             if (alterSollWert !== neuerSollWert) {
                 for (let dateStr in db.entries) {
                     let entry = db.entries[dateStr];
                     let dateObj = new Date(dateStr);
                     let isWorkDay = db.settings.model.days.includes(dateObj.getDay());
                     
-                    // Nur an regulären Arbeitstagen updaten, und nur wenn es vorher dem Standard entsprach
                     if (isWorkDay && Math.abs(entry.soll - alterSollWert) < 0.01) {
                         entry.soll = parseFloat(neuerSollWert.toFixed(2));
                     }
-                    // Wenn es nun KEIN Arbeitstag mehr ist (z.B. Samstag abgewählt), setze auf 0
                     if (!isWorkDay && entry.soll > 0 && Math.abs(entry.soll - alterSollWert) < 0.01) {
                         entry.soll = 0;
                     }
@@ -939,26 +1086,22 @@
         // --- BACKUP / EXPORT / IMPORT ---
         function exportData() {
             let dataStr = btoa(encodeURIComponent(JSON.stringify(db)));
-            
-            // Versuche es direkt in die Zwischenablage zu kopieren
             if(navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(dataStr).then(() => {
-                    alert("Backup-Code in die Zwischenablage kopiert! Fügen Sie ihn z.B. in eine Mail, Notizen oder WhatsApp ein.");
+                    alert("Backup-Code kopiert! Sie können ihn nun in WhatsApp/Mail einfügen.");
                 });
             } else {
-                // Fallback: Zeige es im Textfeld an
                 let ta = document.getElementById('import-data');
                 ta.value = dataStr;
                 ta.select();
                 document.execCommand('copy');
-                alert("Backup-Code wurde in das Textfeld unten geschrieben und markiert. Bitte manuell kopieren.");
+                alert("Backup-Code unten eingefügt und markiert. Bitte manuell kopieren.");
             }
         }
 
         function importData() {
             let dataStr = document.getElementById('import-data').value.trim();
             if(!dataStr) return;
-            
             try {
                 let parsed = JSON.parse(decodeURIComponent(atob(dataStr)));
                 if(parsed && parsed.entries) {
@@ -969,14 +1112,12 @@
                         location.reload();
                     }
                 } else {
-                    alert("Ungültiger Code (Falsches Format).");
+                    alert("Ungültiger Code.");
                 }
-            } catch(e) {
-                alert("Fehler beim Importieren. Code ist beschädigt.");
-            }
+            } catch(e) { alert("Code ist beschädigt."); }
         }
 
-        // --- FEIERTAGE API (OpenHolidaysAPI) ---
+        // --- FEIERTAGE API ---
         async function fetchHolidays() {
             let btn = document.querySelector('button[onclick="fetchHolidays()"]');
             btn.innerText = "Lädt...";
@@ -986,18 +1127,15 @@
             let state = db.settings.state;
 
             try {
-                // Feiertage laden (Jahreswechsel = wir laden diesjährig + nächstes Jahr)
                 await loadAPIHolidays(year, state, false);
                 await loadAPIHolidays(year + 1, state, false);
-                
-                // Schulferien laden
                 await loadAPIHolidays(year, state, true);
                 await loadAPIHolidays(year + 1, state, true);
 
                 saveData();
-                alert("Feiertage und Ferien wurden erfolgreich aktualisiert!");
+                alert("Feiertage und Ferien aktualisiert!");
             } catch (e) {
-                alert("Fehler beim Abrufen der Daten. Bitte prüfen Sie Ihre Internetverbindung.");
+                alert("Fehler beim Abrufen der Daten.");
             }
 
             btn.innerText = "Jahresdaten jetzt aktualisieren";
@@ -1016,10 +1154,8 @@
                 let start = new Date(item.startDate);
                 let end = new Date(item.endDate);
                 
-                // Trage jeden Tag der Periode ins Dictionary ein
                 for(let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
                     let dStr = dt.toISOString().split('T')[0];
-                    // Feiertage überschreiben Ferien, falls sie sich am selben Tag überschneiden
                     if (!db.holidays[dStr] || (!isSchool && db.holidays[dStr].isSchool)) {
                         db.holidays[dStr] = { name: name, isSchool: isSchool };
                     }
@@ -1032,6 +1168,3 @@
     </script>
 </body>
 </html>
-
-
-```
