@@ -6,379 +6,334 @@
     <title>Zeiterfassung Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Touch-Optimierungen und Verhinderung von Markierungen beim Tippen */
         body { 
             -webkit-tap-highlight-color: transparent; 
             user-select: none;
             font-family: system-ui, -apple-system, sans-serif;
-            background-color: #f8fafc;
+            background-color: #f1f5f9; /* Noch helleres Grau für mehr Kontrast */
         }
         input, textarea { user-select: text; }
         
-        /* Kalender-Zellen Mindesthöhe für bessere Lesbarkeit auf dem Handy */
-        .cal-cell { min-height: 75px; }
+        /* Optimierte Kalender-Zellen für kompakte Ansicht */
+        .cal-cell { min-height: 58px; display: flex; flex-direction: column; justify-content: space-between; }
         
-        /* Etiketten für Feiertage/Ferien */
         .badge {
-            font-size: 0.6rem;
-            padding: 2px 4px;
+            font-size: 0.55rem;
+            padding: 1px 3px;
             border-bottom-left-radius: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 90%;
+            line-height: 1;
         }
         
-        /* Verstecke Scrollbars für sauberes Design */
         ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        /* Verstecke den Standard-Pfeil der HTML-Akkordeons */
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
     </style>
 </head>
 <body class="text-slate-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- Kopfzeile -->
-    <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10 shrink-0">
-        <h1 class="text-xl font-bold" id="app-title">Zeiterfassung</h1>
-        <div id="paint-indicator" class="hidden bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
+    <!-- Kopfzeile (Kompakter) -->
+    <header class="bg-blue-600 text-white px-3 py-2.5 shadow-md flex justify-between items-center z-10 shrink-0">
+        <h1 class="text-lg font-bold" id="app-title">Zeiterfassung</h1>
+        <div id="paint-indicator" class="hidden bg-red-500 text-white text-[10px] px-2 py-1 rounded-full font-bold animate-pulse">
             PINSEL AKTIV
         </div>
     </header>
 
-    <!-- Hauptinhalt (Scrollbar) -->
-    <main class="flex-1 overflow-y-auto pb-20 relative w-full max-w-2xl mx-auto">
+    <!-- Hauptinhalt -->
+    <main class="flex-1 overflow-y-auto p-2 relative w-full max-w-2xl mx-auto flex flex-col">
         
-        <!-- ================= TAB: HEUTE ================= -->
-        <div id="tab-heute" class="p-4 space-y-4 hidden">
+        <!-- ================= TAB: HEUTE (Ultra-Kompakt) ================= -->
+        <div id="tab-heute" class="space-y-2 hidden flex-col h-full">
             
-            <!-- Datum-Navigation -->
-            <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm">
-                <button onclick="changeDate(-1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </button>
-                <input type="date" id="heute-date" class="text-lg font-bold bg-transparent border-none text-center outline-none" onchange="loadDayData()">
-                <button onclick="changeDate(1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </button>
+            <!-- Datum & Netto in einem flexiblen Container -->
+            <div class="flex gap-2">
+                <!-- Datum-Navigation -->
+                <div class="flex-1 flex justify-between items-center bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+                    <button onclick="changeDate(-1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <input type="date" id="heute-date" class="text-sm font-bold bg-transparent border-none text-center outline-none w-full px-1" onchange="loadDayData()">
+                    <button onclick="changeDate(1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                </div>
             </div>
 
-            <!-- Netto & Speichern Box -->
-            <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-blue-500">
+            <!-- Netto & Speichern -->
+            <div class="bg-white p-2.5 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-blue-500">
                 <div>
-                    <div class="text-sm text-slate-500 font-semibold mb-1">Netto-Arbeitszeit</div>
-                    <div class="text-5xl font-black text-blue-600" id="heute-netto">0.0h</div>
-                    <div id="heute-diff" class="text-sm font-bold mt-1 text-slate-400">0.0h zum Soll</div>
-                </div>
-                <button onclick="saveDay()" class="bg-blue-600 text-white w-20 h-20 rounded-2xl shadow-lg flex flex-col justify-center items-center active:scale-95 transition-transform">
-                    <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    <span class="text-sm font-bold">Speichern</span>
-                </button>
-            </div>
-
-            <!-- Vorlagen Schnellzugriff -->
-            <div class="space-y-2">
-                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Vorlagen anwenden</div>
-                <div class="flex gap-2 overflow-x-auto pb-2" id="heute-templates">
-                    <!-- Wird dynamisch gefüllt -->
-                </div>
-            </div>
-
-            <!-- Zeiten Eingabe -->
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-white p-3 rounded-xl shadow-sm">
-                    <label class="block text-xs font-bold text-slate-400 mb-1">Beginn</label>
-                    <input type="time" id="heute-begin" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" onchange="autoSuggestBreak(); calculateNetto()">
-                </div>
-                <div class="bg-white p-3 rounded-xl shadow-sm">
-                    <label class="block text-xs font-bold text-slate-400 mb-1">Ende</label>
-                    <input type="time" id="heute-end" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" onchange="autoSuggestBreak(); calculateNetto()">
-                </div>
-                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
-                    <label class="block text-xs font-bold text-slate-400 mb-1">Pause (Min)</label>
-                    <input type="number" id="heute-pause" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" onchange="calculateNetto()" placeholder="0">
-                </div>
-                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
-                    <label class="block text-xs font-bold text-slate-400 mb-1">Soll (Std)</label>
-                    <input type="number" step="0.1" id="heute-soll" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" onchange="calculateNetto()">
-                </div>
-            </div>
-
-            <!-- Klassifizierung & Zusatzzeit (NEU) -->
-            <div class="bg-white p-3 rounded-xl shadow-sm space-y-3 border-l-4 border-indigo-400">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1">Abrechnungs-Kategorie (Hauptzeit)</label>
-                    <input type="text" id="heute-type" class="w-full text-sm font-bold text-indigo-700 bg-indigo-50 p-2 rounded-lg outline-none" placeholder="z.B. Regulär, Frühschicht...">
-                </div>
-                <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100">
-                    <div class="col-span-1">
-                        <label class="block text-xs font-bold text-slate-400 mb-1">+ Stunden</label>
-                        <input type="number" step="0.1" id="heute-extra-time" class="w-full text-sm font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-400" placeholder="0.0" onchange="calculateNetto()">
+                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Netto-Arbeit</div>
+                    <div class="flex items-baseline gap-2">
+                        <div class="text-4xl font-black text-blue-600 leading-none" id="heute-netto">0.0h</div>
+                        <div id="heute-diff" class="text-xs font-bold text-slate-400">0.0h Soll</div>
                     </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-bold text-slate-400 mb-1">Zusatz-Zweck</label>
-                        <input type="text" id="heute-extra-type" class="w-full text-sm font-bold bg-slate-50 p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-400" placeholder="z.B. Betriebsrat">
+                </div>
+                <button onclick="saveDay()" class="bg-blue-600 text-white w-14 h-14 rounded-xl shadow-md flex flex-col justify-center items-center active:scale-95 transition-transform shrink-0">
+                    <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span class="text-[9px] font-bold">Save</span>
+                </button>
+            </div>
+
+            <!-- Vorlagen Schnellzugriff (Scrollt horizontal) -->
+            <div class="flex gap-2 overflow-x-auto pb-1" id="heute-templates">
+                <!-- Dynamisch -->
+            </div>
+
+            <!-- Zeiten Eingabe (4-Spalten Grid!) -->
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
+                <div class="grid grid-cols-4 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Beginn</label>
+                        <input type="time" id="heute-begin" class="w-full text-sm font-bold bg-slate-50 p-2 rounded outline-none focus:ring-1 focus:ring-blue-400 text-center" onchange="autoSuggestBreak(); calculateNetto()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Ende</label>
+                        <input type="time" id="heute-end" class="w-full text-sm font-bold bg-slate-50 p-2 rounded outline-none focus:ring-1 focus:ring-blue-400 text-center" onchange="autoSuggestBreak(); calculateNetto()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1 text-center">Pause (m)</label>
+                        <input type="number" id="heute-pause" class="w-full text-sm font-bold bg-slate-50 p-2 rounded outline-none focus:ring-1 focus:ring-blue-400 text-center" onchange="calculateNetto()" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1 text-center">Soll (h)</label>
+                        <input type="number" step="0.1" id="heute-soll" class="w-full text-sm font-bold bg-slate-50 p-2 rounded outline-none focus:ring-1 focus:ring-blue-400 text-center text-blue-700" onchange="calculateNetto()">
                     </div>
                 </div>
             </div>
 
-            <!-- Bemerkung Feld -->
-            <div class="bg-white p-3 rounded-xl shadow-sm">
-                <label class="block text-xs font-bold text-slate-400 mb-1">Bemerkung (optional)</label>
-                <input type="text" id="heute-remark" class="w-full text-base bg-slate-50 p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" placeholder="Krank, Urlaub, Notizen...">
+            <!-- Typ & Zusatzzeit (3-Spalten Grid!) -->
+            <div class="bg-white p-2 rounded-xl shadow-sm border-l-2 border-indigo-400 border border-slate-100">
+                <div class="grid grid-cols-[2fr_1fr_2fr] gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Typ/Vorlage</label>
+                        <input type="text" id="heute-type" class="w-full text-xs font-bold text-indigo-700 bg-indigo-50 p-2 rounded outline-none" placeholder="z.B. Früh">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1 text-center">+ Std.</label>
+                        <input type="number" step="0.1" id="heute-extra-time" class="w-full text-sm font-bold bg-slate-50 p-2 rounded outline-none text-center" placeholder="0.0" onchange="calculateNetto()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Zweck (Extra)</label>
+                        <input type="text" id="heute-extra-type" class="w-full text-xs font-bold bg-slate-50 p-2 rounded outline-none" placeholder="z.B. Meeting">
+                    </div>
+                </div>
             </div>
 
-            <button onclick="clearDay()" class="w-full p-4 mt-2 text-red-500 font-bold bg-red-50 rounded-xl">Eintrag löschen</button>
+            <!-- Bemerkung & Löschen in einer Zeile -->
+            <div class="flex gap-2">
+                <div class="flex-1 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100">
+                    <input type="text" id="heute-remark" class="w-full text-sm bg-transparent p-1.5 outline-none" placeholder="💬 Bemerkung (optional)...">
+                </div>
+                <button onclick="clearDay()" class="bg-red-50 text-red-500 rounded-xl w-12 flex justify-center items-center shadow-sm shrink-0 active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </div>
 
         </div>
 
-        <!-- ================= TAB: KALENDER ================= -->
-        <div id="tab-kalender" class="p-2 space-y-3 hidden">
+        <!-- ================= TAB: KALENDER (Kompakt) ================= -->
+        <div id="tab-kalender" class="space-y-2 hidden flex-col h-full">
             
-            <div class="flex justify-between items-center bg-blue-600 text-white p-3 rounded-xl shadow-md">
-                <button onclick="changeMonth(-1)" class="p-2 bg-blue-500 rounded-lg"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                <div class="text-lg font-bold" id="cal-month-title">Mai 2026</div>
-                <button onclick="changeMonth(1)" class="p-2 bg-blue-500 rounded-lg"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+            <div class="flex justify-between items-center bg-blue-600 text-white p-2 rounded-lg shadow-sm">
+                <button onclick="changeMonth(-1)" class="p-1.5 bg-blue-500 rounded"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <div class="font-bold text-sm" id="cal-month-title">Mai 2026</div>
+                <button onclick="changeMonth(1)" class="p-1.5 bg-blue-500 rounded"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
-            <div class="bg-white p-2 rounded-xl shadow-sm">
-                <div class="grid grid-cols-7 gap-1 mb-1 text-center text-xs font-bold text-slate-400">
+            <!-- Einzeiliges Saldo Board -->
+            <div class="bg-white p-2 rounded-lg shadow-sm border border-slate-100 flex items-center justify-between">
+                <div class="text-center px-2">
+                    <span class="block text-[9px] text-slate-400 font-bold uppercase">Dieser Monat</span>
+                    <span id="saldo-app" class="font-bold text-sm">0.0h</span>
+                </div>
+                <div class="text-center px-3 border-l border-r border-slate-100 relative">
+                    <span class="block text-[9px] text-blue-500 font-bold uppercase">AG Vormonat</span>
+                    <input type="number" step="0.01" id="saldo-ag" class="w-14 text-center font-bold text-blue-700 bg-blue-50 rounded text-sm p-0.5 outline-none" value="0" onchange="saveAGSaldo()">
+                </div>
+                <div class="text-center px-2">
+                    <span class="block text-[9px] text-indigo-500 font-bold uppercase">Gesamtstand</span>
+                    <span id="saldo-total" class="font-black text-base text-indigo-700">0.0h</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-1.5 rounded-lg shadow-sm flex-1 flex flex-col">
+                <div class="grid grid-cols-7 gap-[2px] mb-1 text-center text-[10px] font-bold text-slate-400">
                     <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
                 </div>
-                <div id="cal-grid" class="grid grid-cols-7 gap-1">
+                <div id="cal-grid" class="grid grid-cols-7 gap-[2px] flex-1">
                     <!-- Wird dynamisch generiert -->
                 </div>
-                <div class="mt-3 flex justify-center gap-3 text-[10px] text-slate-400">
+                <div class="mt-2 flex justify-center gap-3 text-[9px] text-slate-400 font-bold">
                     <span class="flex items-center gap-1"><div class="w-2 h-2 bg-yellow-300 rounded-full"></div> Feiertag</span>
                     <span class="flex items-center gap-1"><div class="w-2 h-2 bg-green-200 rounded-full"></div> Ferien</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-slate-200 border border-slate-300 rounded-full"></div> Wochenende</span>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4 border border-blue-100">
-                <div class="grid grid-cols-2 gap-4 text-center">
-                    <div class="p-3 bg-slate-50 rounded-lg">
-                        <div class="text-xs font-bold text-slate-500">App (Dieser Monat)</div>
-                        <div class="text-xl font-bold" id="saldo-app">0.00 h</div>
-                    </div>
-                    <div class="p-3 bg-blue-50 rounded-lg border border-blue-100 relative">
-                        <div class="text-xs font-bold text-blue-600">Übertrag (AG Vormonat)</div>
-                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-xl font-bold bg-transparent text-center outline-none text-blue-800" value="0" onchange="saveAGSaldo()">
-                        <svg class="w-3 h-3 text-blue-400 absolute top-2 right-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                    </div>
-                </div>
-                <div class="bg-indigo-600 p-4 rounded-xl text-white flex justify-between items-center shadow-md">
-                    <div>
-                        <div class="text-sm font-bold opacity-90">Stand Ende Monat</div>
-                        <div class="text-xs opacity-75">Übertrag + App-Saldo</div>
-                    </div>
-                    <div class="text-3xl font-black" id="saldo-total">+0.00 h</div>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-slate-100 border border-slate-200 rounded-full"></div> Wochenende</span>
                 </div>
             </div>
             
         </div>
 
-        <!-- ================= TAB: PLANER ================= -->
-        <div id="tab-planer" class="p-4 space-y-6 hidden">
+        <!-- ================= TAB: PLANER (Grid optimiert) ================= -->
+        <div id="tab-planer" class="space-y-2 hidden">
             
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4 border-l-4 border-indigo-500">
-                <h2 class="font-bold text-indigo-700 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
-                    Schnell-Zuweisung (Pinsel)
-                </h2>
-                <p class="text-xs text-slate-500">Vorlage wählen, aktivieren und im Kalender auf die Tage tippen.</p>
-                
-                <select id="paint-template" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold">
-                    <!-- Dynamisch -->
-                </select>
-                
-                <button id="btn-paint-toggle" onclick="togglePaintMode()" class="w-full py-3 rounded-lg font-bold bg-indigo-100 text-indigo-700 transition-colors">
-                    Pinsel Aktivieren
-                </button>
+            <div class="bg-white p-3 rounded-xl shadow-sm border-l-4 border-indigo-500">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="font-bold text-indigo-700 text-sm flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg> Pinsel Modus</h2>
+                </div>
+                <div class="flex gap-2">
+                    <select id="paint-template" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none"></select>
+                    <button id="btn-paint-toggle" onclick="togglePaintMode()" class="px-3 rounded-lg font-bold bg-indigo-100 text-indigo-700 text-sm whitespace-nowrap">Aktivieren</button>
+                </div>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="font-bold text-slate-800 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        Wochen-Muster
-                    </h2>
-                    
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <span class="text-xs font-bold text-slate-500">Feiertage schützen</span>
+            <div class="bg-white p-3 rounded-xl shadow-sm">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-bold text-slate-800 text-sm flex items-center gap-1"><svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Wochen-Muster</h2>
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                        <span class="text-[10px] font-bold text-slate-500">Feiertage schützen</span>
                         <input type="checkbox" id="protect-holidays" class="sr-only" checked onchange="saveSettings()">
-                        <div class="w-10 h-5 bg-slate-300 rounded-full relative transition-colors" id="toggle-bg">
-                            <div class="w-4 h-4 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform" id="toggle-dot"></div>
+                        <div class="w-8 h-4 bg-slate-300 rounded-full relative transition-colors" id="toggle-bg">
+                            <div class="w-3 h-3 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform" id="toggle-dot"></div>
                         </div>
                     </label>
                 </div>
                 
-                <div class="space-y-2" id="pattern-container">
-                    <!-- Mo-So Dropdowns -->
+                <!-- 2-Spalten Grid für die Wochentage! -->
+                <div class="grid grid-cols-2 gap-2" id="pattern-container"></div>
+
+                <div class="flex items-center gap-2 mt-3 mb-2">
+                    <input type="checkbox" id="overwrite-pattern" class="w-3 h-3 text-blue-600 rounded">
+                    <label for="overwrite-pattern" class="text-[10px] font-bold text-slate-600">Bestehende überschreiben</label>
                 </div>
 
-                <div class="flex items-center gap-2 mb-2 mt-4">
-                    <input type="checkbox" id="overwrite-pattern" class="w-4 h-4 text-blue-600 rounded">
-                    <label for="overwrite-pattern" class="text-xs font-bold text-slate-600">Bestehende Einträge überschreiben</label>
-                </div>
-
-                <button onclick="applyPattern()" class="w-full py-3 rounded-lg font-bold bg-blue-600 text-white shadow-md active:bg-blue-700">
-                    Muster eintragen
+                <button onclick="applyPattern()" class="w-full py-2.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow-sm active:scale-95">
+                    Muster in Monat eintragen
                 </button>
             </div>
         </div>
 
         <!-- ================= TAB: AUSWERTUNG ================= -->
-        <div id="tab-auswertung" class="p-4 space-y-4 hidden">
-            
-            <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm">
-                <h2 class="font-bold text-slate-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    Zeit-Analysen
-                </h2>
-                <select id="stat-year" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm font-bold text-indigo-600 outline-none" onchange="renderAuswertung()">
-                    <!-- Wird dynamisch gefüllt -->
-                </select>
+        <div id="tab-auswertung" class="space-y-2 hidden p-1">
+            <div class="flex justify-between items-center bg-white p-2 rounded-lg shadow-sm">
+                <h2 class="font-bold text-sm text-slate-800 flex items-center gap-1"><svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Statistik</h2>
+                <select id="stat-year" class="bg-slate-50 border border-slate-200 rounded text-xs font-bold text-indigo-600 p-1 outline-none" onchange="renderAuswertung()"></select>
             </div>
 
-            <div class="grid grid-cols-3 gap-3">
-                <div class="bg-white p-3 rounded-xl shadow-sm text-center border-b-4 border-indigo-400">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ø Tag</div>
-                    <div class="text-xl font-black text-slate-700 mt-1" id="stat-avg-day">0.0h</div>
-                </div>
-                <div class="bg-white p-3 rounded-xl shadow-sm text-center border-b-4 border-blue-400">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ø Woche</div>
-                    <div class="text-xl font-black text-slate-700 mt-1" id="stat-avg-week">0.0h</div>
-                </div>
-                <div class="bg-white p-3 rounded-xl shadow-sm text-center border-b-4 border-emerald-400">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ø Monat</div>
-                    <div class="text-xl font-black text-slate-700 mt-1" id="stat-avg-month">0.0h</div>
-                </div>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-white p-2 rounded-lg shadow-sm text-center border-b-4 border-indigo-400"><div class="text-[9px] font-bold text-slate-400 uppercase">Ø Tag</div><div class="text-sm font-black text-slate-700" id="stat-avg-day">0h</div></div>
+                <div class="bg-white p-2 rounded-lg shadow-sm text-center border-b-4 border-blue-400"><div class="text-[9px] font-bold text-slate-400 uppercase">Ø Woche</div><div class="text-sm font-black text-slate-700" id="stat-avg-week">0h</div></div>
+                <div class="bg-white p-2 rounded-lg shadow-sm text-center border-b-4 border-emerald-400"><div class="text-[9px] font-bold text-slate-400 uppercase">Ø Monat</div><div class="text-sm font-black text-slate-700" id="stat-avg-month">0h</div></div>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
-                <div>
-                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Aufschlüsselung nach Tätigkeit</h3>
-                    <p class="text-xs text-slate-400 mt-1">Geleistete Stunden pro Vorlage & Zusatz-Kategorie</p>
-                </div>
-                
-                <div id="stat-breakdown" class="space-y-4 pt-2 border-t border-slate-100">
-                    <!-- Progress bars werden dynamisch generiert -->
-                </div>
+            <div class="bg-white p-3 rounded-lg shadow-sm flex-1">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase border-b pb-1 mb-2">Aufschlüsselung (Tätigkeiten)</h3>
+                <div id="stat-breakdown" class="space-y-3"></div>
             </div>
-            
         </div>
 
-        <!-- ================= TAB: SETUP ================= -->
-        <div id="tab-setup" class="p-4 space-y-6 hidden">
+        <!-- ================= TAB: SETUP (Akkordeon Design!) ================= -->
+        <div id="tab-setup" class="space-y-2 hidden pb-4">
             
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
-                <h2 class="font-bold text-lg border-b pb-2">Arbeitszeit-Modell</h2>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Vertragl. Wochenstunden</label>
-                        <input type="number" id="set-weekly-hours" class="w-full p-2 bg-slate-50 border rounded-lg font-bold" value="40" onchange="saveSettings()">
+            <!-- Akkordeon 1: Modell -->
+            <details class="bg-white rounded-xl shadow-sm border border-slate-100 group" open>
+                <summary class="p-3 font-bold text-sm text-slate-800 cursor-pointer flex justify-between items-center outline-none">
+                    Arbeitszeit-Modell
+                    <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </summary>
+                <div class="p-3 pt-0 border-t border-slate-50 space-y-3 mt-2">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Vertragl. Wochenstunden</label>
+                            <input type="number" id="set-weekly-hours" class="w-full p-2 bg-slate-50 border rounded text-sm font-bold" value="40" onchange="saveSettings()">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 mb-1">Tägliches Soll (Auto)</label>
+                            <div id="calc-daily-soll" class="p-2 text-blue-600 font-bold bg-blue-50 rounded text-center text-sm">8.0 h</div>
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Tägliches Soll (Auto)</label>
-                        <div id="calc-daily-soll" class="p-2 text-blue-600 font-bold bg-blue-50 rounded-lg text-center">8.0 h</div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">Reguläre Arbeitstage</label>
+                        <div class="flex justify-between gap-1">
+                            <button class="day-btn flex-1 py-1.5 text-xs font-bold rounded bg-blue-100 text-blue-700" data-day="1" onclick="toggleWorkDay(1)">Mo</button>
+                            <button class="day-btn flex-1 py-1.5 text-xs font-bold rounded bg-blue-100 text-blue-700" data-day="2" onclick="toggleWorkDay(2)">Di</button>
+                            <button class="day-btn flex-1 py-1.5 text-xs font-bold rounded bg-blue-100 text-blue-700" data-day="3" onclick="toggleWorkDay(3)">Mi</button>
+                            <button class="day-btn flex-1 py-1.5 text-xs font-bold rounded bg-blue-100 text-blue-700" data-day="4" onclick="toggleWorkDay(4)">Do</button>
+                            <button class="day-btn flex-1 py-1.5 text-xs font-bold rounded bg-blue-100 text-blue-700" data-day="5" onclick="toggleWorkDay(5)">Fr</button>
+                            <button class="day-btn flex-1 py-1.5 text-xs font-bold rounded bg-slate-100 text-slate-400" data-day="6" onclick="toggleWorkDay(6)">Sa</button>
+                            <button class="day-btn flex-1 py-1.5 text-xs font-bold rounded bg-slate-100 text-slate-400" data-day="0" onclick="toggleWorkDay(0)">So</button>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-2">Reguläre Arbeitstage</label>
-                    <div class="flex justify-between gap-1">
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500" data-day="1" onclick="toggleWorkDay(1)">Mo</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500" data-day="2" onclick="toggleWorkDay(2)">Di</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500" data-day="3" onclick="toggleWorkDay(3)">Mi</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500" data-day="4" onclick="toggleWorkDay(4)">Do</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500" data-day="5" onclick="toggleWorkDay(5)">Fr</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent" data-day="6" onclick="toggleWorkDay(6)">Sa</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent" data-day="0" onclick="toggleWorkDay(0)">So</button>
+            </details>
+
+            <!-- Akkordeon 2: Vorlagen -->
+            <details class="bg-white rounded-xl shadow-sm border border-slate-100 group">
+                <summary class="p-3 font-bold text-sm text-slate-800 cursor-pointer flex justify-between items-center outline-none">
+                    Vorlagen verwalten
+                    <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </summary>
+                <div class="p-3 pt-0 border-t border-slate-50 mt-2">
+                    <div class="grid grid-cols-4 gap-1.5 mb-3">
+                        <input type="text" id="tpl-name" placeholder="Name" class="col-span-4 p-1.5 bg-slate-50 border rounded text-xs font-bold">
+                        <input type="time" id="tpl-begin" class="col-span-2 p-1.5 bg-slate-50 border rounded text-xs">
+                        <input type="time" id="tpl-end" class="col-span-2 p-1.5 bg-slate-50 border rounded text-xs">
+                        <input type="number" id="tpl-pause" placeholder="Pause(m)" class="col-span-2 p-1.5 bg-slate-50 border rounded text-xs">
+                        <button onclick="addTemplate()" class="col-span-2 bg-indigo-600 text-white font-bold rounded text-xs">Speichern</button>
+                    </div>
+                    <div id="setup-templates-list" class="space-y-1.5 max-h-32 overflow-y-auto"></div>
+                </div>
+            </details>
+
+            <!-- Akkordeon 3: Feiertage & Backup -->
+            <details class="bg-white rounded-xl shadow-sm border border-slate-100 group">
+                <summary class="p-3 font-bold text-sm text-slate-800 cursor-pointer flex justify-between items-center outline-none">
+                    Daten & Feiertage
+                    <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </summary>
+                <div class="p-3 pt-0 border-t border-slate-50 space-y-3 mt-2">
+                    <div>
+                        <select id="state-select" class="w-full p-2 bg-slate-50 border rounded text-xs font-bold mb-1" onchange="saveSettings()">
+                            <option value="BW">Baden-Württemberg</option><option value="BY">Bayern</option><option value="BE">Berlin</option><option value="BB">Brandenburg</option><option value="HB">Bremen</option><option value="HH">Hamburg</option><option value="HE">Hessen</option><option value="MV">Mecklenburg-Vorpommern</option><option value="NI">Niedersachsen</option><option value="NW">Nordrhein-Westfalen</option><option value="RP">Rheinland-Pfalz</option><option value="SL">Saarland</option><option value="SN">Sachsen</option><option value="ST">Sachsen-Anhalt</option><option value="SH">Schleswig-Holstein</option><option value="TH">Thüringen</option>
+                        </select>
+                        <button onclick="fetchHolidays()" class="w-full py-2 bg-emerald-500 text-white text-xs font-bold rounded">Feiertage laden</button>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 flex gap-2">
+                         <button onclick="exportData()" class="flex-1 py-2 bg-slate-800 text-white text-xs font-bold rounded text-center">Backup Kopieren</button>
+                    </div>
+                    <div>
+                        <textarea id="import-data" class="w-full p-1 bg-slate-50 border rounded text-[10px] font-mono h-10" placeholder="Code hier einfügen..."></textarea>
+                        <button onclick="importData()" class="w-full mt-1 py-2 bg-red-100 text-red-700 text-xs font-bold rounded">Wiederherstellen</button>
                     </div>
                 </div>
-            </div>
+            </details>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
-                <h2 class="font-bold text-lg border-b pb-2">Vorlagen verwalten</h2>
-                <div class="grid grid-cols-4 gap-2">
-                    <input type="text" id="tpl-name" placeholder="Name" class="col-span-4 p-2 bg-slate-50 border rounded-lg text-sm font-bold">
-                    <input type="time" id="tpl-begin" class="col-span-2 p-2 bg-slate-50 border rounded-lg text-sm">
-                    <input type="time" id="tpl-end" class="col-span-2 p-2 bg-slate-50 border rounded-lg text-sm">
-                    <input type="number" id="tpl-pause" placeholder="Pause (Min)" class="col-span-2 p-2 bg-slate-50 border rounded-lg text-sm">
-                    <button onclick="addTemplate()" class="col-span-2 bg-indigo-600 text-white font-bold rounded-lg text-sm">Speichern</button>
-                </div>
-                <div id="setup-templates-list" class="space-y-2 mt-4">
-                    <!-- Vorlagen Liste -->
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
-                <h2 class="font-bold text-lg border-b pb-2">Bundesland (Feiertage/Ferien)</h2>
-                <select id="state-select" class="w-full p-3 bg-slate-50 border rounded-lg font-bold" onchange="saveSettings()">
-                    <option value="BW">Baden-Württemberg</option>
-                    <option value="BY">Bayern</option>
-                    <option value="BE">Berlin</option>
-                    <option value="BB">Brandenburg</option>
-                    <option value="HB">Bremen</option>
-                    <option value="HH">Hamburg</option>
-                    <option value="HE">Hessen</option>
-                    <option value="MV">Mecklenburg-Vorpommern</option>
-                    <option value="NI">Niedersachsen</option>
-                    <option value="NW">Nordrhein-Westfalen</option>
-                    <option value="RP">Rheinland-Pfalz</option>
-                    <option value="SL">Saarland</option>
-                    <option value="SN">Sachsen</option>
-                    <option value="ST">Sachsen-Anhalt</option>
-                    <option value="SH">Schleswig-Holstein</option>
-                    <option value="TH">Thüringen</option>
-                </select>
-                <button onclick="fetchHolidays()" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-lg shadow-sm">
-                    Jahresdaten jetzt aktualisieren
-                </button>
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-4">
-                <h2 class="font-bold text-lg border-b pb-2 text-blue-800">Lokales Backup</h2>
-                <button onclick="exportData()" class="w-full py-3 bg-slate-800 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    Backup-Code kopieren / teilen
-                </button>
-                <div class="pt-4 border-t border-slate-100">
-                    <textarea id="import-data" class="w-full p-2 bg-slate-50 border rounded-lg text-xs font-mono h-20" placeholder="Code hier einfügen..."></textarea>
-                    <button onclick="importData()" class="w-full mt-2 py-3 bg-red-100 text-red-700 font-bold rounded-lg">
-                        Daten Wiederherstellen
-                    </button>
-                </div>
-            </div>
-
-            <div class="pt-8">
-                <button onclick="if(confirm('Wirklich ALLES löschen?')) { localStorage.clear(); location.reload(); }" class="w-full py-3 text-red-400 font-bold text-sm">
-                    App komplett zurücksetzen
-                </button>
-            </div>
-
+            <button onclick="if(confirm('Wirklich ALLES löschen?')) { localStorage.clear(); location.reload(); }" class="w-full py-2 text-red-400 font-bold text-[10px]">App Reset (Alles löschen)</button>
         </div>
 
     </main>
 
-    <!-- Bottom Navigation -->
-    <nav class="bg-white border-t border-slate-200 flex justify-around p-2 pb-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/5" data-target="tab-heute">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span class="text-[10px] font-bold">Heute</span>
+    <!-- Bottom Navigation (Kompakt) -->
+    <nav class="bg-white border-t border-slate-200 flex justify-around p-1 pb-2 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5" data-target="tab-heute">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="text-[9px] font-bold">Heute</span>
         </button>
-        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/5" data-target="tab-kalender">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            <span class="text-[10px] font-bold">Kalender</span>
+        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5" data-target="tab-kalender">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span class="text-[9px] font-bold">Kalender</span>
         </button>
-        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/5" data-target="tab-planer">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-            <span class="text-[10px] font-bold">Planer</span>
+        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5" data-target="tab-planer">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            <span class="text-[9px] font-bold">Planer</span>
         </button>
-        <button onclick="switchTab('auswertung')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/5" data-target="tab-auswertung">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
-            <span class="text-[10px] font-bold">Statistik</span>
+        <button onclick="switchTab('auswertung')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5" data-target="tab-auswertung">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+            <span class="text-[9px] font-bold">Statistik</span>
         </button>
-        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/5" data-target="tab-setup">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            <span class="text-[10px] font-bold">Setup</span>
+        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5" data-target="tab-setup">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span class="text-[9px] font-bold">Setup</span>
         </button>
     </nav>
 
@@ -393,10 +348,7 @@
             settings: {
                 state: "NW",
                 agSaldo: 0.0,
-                model: {
-                    hours: 40,
-                    days: [1, 2, 3, 4, 5]
-                },
+                model: { hours: 40, days: [1, 2, 3, 4, 5] },
                 protectHolidays: true
             },
             holidays: {} 
@@ -416,18 +368,14 @@
                     if(db.settings.protectHolidays === undefined) db.settings.protectHolidays = true;
                 } catch(e) { console.error("Parse Error"); }
             }
-            
             document.getElementById('heute-date').value = selectedDate.toISOString().split('T')[0];
-            
             updateStatYears();
             updateSetupUI();
             loadDayData();
             switchTab('heute');
         }
 
-        function saveData() {
-            localStorage.setItem('zeiterfassung_db', JSON.stringify(db));
-        }
+        function saveData() { localStorage.setItem('zeiterfassung_db', JSON.stringify(db)); }
 
         // --- HILFSFUNKTIONEN ---
         function getDailySoll(dateString) {
@@ -439,18 +387,12 @@
             return parseFloat(hoursPerDay.toFixed(2));
         }
 
-        function timeToDecimal(timeStr) {
-            if (!timeStr) return 0;
-            let [h, m] = timeStr.split(':').map(Number);
-            return h + (m / 60);
-        }
-
         function calculateMinutes(begin, end) {
             if (!begin || !end) return 0;
             let [h1, m1] = begin.split(':').map(Number);
             let [h2, m2] = end.split(':').map(Number);
             let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
-            if (diff < 0) diff += 24 * 60; // Nachtschicht
+            if (diff < 0) diff += 24 * 60; 
             return diff;
         }
 
@@ -467,30 +409,21 @@
         function switchTab(tabName) {
             document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
             document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.remove('text-blue-600');
-                b.classList.add('text-slate-400');
+                b.classList.remove('text-blue-600'); b.classList.add('text-slate-400');
             });
-            
             document.getElementById('tab-' + tabName).classList.remove('hidden');
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-slate-400');
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
-            
             document.getElementById('app-title').innerText = tabName.charAt(0).toUpperCase() + tabName.slice(1);
 
             if (tabName === 'kalender') renderCalendar();
             if (tabName === 'heute') loadDayData();
             if (tabName === 'auswertung') renderAuswertung();
-            if (tabName === 'planer') {
-                renderPatternDropdowns();
-                renderPaintTemplateDropdown();
-                updateToggleUI();
-            }
-            if (tabName !== 'planer' && paintModeActive) {
-                togglePaintMode(true); 
-            }
+            if (tabName === 'planer') { renderPatternDropdowns(); renderPaintTemplateDropdown(); updateToggleUI(); }
+            if (tabName !== 'planer' && paintModeActive) togglePaintMode(true); 
         }
 
-        // --- HEUTE TAB LOGIK ---
+        // --- HEUTE ---
         function changeDate(days) {
             selectedDate.setDate(selectedDate.getDate() + days);
             document.getElementById('heute-date').value = selectedDate.toISOString().split('T')[0];
@@ -507,7 +440,6 @@
             document.getElementById('heute-pause').value = entry.pause || '';
             document.getElementById('heute-soll').value = entry.soll;
             document.getElementById('heute-remark').value = entry.remark || '';
-            
             document.getElementById('heute-type').value = entry.type || '';
             document.getElementById('heute-extra-time').value = entry.extraTime || '';
             document.getElementById('heute-extra-type').value = entry.extraType || '';
@@ -520,12 +452,10 @@
             let begin = document.getElementById('heute-begin').value;
             let end = document.getElementById('heute-end').value;
             if(!begin || !end) return;
-
             let diffMin = calculateMinutes(begin, end);
             let suggestedPause = 0;
             if(diffMin > 9 * 60) suggestedPause = 45;
             else if(diffMin > 6 * 60) suggestedPause = 30;
-
             document.getElementById('heute-pause').value = suggestedPause;
         }
 
@@ -536,37 +466,24 @@
             let soll = parseFloat(document.getElementById('heute-soll').value) || 0;
             let extra = parseFloat(document.getElementById('heute-extra-time').value) || 0;
 
-            let nettoStr = "0.0h";
-            let diffStr = "";
-            let isPositive = false;
-            let nettoStd = 0;
-
+            let nettoStd = extra;
             if (begin && end) {
                 let bruttoMin = calculateMinutes(begin, end);
-                nettoStd = (bruttoMin - pause) / 60;
-                if (nettoStd < 0) nettoStd = 0;
+                let mainNet = (bruttoMin - pause) / 60;
+                if (mainNet > 0) nettoStd += mainNet;
             }
+
+            document.getElementById('heute-netto').innerText = nettoStd.toFixed(1) + "h";
             
-            nettoStd += extra; // Zusatzzeit addieren
-
-            if ((begin && end) || extra > 0) {
-                nettoStr = nettoStd.toFixed(2) + "h";
-                let diff = nettoStd - soll;
-                isPositive = diff >= 0;
-                diffStr = (diff > 0 ? "+" : "") + diff.toFixed(2) + "h " + (diff >= 0 ? "Überstunden" : "Minusstunden");
-            } else {
-                if (soll > 0) {
-                    diffStr = "-" + soll.toFixed(2) + "h Minusstunden";
-                } else {
-                    diffStr = "0.00h zum Soll";
-                    isPositive = true;
-                }
-            }
-
-            document.getElementById('heute-netto').innerText = nettoStr;
+            let diff = nettoStd - soll;
             let diffEl = document.getElementById('heute-diff');
-            diffEl.innerText = diffStr;
-            diffEl.className = "text-sm font-bold mt-1 " + (isPositive ? "text-emerald-500" : "text-red-400");
+            if (nettoStd > 0 || soll > 0) {
+                diffEl.innerText = (diff > 0 ? "+" : "") + diff.toFixed(2) + "h " + (diff >= 0 ? "Überstunden" : "Minusstunden");
+                diffEl.className = "text-xs font-bold " + (diff >= 0 ? "text-emerald-500" : "text-red-400");
+            } else {
+                diffEl.innerText = "0.0h Soll";
+                diffEl.className = "text-xs font-bold text-slate-400";
+            }
         }
 
         function saveDay() {
@@ -580,38 +497,23 @@
             let extraTime = document.getElementById('heute-extra-time').value.trim();
             let extraType = document.getElementById('heute-extra-type').value.trim();
 
-            // Nur speichern wenn irgendwas relevantes eingegeben wurde
             if (!begin && !end && soll === 0 && !remark && (!extraTime || parseFloat(extraTime) === 0)) {
                 delete db.entries[dStr];
             } else {
                 db.entries[dStr] = { begin, end, pause, soll, remark, type, extraTime, extraType };
             }
             saveData();
-            updateStatYears(); // Für Dropdown in der Auswertung
+            updateStatYears(); 
             
             let btn = document.querySelector('#tab-heute button[onclick="saveDay()"]');
-            let oldHtml = btn.innerHTML;
-            btn.innerHTML = `<svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-sm font-bold">Gespeichert</span>`;
-            btn.classList.add('bg-emerald-500');
-            btn.classList.remove('bg-blue-600');
-            setTimeout(() => {
-                btn.innerHTML = oldHtml;
-                btn.classList.remove('bg-emerald-500');
-                btn.classList.add('bg-blue-600');
-            }, 1000);
+            btn.classList.add('bg-emerald-500'); btn.classList.remove('bg-blue-600');
+            setTimeout(() => { btn.classList.remove('bg-emerald-500'); btn.classList.add('bg-blue-600'); }, 500);
         }
 
         function clearDay() {
-            document.getElementById('heute-begin').value = '';
-            document.getElementById('heute-end').value = '';
-            document.getElementById('heute-pause').value = '';
-            document.getElementById('heute-remark').value = '';
-            document.getElementById('heute-type').value = '';
-            document.getElementById('heute-extra-time').value = '';
-            document.getElementById('heute-extra-type').value = '';
+            ['heute-begin', 'heute-end', 'heute-pause', 'heute-remark', 'heute-type', 'heute-extra-time', 'heute-extra-type'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('heute-soll').value = getDailySoll(document.getElementById('heute-date').value);
-            calculateNetto();
-            saveDay();
+            calculateNetto(); saveDay();
         }
 
         function renderHeuteTemplates() {
@@ -619,50 +521,38 @@
             c.innerHTML = '';
             db.templates.forEach(t => {
                 let b = document.createElement('button');
-                b.className = "px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-bold text-sm shadow-sm whitespace-nowrap active:bg-indigo-100 border border-indigo-100";
+                b.className = "px-3 py-1.5 bg-blue-50 text-blue-700 rounded text-xs font-bold shrink-0";
                 b.innerText = t.name;
                 b.onclick = () => {
                     document.getElementById('heute-begin').value = t.begin;
                     document.getElementById('heute-end').value = t.end;
                     document.getElementById('heute-pause').value = t.pause || 30;
-                    document.getElementById('heute-type').value = t.name; // Typ automatisch setzen!
+                    document.getElementById('heute-type').value = t.name;
                     calculateNetto();
                 };
                 c.appendChild(b);
             });
         }
 
-        // --- KALENDER TAB LOGIK ---
-        function changeMonth(m) {
-            currentViewDate.setMonth(currentViewDate.getMonth() + m);
-            renderCalendar();
-        }
+        // --- KALENDER ---
+        function changeMonth(m) { currentViewDate.setMonth(currentViewDate.getMonth() + m); renderCalendar(); }
 
         function renderCalendar() {
             let year = currentViewDate.getFullYear();
             let month = currentViewDate.getMonth();
+            document.getElementById('cal-month-title').innerText = currentViewDate.toLocaleString('de-DE', { month: 'short', year: 'numeric' });
             
-            document.getElementById('cal-month-title').innerText = currentViewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
-            
-            let grid = document.getElementById('cal-grid');
-            grid.innerHTML = '';
-
-            let firstDay = new Date(year, month, 1).getDay();
-            firstDay = firstDay === 0 ? 7 : firstDay;
+            let grid = document.getElementById('cal-grid'); grid.innerHTML = '';
+            let firstDay = new Date(year, month, 1).getDay(); firstDay = firstDay === 0 ? 7 : firstDay;
             let daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            for (let i = 1; i < firstDay; i++) {
-                grid.innerHTML += `<div class="bg-transparent"></div>`;
-            }
+            for (let i = 1; i < firstDay; i++) grid.innerHTML += `<div></div>`;
 
             let appTotalDiff = 0;
-
             for (let i = 1; i <= daysInMonth; i++) {
                 let dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                 let dateObj = new Date(dStr);
-                let dayOfWeek = dateObj.getDay();
-                let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-                
+                let isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
                 let entry = db.entries[dStr];
                 let holiday = db.holidays[dStr];
                 
@@ -670,500 +560,224 @@
                 let daySoll = entry && entry.soll !== undefined ? entry.soll : getDailySoll(dStr);
                 
                 if (entry) {
-                    if (entry.begin && entry.end) {
-                        let bMin = calculateMinutes(entry.begin, entry.end);
-                        let mNet = (bMin - (entry.pause || 0)) / 60;
-                        if(mNet > 0) netStd += mNet;
-                    }
-                    if (entry.extraTime) {
-                        netStd += parseFloat(entry.extraTime) || 0;
-                    }
+                    if (entry.begin && entry.end) netStd += Math.max(0, (calculateMinutes(entry.begin, entry.end) - (entry.pause || 0)) / 60);
+                    if (entry.extraTime) netStd += parseFloat(entry.extraTime) || 0;
                 }
                 
                 let dayDiff = netStd - daySoll;
                 let isFuture = dateObj > new Date();
-                
-                if(!entry && isFuture) {
-                    dayDiff = 0;
-                } else if (!entry && !isFuture && daySoll > 0) {
-                    dayDiff = -daySoll;
-                }
+                if(!entry && isFuture) dayDiff = 0;
+                else if (!entry && !isFuture && daySoll > 0) dayDiff = -daySoll;
                 
                 appTotalDiff += dayDiff;
 
-                let bgClass = "bg-white border-slate-100";
-                if (isWeekend) bgClass = "bg-slate-50 border-slate-200";
-                
-                let badgeHtml = "";
+                let bgClass = isWeekend ? "bg-slate-50" : "bg-white";
+                let badge = "";
                 if (holiday) {
-                    if (holiday.isSchool) {
-                        badgeHtml = `<div class="absolute top-0 right-0 badge bg-green-200 text-green-800 font-bold" title="${holiday.name}">Ferien</div>`;
-                    } else {
-                        badgeHtml = `<div class="absolute top-0 right-0 badge bg-yellow-300 text-yellow-900 font-bold" title="${holiday.name}">Feiertag</div>`;
-                        bgClass = "bg-yellow-50 border-yellow-200"; 
-                    }
+                    if (holiday.isSchool) badge = `<div class="absolute top-0 right-0 badge bg-green-200 text-green-800" title="${holiday.name}">Ferien</div>`;
+                    else { badge = `<div class="absolute top-0 right-0 badge bg-yellow-300 text-yellow-900" title="${holiday.name}">Feiertag</div>`; bgClass = "bg-yellow-50"; }
                 }
 
                 let textHtml = "";
-                let hasRemark = entry && entry.remark ? `<div class="absolute bottom-1 right-1 text-xs">💬</div>` : '';
-
                 if (entry && (entry.begin || entry.extraTime)) {
-                    let diffColor = dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
-                    let timeLine = entry.begin ? `${entry.begin}<br>${entry.end}` : `<span class="text-indigo-500">+ Zusatz</span>`;
-                    textHtml = `
-                        <div class="text-[10px] text-slate-500 mt-1 leading-tight">${timeLine}</div>
-                        <div class="text-xs font-black ${diffColor} mt-1">${netStd.toFixed(1)}h</div>
-                    `;
+                    let c = dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
+                    let t = entry.begin ? `${entry.begin}<br>${entry.end}` : `<span class="text-indigo-400">+Ext</span>`;
+                    textHtml = `<div class="text-[8px] text-slate-500 leading-tight pt-1">${t}</div><div class="text-[10px] font-black ${c}">${netStd.toFixed(1)}</div>`;
                 }
 
-                let cellHtml = `
-                    <div class="cal-cell relative p-1 border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
-                         onclick="handleCellClick('${dStr}')">
-                        ${badgeHtml}
-                        <div class="text-sm font-bold ${isWeekend ? 'text-slate-400' : 'text-slate-800'}">${i}</div>
-                        ${textHtml}
-                        ${hasRemark}
-                    </div>
-                `;
-                grid.innerHTML += cellHtml;
+                let hasRem = entry && entry.remark ? `<div class="absolute bottom-0 right-0.5 text-[8px]">💬</div>` : '';
+                grid.innerHTML += `<div class="cal-cell relative p-0.5 border border-slate-100 rounded ${bgClass} cursor-pointer active:bg-slate-100" onclick="handleCellClick('${dStr}')">${badge}<div class="text-[10px] font-bold ${isWeekend?'text-slate-400':'text-slate-800'}">${i}</div>${textHtml}${hasRem}</div>`;
             }
 
             let agSaldo = parseFloat(db.settings.agSaldo || 0);
-            let total = agSaldo + appTotalDiff;
-            
-            document.getElementById('saldo-app').innerText = (appTotalDiff > 0 ? '+' : '') + appTotalDiff.toFixed(2) + " h";
-            document.getElementById('saldo-app').className = "text-xl font-bold " + (appTotalDiff >= 0 ? "text-emerald-600" : "text-red-500");
+            document.getElementById('saldo-app').innerText = (appTotalDiff > 0 ? '+' : '') + appTotalDiff.toFixed(1) + "h";
+            document.getElementById('saldo-app').className = "font-bold text-sm " + (appTotalDiff >= 0 ? "text-emerald-600" : "text-red-500");
             document.getElementById('saldo-ag').value = agSaldo;
-            document.getElementById('saldo-total').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + " h";
+            document.getElementById('saldo-total').innerText = (agSaldo + appTotalDiff > 0 ? '+' : '') + (agSaldo + appTotalDiff).toFixed(2) + "h";
         }
 
         function handleCellClick(dStr) {
             if (paintModeActive) {
                 let tplId = document.getElementById('paint-template').value;
-                if (!tplId) return;
-                
-                if (db.settings.protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) return;
-
-                if (tplId === "clear") {
-                    delete db.entries[dStr];
-                } else {
+                if (!tplId || (db.settings.protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool)) return;
+                if (tplId === "clear") delete db.entries[dStr];
+                else {
                     let t = db.templates.find(x => x.id == tplId);
                     if (t) {
                         let e = db.entries[dStr] || {};
-                        db.entries[dStr] = {
-                            begin: t.begin,
-                            end: t.end,
-                            pause: t.pause || 30,
-                            type: t.name, // Wichtig für Auswertung!
-                            soll: e.soll !== undefined ? e.soll : getDailySoll(dStr),
-                            remark: e.remark || '',
-                            extraTime: e.extraTime || '',
-                            extraType: e.extraType || ''
-                        };
+                        db.entries[dStr] = { begin: t.begin, end: t.end, pause: t.pause||30, type: t.name, soll: e.soll !== undefined ? e.soll : getDailySoll(dStr), remark: e.remark||'', extraTime: e.extraTime||'', extraType: e.extraType||'' };
                     }
                 }
-                saveData();
-                renderCalendar();
+                saveData(); renderCalendar();
             } else {
-                document.getElementById('heute-date').value = dStr;
-                switchTab('heute');
+                document.getElementById('heute-date').value = dStr; switchTab('heute');
             }
         }
 
-        function saveAGSaldo() {
-            db.settings.agSaldo = parseFloat(document.getElementById('saldo-ag').value) || 0;
-            saveData();
-            renderCalendar();
-        }
+        function saveAGSaldo() { db.settings.agSaldo = parseFloat(document.getElementById('saldo-ag').value) || 0; saveData(); renderCalendar(); }
 
-        // --- AUSWERTUNG TAB LOGIK (NEU) ---
+        // --- AUSWERTUNG ---
         function updateStatYears() {
             let years = new Set();
-            for (let dStr in db.entries) {
-                years.add(dStr.substring(0, 4));
-            }
-            let currentY = new Date().getFullYear().toString();
-            years.add(currentY);
-            
-            let sel = document.getElementById('stat-year');
-            let currentVal = sel.value;
-            sel.innerHTML = `<option value="all">Gesamt (Alle Zeiten)</option>`;
-            Array.from(years).sort().reverse().forEach(y => {
-                sel.innerHTML += `<option value="${y}">Jahr ${y}</option>`;
-            });
-            
-            if (currentVal && Array.from(years).includes(currentVal) || currentVal === 'all') {
-                sel.value = currentVal;
-            } else {
-                sel.value = currentY; // Default aktuelles Jahr
-            }
+            for (let dStr in db.entries) years.add(dStr.substring(0, 4));
+            let curr = new Date().getFullYear().toString(); years.add(curr);
+            let sel = document.getElementById('stat-year'); let val = sel.value;
+            sel.innerHTML = `<option value="all">Gesamt</option>`;
+            Array.from(years).sort().reverse().forEach(y => sel.innerHTML += `<option value="${y}">${y}</option>`);
+            sel.value = (val && Array.from(years).includes(val) || val === 'all') ? val : curr;
         }
 
         function renderAuswertung() {
-            let yearFilter = document.getElementById('stat-year').value;
-            
-            let totalHours = 0;
-            let daysWorked = 0;
-            let weeks = new Set();
-            let months = new Set();
-            let buckets = {};
+            let yF = document.getElementById('stat-year').value;
+            let total = 0, days = 0, weeks = new Set(), months = new Set(), buckets = {};
 
             for (let dStr in db.entries) {
-                if (yearFilter !== 'all' && !dStr.startsWith(yearFilter)) continue;
+                if (yF !== 'all' && !dStr.startsWith(yF)) continue;
+                let e = db.entries[dStr], main = 0, ext = parseFloat(e.extraTime) || 0;
+                if (e.begin && e.end) main = Math.max(0, (calculateMinutes(e.begin, e.end) - (e.pause||0)) / 60);
+                let dayTot = main + ext;
 
-                let e = db.entries[dStr];
-                let mainNet = 0;
-                
-                if (e.begin && e.end) {
-                    let min = calculateMinutes(e.begin, e.end);
-                    mainNet = Math.max(0, (min - (e.pause || 0)) / 60);
-                }
-                
-                let extra = parseFloat(e.extraTime) || 0;
-                let dayTotal = mainNet + extra;
-
-                if (dayTotal > 0) {
-                    totalHours += dayTotal;
-                    daysWorked++;
-                    
-                    let d = new Date(dStr);
-                    weeks.add(getWeekNumber(d));
-                    months.add(dStr.substring(0, 7));
-
-                    // Eimer für Balkendiagramm befüllen
-                    if (mainNet > 0) {
-                        let type = e.type ? e.type : "Reguläre Arbeitszeit";
-                        buckets[type] = (buckets[type] || 0) + mainNet;
-                    }
-                    if (extra > 0) {
-                        let eType = e.extraType ? e.extraType : "Zusatzzeit (Unbenannt)";
-                        buckets[eType] = (buckets[eType] || 0) + extra;
-                    }
+                if (dayTot > 0) {
+                    total += dayTot; days++;
+                    let d = new Date(dStr); weeks.add(getWeekNumber(d)); months.add(dStr.substring(0, 7));
+                    if (main > 0) { let t = e.type ? e.type : "Regulär"; buckets[t] = (buckets[t] || 0) + main; }
+                    if (ext > 0) { let t = e.extraType ? e.extraType : "Zusatz"; buckets[t] = (buckets[t] || 0) + ext; }
                 }
             }
 
-            // Durchschnittliche Berechnungen
-            document.getElementById('stat-avg-day').innerText = daysWorked ? (totalHours / daysWorked).toFixed(1) + "h" : "0.0h";
-            document.getElementById('stat-avg-week').innerText = weeks.size ? (totalHours / weeks.size).toFixed(1) + "h" : "0.0h";
-            document.getElementById('stat-avg-month').innerText = months.size ? (totalHours / months.size).toFixed(1) + "h" : "0.0h";
+            document.getElementById('stat-avg-day').innerText = days ? (total / days).toFixed(1) + "h" : "0h";
+            document.getElementById('stat-avg-week').innerText = weeks.size ? (total / weeks.size).toFixed(1) + "h" : "0h";
+            document.getElementById('stat-avg-month').innerText = months.size ? (total / months.size).toFixed(1) + "h" : "0h";
 
-            // Balkendiagramme Rendern
-            let container = document.getElementById('stat-breakdown');
-            container.innerHTML = '';
-            
-            // Absteigend sortieren
-            let sortedBuckets = Object.entries(buckets).sort((a, b) => b[1] - a[1]);
-            let maxHours = sortedBuckets.length > 0 ? sortedBuckets[0][1] : 0;
+            let cont = document.getElementById('stat-breakdown'); cont.innerHTML = '';
+            let sorted = Object.entries(buckets).sort((a, b) => b[1] - a[1]);
+            if (sorted.length === 0) cont.innerHTML = '<div class="text-xs text-slate-400">Keine Daten.</div>';
+            let maxH = sorted.length > 0 ? sorted[0][1] : 0;
 
-            if (sortedBuckets.length === 0) {
-                container.innerHTML = '<div class="text-sm text-slate-400 text-center py-4">Keine erfassten Zeiten für diesen Zeitraum.</div>';
-            }
-
-            sortedBuckets.forEach(([name, hours], index) => {
-                let pct = maxHours > 0 ? (hours / maxHours) * 100 : 0;
-                // Unterschiedliche Farben für verschiedene Vorlagen
-                let colors = ['bg-indigo-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500'];
-                let color = colors[index % colors.length];
-
-                container.innerHTML += `
-                    <div>
-                        <div class="flex justify-between items-end mb-1">
-                            <span class="text-xs font-bold text-slate-700 truncate pr-2">${name}</span>
-                            <span class="text-sm font-black text-slate-600 whitespace-nowrap">${hours.toFixed(1)} h</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2">
-                            <div class="${color} h-2 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
-                        </div>
-                    </div>
-                `;
+            sorted.forEach(([name, hours], i) => {
+                let pct = maxH > 0 ? (hours / maxH) * 100 : 0;
+                let col = ['bg-indigo-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500'][i % 4];
+                cont.innerHTML += `<div><div class="flex justify-between text-[10px] font-bold text-slate-600 mb-0.5"><span>${name}</span><span>${hours.toFixed(1)}h</span></div><div class="w-full bg-slate-100 rounded-full h-1.5"><div class="${col} h-1.5 rounded-full" style="width: ${pct}%"></div></div></div>`;
             });
         }
 
-        // --- PLANER TAB LOGIK ---
+        // --- PLANER ---
         function togglePaintMode(forceOff = false) {
             paintModeActive = forceOff ? false : !paintModeActive;
-            let btn = document.getElementById('btn-paint-toggle');
-            let ind = document.getElementById('paint-indicator');
-            
-            if (paintModeActive) {
-                btn.innerText = "Pinsel Aktiv (Klicken zum Beenden)";
-                btn.className = "w-full py-3 rounded-lg font-bold bg-red-500 text-white shadow-md transition-colors";
-                ind.classList.remove('hidden');
-                switchTab('kalender'); 
-            } else {
-                btn.innerText = "Pinsel Aktivieren";
-                btn.className = "w-full py-3 rounded-lg font-bold bg-indigo-100 text-indigo-700 transition-colors";
-                ind.classList.add('hidden');
-            }
+            let btn = document.getElementById('btn-paint-toggle'), ind = document.getElementById('paint-indicator');
+            if (paintModeActive) { btn.innerText = "Beenden"; btn.className = "px-3 rounded-lg font-bold bg-red-500 text-white text-sm"; ind.classList.remove('hidden'); switchTab('kalender'); } 
+            else { btn.innerText = "Aktivieren"; btn.className = "px-3 rounded-lg font-bold bg-indigo-100 text-indigo-700 text-sm"; ind.classList.add('hidden'); }
         }
 
         function renderPaintTemplateDropdown() {
             let s = document.getElementById('paint-template');
-            s.innerHTML = `<option value="">-- Bitte wählen --</option><option value="clear" class="font-bold text-red-500">Tag leeren (Löschen)</option>`;
-            db.templates.forEach(t => {
-                s.innerHTML += `<option value="${t.id}">${t.name} (${t.begin} - ${t.end})</option>`;
-            });
+            s.innerHTML = `<option value="">- Vorlage wählen -</option><option value="clear" class="text-red-500">Löschen</option>`;
+            db.templates.forEach(t => s.innerHTML += `<option value="${t.id}">${t.name}</option>`);
         }
 
         function renderPatternDropdowns() {
-            let c = document.getElementById('pattern-container');
-            c.innerHTML = '';
-            const days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
-            
-            let tplOptions = `<option value="">- Frei / Nichts -</option>`;
-            db.templates.forEach(t => { tplOptions += `<option value="${t.id}">${t.name}</option>`; });
-
-            days.forEach((d, i) => {
-                c.innerHTML += `
-                    <div class="flex items-center justify-between p-2 bg-slate-50 border rounded-lg">
-                        <span class="text-sm font-bold w-24">${d}</span>
-                        <select id="pat-day-${i+1}" class="p-2 border rounded-md text-sm font-bold bg-white w-full max-w-[200px]">
-                            ${tplOptions}
-                        </select>
-                    </div>
-                `;
+            let c = document.getElementById('pattern-container'); c.innerHTML = '';
+            let opts = `<option value="">- Frei -</option>`; db.templates.forEach(t => opts += `<option value="${t.id}">${t.name}</option>`);
+            ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].forEach((d, i) => {
+                c.innerHTML += `<div class="flex items-center justify-between p-1 bg-slate-50 border border-slate-100 rounded"><span class="text-[10px] font-bold w-6">${d}</span><select id="pat-day-${i+1}" class="p-1 border rounded text-[10px] font-bold bg-white w-full outline-none">${opts}</select></div>`;
             });
         }
 
         function applyPattern() {
-            let year = currentViewDate.getFullYear();
-            let month = currentViewDate.getMonth();
-            let daysInMonth = new Date(year, month + 1, 0).getDate();
-            let overwrite = document.getElementById('overwrite-pattern').checked;
-            let protectHolidays = db.settings.protectHolidays;
-
-            let pattern = {};
-            for(let i=1; i<=7; i++) {
-                let jsDay = i === 7 ? 0 : i; 
-                pattern[jsDay] = document.getElementById(`pat-day-${i}`).value;
-            }
-
-            let count = 0;
+            let y = currentViewDate.getFullYear(), m = currentViewDate.getMonth();
+            let daysInMonth = new Date(y, m + 1, 0).getDate();
+            let over = document.getElementById('overwrite-pattern').checked;
+            let prot = document.getElementById('protect-holidays').checked;
+            let pat = {}; for(let i=1; i<=7; i++) pat[i === 7 ? 0 : i] = document.getElementById(`pat-day-${i}`).value;
+            let c = 0;
             for (let i = 1; i <= daysInMonth; i++) {
-                let dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                let dateObj = new Date(dStr);
-                let dayOfWeek = dateObj.getDay();
-                let tplId = pattern[dayOfWeek];
-
-                if (protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) continue;
-
+                let dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                if (prot && db.holidays[dStr] && !db.holidays[dStr].isSchool) continue;
+                let tplId = pat[new Date(dStr).getDay()];
                 if (tplId) {
-                    let existing = db.entries[dStr];
-                    if (!existing || overwrite) {
+                    let ex = db.entries[dStr];
+                    if (!ex || over) {
                         let t = db.templates.find(x => x.id == tplId);
-                        if (t) {
-                            db.entries[dStr] = {
-                                begin: t.begin,
-                                end: t.end,
-                                pause: t.pause || 30,
-                                type: t.name, // Speichere Namen für Auswertung
-                                soll: existing && existing.soll !== undefined ? existing.soll : getDailySoll(dStr),
-                                remark: existing ? existing.remark : '',
-                                extraTime: existing ? existing.extraTime : '',
-                                extraType: existing ? existing.extraType : ''
-                            };
-                            count++;
-                        }
+                        if (t) { db.entries[dStr] = { begin: t.begin, end: t.end, pause: t.pause||30, type: t.name, soll: ex && ex.soll !== undefined ? ex.soll : getDailySoll(dStr), remark: ex ? ex.remark : '', extraTime: ex ? ex.extraTime : '', extraType: ex ? ex.extraType : '' }; c++; }
                     }
                 }
             }
-            saveData();
-            alert(`${count} Schichten eingetragen!`);
-            switchTab('kalender');
+            saveData(); alert(`${c} eingetragen!`); switchTab('kalender');
         }
 
-        // --- SETUP TAB LOGIK ---
+        // --- SETUP ---
         function updateSetupUI() {
             document.getElementById('set-weekly-hours').value = db.settings.model.hours;
             document.getElementById('state-select').value = db.settings.state || "NW";
-            
-            document.querySelectorAll('.day-btn').forEach(btn => {
-                let d = parseInt(btn.getAttribute('data-day'));
-                if (db.settings.model.days.includes(d)) {
-                    btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500";
-                } else {
-                    btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent";
-                }
+            document.querySelectorAll('.day-btn').forEach(b => {
+                b.className = db.settings.model.days.includes(parseInt(b.getAttribute('data-day'))) ? "day-btn flex-1 py-1.5 text-xs font-bold rounded bg-blue-100 text-blue-700" : "day-btn flex-1 py-1.5 text-xs font-bold rounded bg-slate-100 text-slate-400";
             });
-            
-            let daily = (db.settings.model.hours / Math.max(1, db.settings.model.days.length)).toFixed(2);
-            document.getElementById('calc-daily-soll').innerText = daily + " h";
-
+            document.getElementById('calc-daily-soll').innerText = (db.settings.model.hours / Math.max(1, db.settings.model.days.length)).toFixed(2) + " h";
             document.getElementById('protect-holidays').checked = db.settings.protectHolidays;
-            updateToggleUI();
-
-            renderSetupTemplates();
+            updateToggleUI(); renderSetupTemplates();
         }
 
-        function toggleWorkDay(dayInt) {
-            let idx = db.settings.model.days.indexOf(dayInt);
-            if(idx > -1) db.settings.model.days.splice(idx, 1);
-            else db.settings.model.days.push(dayInt);
-            saveSettings();
-        }
+        function toggleWorkDay(d) { let i = db.settings.model.days.indexOf(d); i > -1 ? db.settings.model.days.splice(i, 1) : db.settings.model.days.push(d); saveSettings(); }
 
         function saveSettings() {
-            let alterSollWert = db.settings.model.hours / Math.max(1, db.settings.model.days.length);
-
+            let alt = db.settings.model.hours / Math.max(1, db.settings.model.days.length);
             db.settings.model.hours = parseFloat(document.getElementById('set-weekly-hours').value) || 40;
             db.settings.state = document.getElementById('state-select').value;
             db.settings.protectHolidays = document.getElementById('protect-holidays').checked;
-            
-            let neuerSollWert = db.settings.model.hours / Math.max(1, db.settings.model.days.length);
+            let neu = db.settings.model.hours / Math.max(1, db.settings.model.days.length);
 
-            if (alterSollWert !== neuerSollWert) {
-                for (let dateStr in db.entries) {
-                    let entry = db.entries[dateStr];
-                    let dateObj = new Date(dateStr);
-                    let isWorkDay = db.settings.model.days.includes(dateObj.getDay());
-                    
-                    if (isWorkDay && Math.abs(entry.soll - alterSollWert) < 0.01) {
-                        entry.soll = parseFloat(neuerSollWert.toFixed(2));
-                    }
-                    if (!isWorkDay && entry.soll > 0 && Math.abs(entry.soll - alterSollWert) < 0.01) {
-                        entry.soll = 0;
-                    }
+            if (alt !== neu) {
+                for (let ds in db.entries) {
+                    let isW = db.settings.model.days.includes(new Date(ds).getDay());
+                    if (isW && Math.abs(db.entries[ds].soll - alt) < 0.01) db.entries[ds].soll = parseFloat(neu.toFixed(2));
+                    if (!isW && db.entries[ds].soll > 0 && Math.abs(db.entries[ds].soll - alt) < 0.01) db.entries[ds].soll = 0;
                 }
             }
-
-            saveData();
-            updateSetupUI();
+            saveData(); updateSetupUI();
         }
 
         function updateToggleUI() {
-            let isChecked = document.getElementById('protect-holidays').checked;
-            let bg = document.getElementById('toggle-bg');
-            let dot = document.getElementById('toggle-dot');
-            if (isChecked) {
-                bg.classList.remove('bg-slate-300'); bg.classList.add('bg-blue-500');
-                dot.style.transform = 'translateX(20px)';
-            } else {
-                bg.classList.remove('bg-blue-500'); bg.classList.add('bg-slate-300');
-                dot.style.transform = 'translateX(0)';
-            }
+            let c = document.getElementById('protect-holidays').checked, bg = document.getElementById('toggle-bg'), dot = document.getElementById('toggle-dot');
+            if (c) { bg.classList.replace('bg-slate-300', 'bg-blue-500'); dot.style.transform = 'translateX(16px)'; } 
+            else { bg.classList.replace('bg-blue-500', 'bg-slate-300'); dot.style.transform = 'translateX(0)'; }
         }
 
         function addTemplate() {
-            let name = document.getElementById('tpl-name').value;
-            let begin = document.getElementById('tpl-begin').value;
-            let end = document.getElementById('tpl-end').value;
-            let pause = document.getElementById('tpl-pause').value;
-            if (name && begin && end) {
-                db.templates.push({ id: Date.now(), name, begin, end, pause: parseInt(pause)||0 });
-                saveData();
-                renderSetupTemplates();
-                document.getElementById('tpl-name').value = '';
-                document.getElementById('tpl-begin').value = '';
-                document.getElementById('tpl-end').value = '';
-                document.getElementById('tpl-pause').value = '';
-            }
+            let n = document.getElementById('tpl-name').value, b = document.getElementById('tpl-begin').value, e = document.getElementById('tpl-end').value, p = document.getElementById('tpl-pause').value;
+            if (n && b && e) { db.templates.push({ id: Date.now(), name: n, begin: b, end: e, pause: parseInt(p)||0 }); saveData(); renderSetupTemplates(); ['tpl-name','tpl-begin','tpl-end','tpl-pause'].forEach(i => document.getElementById(i).value=''); }
         }
-
-        function deleteTemplate(id) {
-            db.templates = db.templates.filter(t => t.id !== id);
-            saveData();
-            renderSetupTemplates();
-        }
-
+        function deleteTemplate(id) { db.templates = db.templates.filter(t => t.id !== id); saveData(); renderSetupTemplates(); }
         function renderSetupTemplates() {
-            let c = document.getElementById('setup-templates-list');
-            c.innerHTML = '';
-            db.templates.forEach(t => {
-                c.innerHTML += `
-                    <div class="flex justify-between items-center p-3 bg-slate-50 border rounded-lg">
-                        <div>
-                            <div class="font-bold text-sm">${t.name}</div>
-                            <div class="text-xs text-slate-500">${t.begin} - ${t.end} (${t.pause || 0}m Pause)</div>
-                        </div>
-                        <button onclick="deleteTemplate(${t.id})" class="text-red-500 p-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </div>
-                `;
-            });
+            let c = document.getElementById('setup-templates-list'); c.innerHTML = '';
+            db.templates.forEach(t => c.innerHTML += `<div class="flex justify-between items-center p-2 bg-slate-50 rounded"><div class="text-xs"><span class="font-bold">${t.name}</span><br><span class="text-[10px] text-slate-500">${t.begin}-${t.end} (${t.pause||0}m)</span></div><button onclick="deleteTemplate(${t.id})" class="text-red-500">✕</button></div>`);
         }
 
-        // --- BACKUP / EXPORT / IMPORT ---
         function exportData() {
-            let dataStr = btoa(encodeURIComponent(JSON.stringify(db)));
-            if(navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(dataStr).then(() => {
-                    alert("Backup-Code kopiert! Sie können ihn nun in WhatsApp/Mail einfügen.");
-                });
-            } else {
-                let ta = document.getElementById('import-data');
-                ta.value = dataStr;
-                ta.select();
-                document.execCommand('copy');
-                alert("Backup-Code unten eingefügt und markiert. Bitte manuell kopieren.");
-            }
+            let s = btoa(encodeURIComponent(JSON.stringify(db)));
+            if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(s).then(()=>alert("Backup im Zwischenspeicher!"));
+            else { let t = document.getElementById('import-data'); t.value = s; t.select(); document.execCommand('copy'); alert("Code unten markiert!"); }
         }
-
         function importData() {
-            let dataStr = document.getElementById('import-data').value.trim();
-            if(!dataStr) return;
-            try {
-                let parsed = JSON.parse(decodeURIComponent(atob(dataStr)));
-                if(parsed && parsed.entries) {
-                    if(confirm("Dies überschreibt alle aktuellen Daten. Fortfahren?")) {
-                        db = parsed;
-                        saveData();
-                        alert("Daten erfolgreich wiederhergestellt!");
-                        location.reload();
-                    }
-                } else {
-                    alert("Ungültiger Code.");
-                }
-            } catch(e) { alert("Code ist beschädigt."); }
+            let s = document.getElementById('import-data').value.trim(); if(!s) return;
+            try { let p = JSON.parse(decodeURIComponent(atob(s))); if(p && p.entries) { if(confirm("Überschreiben?")) { db = p; saveData(); alert("Erfolgreich!"); location.reload(); } } } catch(e) { alert("Code ungültig!"); }
         }
 
-        // --- FEIERTAGE API ---
         async function fetchHolidays() {
-            let btn = document.querySelector('button[onclick="fetchHolidays()"]');
-            btn.innerText = "Lädt...";
-            btn.classList.add("opacity-50");
-
-            let year = new Date().getFullYear();
-            let state = db.settings.state;
-
-            try {
-                await loadAPIHolidays(year, state, false);
-                await loadAPIHolidays(year + 1, state, false);
-                await loadAPIHolidays(year, state, true);
-                await loadAPIHolidays(year + 1, state, true);
-
-                saveData();
-                alert("Feiertage und Ferien aktualisiert!");
-            } catch (e) {
-                alert("Fehler beim Abrufen der Daten.");
-            }
-
-            btn.innerText = "Jahresdaten jetzt aktualisieren";
-            btn.classList.remove("opacity-50");
+            let y = new Date().getFullYear(), st = db.settings.state;
+            try { await loadAPIHolidays(y, st, false); await loadAPIHolidays(y+1, st, false); await loadAPIHolidays(y, st, true); await loadAPIHolidays(y+1, st, true); saveData(); alert("Aktualisiert!"); } catch (e) { alert("Fehler!"); }
         }
-
-        async function loadAPIHolidays(year, state, isSchool) {
-            let typeUrl = isSchool ? "SchoolHolidays" : "PublicHolidays";
-            let url = `https://openholidaysapi.org/${typeUrl}?countryIsoCode=DE&languageIsoCode=DE&validFrom=${year}-01-01&validTo=${year}-12-31&subdivisionCode=DE-${state}`;
-            
-            let res = await fetch(url);
-            let data = await res.json();
-            
-            data.forEach(item => {
-                let name = item.name[0].text;
-                let start = new Date(item.startDate);
-                let end = new Date(item.endDate);
-                
-                for(let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+        async function loadAPIHolidays(y, st, isSch) {
+            let url = `https://openholidaysapi.org/${isSch?'SchoolHolidays':'PublicHolidays'}?countryIsoCode=DE&languageIsoCode=DE&validFrom=${y}-01-01&validTo=${y}-12-31&subdivisionCode=DE-${st}`;
+            let res = await fetch(url), data = await res.json();
+            data.forEach(i => {
+                let s = new Date(i.startDate), e = new Date(i.endDate);
+                for(let dt = new Date(s); dt <= e; dt.setDate(dt.getDate() + 1)) {
                     let dStr = dt.toISOString().split('T')[0];
-                    if (!db.holidays[dStr] || (!isSchool && db.holidays[dStr].isSchool)) {
-                        db.holidays[dStr] = { name: name, isSchool: isSchool };
-                    }
+                    if (!db.holidays[dStr] || (!isSch && db.holidays[dStr].isSchool)) db.holidays[dStr] = { name: i.name[0].text, isSchool: isSch };
                 }
             });
         }
 
-        // Start
         init();
     </script>
 </body>
