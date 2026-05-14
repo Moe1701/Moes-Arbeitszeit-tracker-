@@ -1,205 +1,247 @@
-```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <!-- Wichtig: maximum-scale=1.0 verhindert das automatische Zoomen beim Tippen in Felder -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Zeiterfassung Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Touch-Optimierungen für Smartphones */
         body { 
             -webkit-tap-highlight-color: transparent; 
             user-select: none;
             font-family: system-ui, -apple-system, sans-serif;
-            background-color: #f1f5f9; /* Helles, freundliches Grau-Blau */
-            height: 100dvh; /* Nutzt die exakte sichtbare Displayhöhe inkl. Browser-Leiste */
+            background-color: #f8fafc;
+            /* Use standard height for better compatibility across Android browsers */
+            height: 100vh; 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent body scrolling */
         }
         input, textarea, select { user-select: text; }
         
-        /* Dynamische Kalender-Zellen für optimale Platznutzung */
+        /* Main content area must handle its own scrolling */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            padding-bottom: 80px; /* Space for the bottom nav */
+        }
+
+        /* Hide scrollbar for a cleaner look, but keep functionality */
+        main::-webkit-scrollbar { width: 0px; background: transparent; }
+        
+        .tab-content {
+            display: none;
+            min-height: 100%; /* Ensure content fills the area */
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Calendar specific styles */
         .cal-cell { 
-            min-height: 9vh; /* Passt sich der Displayhöhe an */
+            /* Let the grid handle the height, but ensure a minimum */
+            min-height: 60px; 
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            padding: 2px;
         }
         
-        /* Kompakte Etiketten für Feiertage/Ferien */
         .badge {
             font-size: 0.55rem;
-            padding: 2px 4px;
+            padding: 1px 3px;
             border-bottom-left-radius: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 100%;
         }
-        
-        /* Verstecke Scrollbars komplett für sauberes App-Feeling */
-        ::-webkit-scrollbar { width: 0px; background: transparent; display: none; }
+
+        /* Bottom Navigation Fixed */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border-top: 1px solid #e2e8f0;
+            z-index: 50;
+            padding-bottom: env(safe-area-inset-bottom); /* iOS safe area */
+        }
     </style>
 </head>
-<body class="text-slate-800 flex flex-col overflow-hidden">
+<body class="text-slate-800">
 
-    <!-- Kopfzeile (Kompakt) -->
-    <header class="bg-blue-600 text-white p-3 shadow-md flex justify-between items-center z-10 shrink-0">
-        <h1 class="text-lg font-bold" id="app-title">Heute</h1>
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10 shrink-0">
+        <h1 class="text-xl font-bold" id="app-title">Heute</h1>
         <div id="paint-indicator" class="hidden bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse shadow-sm">
             PINSEL AKTIV
         </div>
     </header>
 
-    <!-- Hauptinhalt (Nimmt den restlichen Platz ein) -->
-    <main class="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative">
+    <!-- Main Content Area -->
+    <main class="w-full max-w-lg mx-auto relative">
         
-        <!-- ================= TAB: HEUTE (Scrollfrei optimiert) ================= -->
-        <div id="tab-heute" class="p-3 h-full flex flex-col gap-3 hidden">
+        <!-- ================= TAB: HEUTE ================= -->
+        <div id="tab-heute" class="tab-content active p-4 space-y-4">
             
-            <!-- Datum-Navigation -->
-            <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm shrink-0">
-                <button onclick="changeDate(-1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg active:bg-blue-100">
+            <!-- Datum -->
+            <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm border border-slate-100">
+                <button onclick="changeDate(-1)" class="p-3 text-blue-600 rounded-lg hover:bg-blue-50 active:bg-blue-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
-                <input type="date" id="heute-date" class="text-lg font-bold bg-transparent border-none text-center outline-none" onchange="loadDayData()">
-                <button onclick="changeDate(1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg active:bg-blue-100">
+                <div class="relative">
+                    <!-- Fake input for styling, real input hidden over it to trigger native picker -->
+                    <div id="heute-date-display" class="text-lg font-bold text-center px-4"></div>
+                    <input type="date" id="heute-date" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" onchange="loadDayData()">
+                </div>
+                <button onclick="changeDate(1)" class="p-3 text-blue-600 rounded-lg hover:bg-blue-50 active:bg-blue-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
             </div>
 
-            <!-- Netto & Speichern Box (Groß, aber platzsparend nebeneinander) -->
-            <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-blue-500 shrink-0">
-                <div>
-                    <div class="text-xs text-slate-500 font-bold mb-1 uppercase tracking-wide">Netto-Arbeitszeit</div>
-                    <div class="text-5xl font-black text-blue-600" id="heute-netto">0.0h</div>
+            <!-- Netto & Speichern -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center relative overflow-hidden">
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                <div class="pl-2">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-wide">Netto-Arbeitszeit</div>
+                    <div class="flex items-baseline gap-1">
+                        <div class="text-5xl font-black text-blue-600" id="heute-netto">0.0</div>
+                        <div class="text-xl font-bold text-blue-600">h</div>
+                    </div>
                     <div id="heute-diff" class="text-xs font-bold mt-1 text-slate-400">0.0h zum Soll</div>
                 </div>
-                <button onclick="saveDay()" class="bg-blue-600 text-white w-[80px] h-[80px] rounded-2xl shadow-lg flex flex-col justify-center items-center active:scale-95 transition-transform">
+                <button onclick="saveDay()" class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl shadow-md flex flex-col items-center justify-center active:scale-95 transition-transform min-w-[80px] min-h-[80px]">
                     <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    <span class="text-[11px] font-bold">Speichern</span>
+                    <span class="text-xs font-bold">Speichern</span>
                 </button>
             </div>
 
-            <!-- Vorlagen Schnellzugriff (Horizontale Liste) -->
-            <div class="shrink-0">
-                <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="heute-templates">
-                    <!-- Wird dynamisch gefüllt -->
+            <!-- Vorlagen -->
+            <div>
+                <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar" id="heute-templates">
+                    <!-- Dynamisch -->
                 </div>
             </div>
 
-            <!-- Zeiten Eingabe (Kompaktes Grid, Felder füllen Platz) -->
-            <div class="grid grid-cols-2 gap-2 flex-1">
-                <div class="bg-white p-2 rounded-xl shadow-sm flex flex-col justify-center">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Beginn</label>
-                    <input type="time" id="heute-begin" class="w-full text-2xl font-bold bg-slate-50 p-1 rounded-lg outline-none text-center" onchange="autoSuggestBreak(); calculateNetto()">
+            <!-- Eingaben -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Beginn</label>
+                    <input type="time" id="heute-begin" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none border border-transparent focus:border-blue-300 text-center" onchange="autoSuggestBreak(); calculateNetto()">
                 </div>
-                <div class="bg-white p-2 rounded-xl shadow-sm flex flex-col justify-center">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Ende</label>
-                    <input type="time" id="heute-end" class="w-full text-2xl font-bold bg-slate-50 p-1 rounded-lg outline-none text-center" onchange="autoSuggestBreak(); calculateNetto()">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Ende</label>
+                    <input type="time" id="heute-end" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none border border-transparent focus:border-blue-300 text-center" onchange="autoSuggestBreak(); calculateNetto()">
                 </div>
-                <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-center">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Pause (Min)</label>
-                    <input type="number" id="heute-pause" class="w-full text-2xl font-bold bg-slate-50 p-1 rounded-lg outline-none text-center text-indigo-600" onchange="calculateNetto()" placeholder="0">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Pause (Min)</label>
+                    <input type="number" id="heute-pause" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none border border-transparent focus:border-blue-300 text-center" onchange="calculateNetto()" placeholder="0">
                 </div>
-                <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-center">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Soll (Std)</label>
-                    <input type="number" step="0.1" id="heute-soll" class="w-full text-2xl font-bold bg-slate-50 p-1 rounded-lg outline-none text-center text-slate-500" onchange="calculateNetto()">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Soll (Std)</label>
+                    <input type="number" step="0.1" id="heute-soll" class="w-full text-xl font-bold bg-slate-50 p-2 rounded-lg outline-none border border-transparent focus:border-blue-300 text-center text-slate-500" onchange="calculateNetto()">
                 </div>
             </div>
 
-            <!-- Bemerkung Feld -->
-            <div class="bg-white p-2 rounded-xl shadow-sm shrink-0">
-                <input type="text" id="heute-remark" class="w-full text-sm font-medium bg-slate-50 p-2 rounded-lg outline-none text-slate-700 placeholder-slate-400" placeholder="💬 Bemerkung (Krank, Urlaub, Notizen...)">
+            <!-- Bemerkung -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">Bemerkung</label>
+                </div>
+                <input type="text" id="heute-remark" class="w-full text-sm font-medium bg-slate-50 p-3 rounded-lg outline-none border border-transparent focus:border-blue-300 placeholder-slate-400" placeholder="Krank, Urlaub, Notizen...">
             </div>
 
-            <!-- Löschen Button (Ganz unten) -->
-            <button onclick="clearDay()" class="w-full p-3 text-red-500 font-bold bg-red-50 rounded-xl shrink-0 active:bg-red-100">
+            <button onclick="clearDay()" class="w-full p-4 mt-2 text-red-500 font-bold bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
                 Tageseintrag leeren
             </button>
-
         </div>
 
         <!-- ================= TAB: KALENDER ================= -->
-        <div id="tab-kalender" class="p-3 space-y-3 hidden">
+        <div id="tab-kalender" class="tab-content p-2 space-y-3">
             
             <!-- Monat Navigation -->
-            <div class="flex justify-between items-center bg-blue-600 text-white p-2.5 rounded-xl shadow-sm">
-                <button onclick="changeMonth(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <div class="flex justify-between items-center bg-blue-600 text-white p-2 rounded-xl shadow-sm">
+                <button onclick="changeMonth(-1)" class="p-3 hover:bg-blue-700 rounded-lg transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                 <div class="text-base font-bold" id="cal-month-title">Mai 2026</div>
-                <button onclick="changeMonth(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                <button onclick="changeMonth(1)" class="p-3 hover:bg-blue-700 rounded-lg transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
             <!-- Kalender Grid -->
-            <div class="bg-white p-2 rounded-xl shadow-sm">
-                <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-slate-400 uppercase">
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
+                <!-- Header mit KW -->
+                <div class="grid grid-cols-[auto_repeat(7,1fr)] gap-1 mb-1 text-center text-[10px] font-bold text-slate-400 uppercase">
+                    <div class="w-6">KW</div>
                     <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
                 </div>
-                <div id="cal-grid" class="grid grid-cols-7 gap-1">
+                <div id="cal-grid" class="grid grid-cols-[auto_repeat(7,1fr)] gap-1">
                     <!-- Wird dynamisch generiert -->
                 </div>
-                <div class="mt-2 flex justify-center gap-3 text-[10px] text-slate-500 font-medium">
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-yellow-300 rounded-full"></div> Feiertag</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-green-300 rounded-full"></div> Ferien</span>
-                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-slate-200 rounded-full"></div> Wochenende</span>
+                <div class="mt-3 flex justify-center gap-4 text-[10px] font-bold text-slate-400">
+                    <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 bg-yellow-100 border border-yellow-300 rounded-full"></div> Feiertag</span>
+                    <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 bg-emerald-50 border border-emerald-200 rounded-full"></div> Ferien</span>
+                    <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 bg-slate-50 border border-slate-200 rounded-full"></div> Wochenende</span>
                 </div>
             </div>
 
-            <!-- Saldo Übersicht (Korrigierte Logik, Freundliche Farben) -->
-            <div class="bg-white p-3 rounded-xl shadow-sm space-y-3 border border-blue-100">
+            <!-- Saldo Übersicht -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 space-y-3">
                 <div class="grid grid-cols-2 gap-3 text-center">
                     <div class="p-2 bg-slate-50 rounded-lg border border-slate-100">
                         <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">App (Monat)</div>
-                        <div class="text-xl font-bold" id="saldo-app">0.00 h</div>
+                        <div class="text-xl font-bold mt-1" id="saldo-app">0.00 h</div>
                     </div>
-                    <div class="p-2 bg-indigo-50 rounded-lg border border-indigo-100 relative">
-                        <div class="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">Übertrag (AG)</div>
-                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-xl font-bold bg-transparent text-center outline-none text-indigo-700" value="0" onchange="saveAGSaldo()">
+                    <div class="p-2 bg-blue-50 rounded-lg border border-blue-100 relative">
+                        <div class="text-[10px] font-bold text-blue-500 uppercase tracking-wide">Übertrag (AG)</div>
+                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-xl font-bold bg-transparent text-center outline-none text-blue-700 mt-1" value="0" onchange="saveAGSaldo()">
                     </div>
                 </div>
-                <!-- Kein Schwarz mehr! Schönes Indigo für den Endstand -->
-                <div class="bg-indigo-600 p-3 rounded-xl text-white flex justify-between items-center shadow-md">
+                <div class="bg-slate-800 p-3 rounded-xl text-white flex justify-between items-center shadow-md">
                     <div>
-                        <div class="text-sm font-bold">Stand Ende Monat</div>
-                        <div class="text-[10px] opacity-80">Aktuelles Gesamtsaldo</div>
+                        <div class="text-sm font-bold">Aktuelles Gesamtsaldo</div>
+                        <div class="text-[10px] text-slate-300">Übertrag (AG) + Dieser Monat (App)</div>
                     </div>
-                    <div class="text-2xl font-black tracking-tight" id="saldo-total">+0.00 h</div>
+                    <div class="text-2xl font-black" id="saldo-total">+0.00 h</div>
                 </div>
             </div>
-            
         </div>
 
         <!-- ================= TAB: PLANER ================= -->
-        <div id="tab-planer" class="p-3 space-y-4 hidden">
+        <div id="tab-planer" class="tab-content p-4 space-y-5">
             
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border-l-4 border-indigo-500">
-                <h2 class="font-bold text-indigo-700 flex items-center gap-2 text-sm">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden">
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500"></div>
+                <h2 class="font-bold text-indigo-700 flex items-center gap-2 text-sm mb-3 pl-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
                     Pinsel-Modus (Schnell eintragen)
                 </h2>
                 
-                <select id="paint-template" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-300">
+                <select id="paint-template" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none mb-3">
                     <!-- Dynamisch -->
                 </select>
                 
-                <button id="btn-paint-toggle" onclick="togglePaintMode()" class="w-full py-3 rounded-xl font-bold bg-indigo-100 text-indigo-700 active:bg-indigo-200 transition-colors">
+                <button id="btn-paint-toggle" onclick="togglePaintMode()" class="w-full py-3 rounded-xl font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 active:bg-indigo-100 transition-colors">
                     Pinsel Aktivieren
                 </button>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
-                <div class="flex justify-between items-center mb-2">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden">
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                
+                <div class="flex justify-between items-center mb-4 pl-2">
                     <h2 class="font-bold text-blue-700 flex items-center gap-2 text-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         Automatisches Muster
                     </h2>
                     
-                    <!-- Feiertagsschutz Toggle -->
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Feiertage frei</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Feiertage frei</span>
                         <input type="checkbox" id="protect-holidays" class="sr-only" checked onchange="saveSettings()">
-                        <div class="w-9 h-5 bg-slate-300 rounded-full relative transition-colors" id="toggle-bg">
-                            <div class="w-4 h-4 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform" id="toggle-dot"></div>
+                        <div class="w-10 h-5 bg-slate-200 rounded-full relative transition-colors" id="toggle-bg">
+                            <div class="w-4 h-4 bg-white rounded-full absolute top-0.5 left-0.5 shadow-sm transition-transform" id="toggle-dot"></div>
                         </div>
                     </label>
                 </div>
@@ -208,67 +250,66 @@
                     <!-- Mo-So Dropdowns -->
                 </div>
 
-                <div class="flex items-center gap-2 mt-4 bg-slate-50 p-2 rounded-lg">
-                    <input type="checkbox" id="overwrite-pattern" class="w-5 h-5 text-blue-600 rounded">
-                    <label for="overwrite-pattern" class="text-xs font-bold text-slate-600">Bestehende Einträge überschreiben</label>
-                </div>
-
-                <button onclick="applyPattern()" class="w-full py-3 mt-2 rounded-xl font-bold bg-blue-600 text-white shadow-md active:bg-blue-700">
+                <button onclick="applyPattern()" class="w-full py-3 mt-4 rounded-xl font-bold bg-blue-600 text-white shadow-md active:scale-95 transition-transform">
                     Muster in diesen Monat eintragen
                 </button>
             </div>
-
         </div>
 
         <!-- ================= TAB: SETUP ================= -->
-        <div id="tab-setup" class="p-3 space-y-4 hidden">
+        <div id="tab-setup" class="tab-content p-4 space-y-5">
             
             <!-- Arbeitszeitmodell -->
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
-                <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Arbeitszeit-Modell</h2>
-                <div class="grid grid-cols-2 gap-3">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <h2 class="font-bold text-slate-800 text-sm mb-3">Arbeitszeit-Modell</h2>
+                <div class="grid grid-cols-2 gap-3 mb-4">
                     <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Wochenstunden</label>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Wochenstunden</label>
                         <input type="number" id="set-weekly-hours" class="w-full bg-transparent font-bold text-lg text-center outline-none" value="40" onchange="saveSettings()">
                     </div>
-                    <div class="bg-blue-50 p-2 rounded-lg border border-blue-100">
-                        <label class="block text-[10px] font-bold text-blue-400 mb-1 uppercase text-center">Tages-Soll (Auto)</label>
-                        <div id="calc-daily-soll" class="font-bold text-lg text-blue-600 text-center">8.0 h</div>
+                    <div class="bg-blue-50 p-2 rounded-lg border border-blue-100 flex flex-col justify-center">
+                        <label class="block text-[10px] font-bold text-blue-500 uppercase tracking-wide mb-1 text-center">Tages-Soll (Auto)</label>
+                        <div id="calc-daily-soll" class="font-bold text-lg text-blue-700 text-center">8.00 h</div>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase">Reguläre Arbeitstage</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">Reguläre Arbeitstage</label>
                     <div class="flex justify-between gap-1">
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="1" onclick="toggleWorkDay(1)">Mo</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="2" onclick="toggleWorkDay(2)">Di</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="3" onclick="toggleWorkDay(3)">Mi</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="4" onclick="toggleWorkDay(4)">Do</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="5" onclick="toggleWorkDay(5)">Fr</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="6" onclick="toggleWorkDay(6)">Sa</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="0" onclick="toggleWorkDay(0)">So</button>
+                        <!-- Buttons werden via JS styled -->
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg border-2" data-day="1" onclick="toggleWorkDay(1)">Mo</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg border-2" data-day="2" onclick="toggleWorkDay(2)">Di</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg border-2" data-day="3" onclick="toggleWorkDay(3)">Mi</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg border-2" data-day="4" onclick="toggleWorkDay(4)">Do</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg border-2" data-day="5" onclick="toggleWorkDay(5)">Fr</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg border-2" data-day="6" onclick="toggleWorkDay(6)">Sa</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg border-2" data-day="0" onclick="toggleWorkDay(0)">So</button>
                     </div>
                 </div>
             </div>
 
             <!-- Vorlagen Verwaltung -->
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
-                <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Vorlagen anlegen</h2>
-                <div class="grid grid-cols-4 gap-2">
-                    <input type="text" id="tpl-name" placeholder="Name (z.B. Früh)" class="col-span-4 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none">
-                    <input type="time" id="tpl-begin" class="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
-                    <input type="time" id="tpl-end" class="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
-                    <input type="number" id="tpl-pause" placeholder="Pause (Min)" class="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
-                    <button onclick="addTemplate()" class="col-span-2 bg-indigo-600 text-white font-bold rounded-lg text-sm active:bg-indigo-700">Speichern</button>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <h2 class="font-bold text-slate-800 text-sm mb-3">Vorlagen anlegen</h2>
+                <div class="space-y-2 mb-4">
+                    <input type="text" id="tpl-name" placeholder="Name (z.B. Früh)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none focus:border-blue-300">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="time" id="tpl-begin" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-300">
+                        <input type="time" id="tpl-end" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-300">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 items-center">
+                        <input type="number" id="tpl-pause" placeholder="Pause (Min)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-300">
+                        <button onclick="addTemplate()" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg text-sm active:bg-blue-700 transition-colors">Speichern</button>
+                    </div>
                 </div>
-                <div id="setup-templates-list" class="space-y-2 mt-2">
+                <div id="setup-templates-list" class="space-y-2">
                     <!-- Vorlagen Liste -->
                 </div>
             </div>
 
             <!-- Feiertage & Ferien -->
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
-                <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Bundesland</h2>
-                <select id="state-select" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none" onchange="saveSettings()">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <h2 class="font-bold text-slate-800 text-sm mb-3">Bundesland</h2>
+                <select id="state-select" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none mb-3" onchange="saveSettings()">
                     <option value="BW">Baden-Württemberg</option><option value="BY">Bayern</option><option value="BE">Berlin</option>
                     <option value="BB">Brandenburg</option><option value="HB">Bremen</option><option value="HH">Hamburg</option>
                     <option value="HE">Hessen</option><option value="MV">Mecklenburg-Vorpommern</option><option value="NI">Niedersachsen</option>
@@ -276,50 +317,32 @@
                     <option value="SN">Sachsen</option><option value="ST">Sachsen-Anhalt</option><option value="SH">Schleswig-Holstein</option>
                     <option value="TH">Thüringen</option>
                 </select>
-                <button onclick="fetchHolidays()" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-sm active:bg-emerald-600 text-sm">
+                <button onclick="fetchHolidays()" class="w-full py-3 bg-slate-800 text-white font-bold rounded-xl shadow-sm active:bg-slate-900 text-sm transition-colors">
                     Jahresdaten aktualisieren
                 </button>
-            </div>
-
-            <!-- Lokales Backup (Kein Schwarz mehr) -->
-            <div class="bg-indigo-50 p-4 rounded-xl shadow-sm space-y-3 border border-indigo-100">
-                <h2 class="font-bold text-indigo-800 border-b border-indigo-200 pb-2 text-sm">Daten sichern & übertragen</h2>
-                
-                <button onclick="exportData()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 active:bg-indigo-700">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    Backup-Code kopieren
-                </button>
-                
-                <div class="pt-2">
-                    <label class="block text-[10px] font-bold text-indigo-500 mb-1 uppercase">Code hier einfügen für Import:</label>
-                    <textarea id="import-data" class="w-full p-2 bg-white border border-indigo-200 rounded-lg text-xs font-mono h-16 outline-none" placeholder="eyJkYXRh..."></textarea>
-                    <button onclick="importData()" class="w-full mt-2 py-2 bg-red-100 text-red-700 font-bold rounded-lg text-sm active:bg-red-200">
-                        Wiederherstellen
-                    </button>
-                </div>
             </div>
 
         </div>
 
     </main>
 
-    <!-- Bottom Navigation (Groß und leicht zu treffen) -->
-    <nav class="bg-white border-t border-slate-200 flex justify-around p-1 pb-4 shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] z-20">
-        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4 rounded-lg active:bg-slate-50" data-target="tab-heute">
-            <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span class="text-[10px] font-bold">Heute</span>
+    <!-- Bottom Navigation -->
+    <nav class="flex justify-around items-center">
+        <button onclick="switchTab('heute')" class="nav-btn flex-1 flex flex-col items-center justify-center py-3 text-blue-600" data-target="tab-heute">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Heute</span>
         </button>
-        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4 rounded-lg active:bg-slate-50" data-target="tab-kalender">
-            <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            <span class="text-[10px] font-bold">Kalender</span>
+        <button onclick="switchTab('kalender')" class="nav-btn flex-1 flex flex-col items-center justify-center py-3 text-slate-400" data-target="tab-kalender">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Kalender</span>
         </button>
-        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4 rounded-lg active:bg-slate-50" data-target="tab-planer">
-            <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-            <span class="text-[10px] font-bold">Planer</span>
+        <button onclick="switchTab('planer')" class="nav-btn flex-1 flex flex-col items-center justify-center py-3 text-slate-400" data-target="tab-planer">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Planer</span>
         </button>
-        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-2 text-slate-400 w-1/4 rounded-lg active:bg-slate-50" data-target="tab-setup">
-            <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            <span class="text-[10px] font-bold">Setup</span>
+        <button onclick="switchTab('setup')" class="nav-btn flex-1 flex flex-col items-center justify-center py-3 text-slate-400" data-target="tab-setup">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Setup</span>
         </button>
     </nav>
 
@@ -349,7 +372,7 @@
 
         // --- INIT ---
         function init() {
-            const saved = localStorage.getItem('zeiterfassung_db');
+            const saved = localStorage.getItem('zeiterfassung_db_v2');
             if (saved) {
                 try { 
                     db = { ...db, ...JSON.parse(saved) }; 
@@ -357,14 +380,18 @@
                     if(db.settings.protectHolidays === undefined) db.settings.protectHolidays = true;
                 } catch(e) { console.error("Parse Error"); }
             }
+            
+            // Format for display DD.MM.YYYY
+            updateDateDisplay(selectedDate);
             document.getElementById('heute-date').value = selectedDate.toISOString().split('T')[0];
+            
             updateSetupUI();
             loadDayData();
             switchTab('heute');
         }
 
         function saveData() {
-            localStorage.setItem('zeiterfassung_db', JSON.stringify(db));
+            localStorage.setItem('zeiterfassung_db_v2', JSON.stringify(db));
         }
 
         function getDailySoll(dateString) {
@@ -385,18 +412,32 @@
             return diff;
         }
 
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+            return weekNo;
+        }
+
         function switchTab(tabName) {
-            document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
+            document.querySelectorAll('.tab-content').forEach(d => {
+                d.classList.remove('active');
+            });
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.classList.remove('text-blue-600');
                 b.classList.add('text-slate-400');
             });
             
-            document.getElementById('tab-' + tabName).classList.remove('hidden');
-            document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-slate-400');
-            document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            let activeBtn = document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`);
+            if(activeBtn){
+                activeBtn.classList.remove('text-slate-400');
+                activeBtn.classList.add('text-blue-600');
+            }
             
-            document.getElementById('app-title').innerText = tabName.charAt(0).toUpperCase() + tabName.slice(1);
+            let titleMap = { 'heute': 'Heute', 'kalender': 'Kalender', 'planer': 'Planer', 'setup': 'Setup' };
+            document.getElementById('app-title').innerText = titleMap[tabName] || 'Zeiterfassung';
 
             if (tabName === 'kalender') renderCalendar();
             if (tabName === 'heute') loadDayData();
@@ -410,15 +451,23 @@
             }
         }
 
+        function updateDateDisplay(dateObj) {
+            let opts = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            document.getElementById('heute-date-display').innerText = dateObj.toLocaleDateString('de-DE', opts);
+        }
+
         function changeDate(days) {
             selectedDate.setDate(selectedDate.getDate() + days);
             document.getElementById('heute-date').value = selectedDate.toISOString().split('T')[0];
+            updateDateDisplay(selectedDate);
             loadDayData();
         }
 
         function loadDayData() {
             let dStr = document.getElementById('heute-date').value;
             selectedDate = new Date(dStr);
+            updateDateDisplay(selectedDate);
+
             let entry = db.entries[dStr] || { begin: '', end: '', pause: '', soll: getDailySoll(dStr), remark: '' };
             
             document.getElementById('heute-begin').value = entry.begin;
@@ -448,7 +497,7 @@
             let pause = parseFloat(document.getElementById('heute-pause').value) || 0;
             let soll = parseFloat(document.getElementById('heute-soll').value) || 0;
 
-            let nettoStr = "0.0h";
+            let nettoStr = "0.0";
             let diffStr = "";
             let isPositive = false;
 
@@ -457,7 +506,7 @@
                 let nettoStd = (bruttoMin - pause) / 60;
                 if (nettoStd < 0) nettoStd = 0;
                 
-                nettoStr = nettoStd.toFixed(2) + "h";
+                nettoStr = nettoStd.toFixed(1); // One decimal for large display
                 let diff = nettoStd - soll;
                 isPositive = diff >= 0;
                 diffStr = (diff > 0 ? "+" : "") + diff.toFixed(2) + "h " + (diff >= 0 ? "Überstunden" : "Minusstunden");
@@ -493,7 +542,7 @@
             
             let btn = document.querySelector('#tab-heute button[onclick="saveDay()"]');
             let oldHtml = btn.innerHTML;
-            btn.innerHTML = `<svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[11px] font-bold">Safe!</span>`;
+            btn.innerHTML = `<svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-xs font-bold">Gespeichert!</span>`;
             btn.classList.add('bg-emerald-500');
             btn.classList.remove('bg-blue-600');
             setTimeout(() => {
@@ -518,7 +567,7 @@
             c.innerHTML = '';
             db.templates.forEach(t => {
                 let b = document.createElement('button');
-                b.className = "px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-bold text-sm shadow-sm whitespace-nowrap active:bg-indigo-100 border border-indigo-100";
+                b.className = "px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg font-bold text-sm shadow-sm whitespace-nowrap active:bg-indigo-100 border border-indigo-100";
                 b.innerText = t.name;
                 b.onclick = () => {
                     document.getElementById('heute-begin').value = t.begin;
@@ -547,7 +596,16 @@
             firstDay = firstDay === 0 ? 7 : firstDay; 
             let daysInMonth = new Date(year, month + 1, 0).getDate();
 
+            let currentWeekNum = -1;
+
+            // Padding before 1st of month
             for (let i = 1; i < firstDay; i++) {
+                if(i===1) {
+                    // Inject KW placeholder if we start mid-week
+                    let tempDate = new Date(year, month, 1);
+                    currentWeekNum = getWeekNumber(tempDate);
+                    grid.innerHTML += `<div class="flex items-center justify-center text-[10px] font-bold text-blue-400 bg-blue-50/50 rounded-lg">${currentWeekNum}</div>`;
+                }
                 grid.innerHTML += `<div class="bg-transparent"></div>`;
             }
 
@@ -556,8 +614,17 @@
             for (let i = 1; i <= daysInMonth; i++) {
                 let dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                 let dateObj = new Date(dStr);
-                let dayOfWeek = dateObj.getDay();
+                let dayOfWeek = dateObj.getDay(); // 0 is Sunday
                 let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                
+                // Add KW column at start of week (Monday) or on the 1st
+                if(dayOfWeek === 1 || i === 1) {
+                    if(!(i === 1 && firstDay !== 1)) { // don't add twice on 1st
+                        currentWeekNum = getWeekNumber(dateObj);
+                        grid.innerHTML += `<div class="flex items-center justify-center text-[10px] font-bold text-blue-400 bg-blue-50/50 rounded-lg">${currentWeekNum}</div>`;
+                    }
+                }
+
                 let entry = db.entries[dStr];
                 let holiday = db.holidays[dStr];
                 
@@ -581,46 +648,56 @@
                 appTotalDiff += dayDiff;
 
                 let bgClass = "bg-white border-slate-100";
-                if (isWeekend) bgClass = "bg-slate-50 border-slate-200";
+                let textClassDate = "text-slate-800";
+                
+                if (isWeekend) {
+                    bgClass = "bg-slate-50 border-slate-200";
+                    if(dayOfWeek === 0) textClassDate = "text-red-400"; // Sunday red
+                    else textClassDate = "text-slate-500";
+                }
                 
                 let badgeHtml = "";
                 if (holiday) {
                     if (holiday.isSchool) {
-                        badgeHtml = `<div class="absolute top-0 right-0 badge bg-green-200 text-green-800 font-bold" title="${holiday.name}">Ferien</div>`;
+                        bgClass = "bg-emerald-50 border-emerald-200";
                     } else {
-                        badgeHtml = `<div class="absolute top-0 right-0 badge bg-yellow-300 text-yellow-900 font-bold" title="${holiday.name}">Feiertag</div>`;
-                        bgClass = "bg-yellow-50 border-yellow-200"; 
+                        bgClass = "bg-yellow-50 border-yellow-300"; 
                     }
                 }
 
                 let textHtml = "";
-                let hasRemark = entry && entry.remark ? `<div class="absolute bottom-1 right-1 text-xs">💬</div>` : '';
+                let hasRemark = entry && entry.remark ? `<div class="absolute bottom-0 right-0.5 text-[10px]">💬</div>` : '';
 
                 if (entry && entry.begin && entry.end) {
-                    let diffColor = dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
+                    let diffColor = dayDiff >= 0 ? 'text-emerald-600' : 'text-red-500';
                     textHtml = `
-                        <div class="text-[9px] text-slate-500 mt-0.5 leading-tight text-center">${entry.begin}<br>${entry.end}</div>
-                        <div class="text-[11px] font-black ${diffColor} mt-0.5 text-center">${netStd.toFixed(1)}h</div>
+                        <div class="text-[9px] text-slate-500 mt-0.5 leading-[1.1] text-center">${entry.begin}<br>-<br>${entry.end}</div>
+                        <div class="text-[11px] font-black ${diffColor} mt-auto text-center">${netStd.toFixed(1)}h</div>
                     `;
                 }
 
                 let cellHtml = `
-                    <div class="cal-cell relative p-1 border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
+                    <div class="cal-cell relative border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
                          onclick="handleCellClick('${dStr}')">
-                        ${badgeHtml}
-                        <div class="text-xs font-bold text-center ${isWeekend ? 'text-slate-400' : 'text-slate-800'}">${i}</div>
+                        <div class="text-[11px] font-bold text-center mt-0.5 ${textClassDate}">${i}</div>
                         ${textHtml}
                         ${hasRemark}
                     </div>
                 `;
                 grid.innerHTML += cellHtml;
+                
+                // Add padding to end of week if month ends mid-week
+                if(i === daysInMonth && dayOfWeek !== 0) {
+                     let paddingDays = 7 - (dayOfWeek === 0 ? 7 : dayOfWeek);
+                     for(let p=0; p<paddingDays; p++) grid.innerHTML += `<div class="bg-transparent"></div>`;
+                }
             }
 
             let agSaldo = parseFloat(db.settings.agSaldo || 0);
             let total = agSaldo + appTotalDiff;
             
             document.getElementById('saldo-app').innerText = (appTotalDiff > 0 ? '+' : '') + appTotalDiff.toFixed(2) + " h";
-            document.getElementById('saldo-app').className = "text-xl font-bold " + (appTotalDiff >= 0 ? "text-emerald-500" : "text-red-500");
+            document.getElementById('saldo-app').className = "text-xl font-bold mt-1 " + (appTotalDiff >= 0 ? "text-emerald-500" : "text-red-500");
             document.getElementById('saldo-ag').value = agSaldo;
             document.getElementById('saldo-total').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + " h";
         }
@@ -648,6 +725,8 @@
                 renderCalendar();
             } else {
                 document.getElementById('heute-date').value = dStr;
+                selectedDate = new Date(dStr);
+                updateDateDisplay(selectedDate);
                 switchTab('heute');
             }
         }
@@ -664,13 +743,13 @@
             let ind = document.getElementById('paint-indicator');
             
             if (paintModeActive) {
-                btn.innerText = "Pinsel Aktiv (Klicken zum Beenden)";
-                btn.className = "w-full py-3 rounded-xl font-bold bg-red-500 text-white shadow-md transition-colors";
+                btn.innerText = "Pinsel Aktiv (Beenden)";
+                btn.className = "w-full py-3 rounded-xl font-bold bg-red-50 text-red-600 border border-red-200 shadow-sm transition-colors";
                 ind.classList.remove('hidden');
                 switchTab('kalender'); 
             } else {
                 btn.innerText = "Pinsel Aktivieren";
-                btn.className = "w-full py-3 rounded-xl font-bold bg-indigo-100 text-indigo-700 transition-colors";
+                btn.className = "w-full py-3 rounded-xl font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 transition-colors";
                 ind.classList.add('hidden');
             }
         }
@@ -694,7 +773,7 @@
                 c.innerHTML += `
                     <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded-lg">
                         <span class="text-sm font-bold w-12 text-slate-500">${d}</span>
-                        <select id="pat-day-${i+1}" class="p-2 border border-slate-200 rounded-lg text-sm font-bold bg-white w-full max-w-[200px] outline-none">
+                        <select id="pat-day-${i+1}" class="p-2 border border-slate-200 rounded-lg text-sm font-bold bg-white w-full max-w-[200px] outline-none focus:border-blue-300">
                             ${tplOptions}
                         </select>
                     </div>
@@ -752,7 +831,7 @@
                 if (db.settings.model.days.includes(d)) {
                     btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500 transition-colors";
                 } else {
-                    btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent transition-colors";
+                    btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-slate-200 transition-colors";
                 }
             });
             
@@ -803,10 +882,10 @@
             let bg = document.getElementById('toggle-bg');
             let dot = document.getElementById('toggle-dot');
             if (isChecked) {
-                bg.classList.remove('bg-slate-300'); bg.classList.add('bg-blue-500');
-                dot.style.transform = 'translateX(16px)';
+                bg.classList.remove('bg-slate-200'); bg.classList.add('bg-blue-500');
+                dot.style.transform = 'translateX(20px)';
             } else {
-                bg.classList.remove('bg-blue-500'); bg.classList.add('bg-slate-300');
+                bg.classList.remove('bg-blue-500'); bg.classList.add('bg-slate-200');
                 dot.style.transform = 'translateX(0)';
             }
         }
@@ -862,7 +941,7 @@
                 ta.value = dataStr;
                 ta.select();
                 document.execCommand('copy');
-                alert("✅ Code in das Textfeld unten kopiert. Bitte manuell herauskopieren!");
+                alert("✅ Code unten kopiert. Bitte manuell herauskopieren!");
             }
         }
 
@@ -934,6 +1013,3 @@
     </script>
 </body>
 </html>
-
-
-```
