@@ -1,10 +1,12 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Zeiterfassung Pro</title>
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <!-- Tailwind CSS laden -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Touch-Optimierungen für Smartphones */
         body { 
@@ -12,11 +14,11 @@
             user-select: none;
             font-family: system-ui, -apple-system, sans-serif;
             background-color: #f1f5f9;
-            height: 100dvh; /* Exakte sichtbare Displayhöhe */
+            height: 100dvh; /* Exakte sichtbare Displayhöhe inkl. Navigation */
         }
         input, textarea, select { user-select: text; }
         
-        /* Dynamische Kalender-Zellen: Höhe wird jetzt vom CSS Grid diktiert */
+        /* Dynamische Kalender-Zellen: Höhe wird vom CSS Grid diktiert */
         .cal-cell { 
             display: flex;
             flex-direction: column;
@@ -36,7 +38,7 @@
             max-width: 100%;
         }
         
-        /* Verstecke Scrollbars komplett */
+        /* Verstecke Scrollbars komplett für App-Feeling */
         ::-webkit-scrollbar { width: 0px; background: transparent; display: none; }
     </style>
 </head>
@@ -54,7 +56,7 @@
     <main class="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative">
         
         <!-- ================= TAB: HEUTE (Scrollfrei optimiert) ================= -->
-        <div id="tab-heute" class="p-3 h-full flex flex-col gap-3 hidden">
+        <div id="tab-heute" class="p-2 h-full flex flex-col gap-2 hidden">
             
             <!-- Datum-Navigation -->
             <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm shrink-0">
@@ -71,12 +73,12 @@
             <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-blue-500 shrink-0">
                 <div>
                     <div class="text-xs text-slate-500 font-bold mb-1 uppercase tracking-wide">Netto-Arbeitszeit</div>
-                    <div class="text-5xl font-black text-blue-600" id="heute-netto">0.0h</div>
+                    <div class="text-4xl font-black text-blue-600" id="heute-netto">0.0h</div>
                     <div id="heute-diff" class="text-xs font-bold mt-1 text-slate-400">0.0h zum Soll</div>
                 </div>
-                <button onclick="saveDay()" class="bg-blue-600 text-white w-[80px] h-[80px] rounded-2xl shadow-lg flex flex-col justify-center items-center active:scale-95 transition-transform shrink-0">
-                    <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    <span class="text-[11px] font-bold">Speichern</span>
+                <button onclick="saveDay()" class="bg-blue-600 text-white w-[70px] h-[70px] rounded-2xl shadow-lg flex flex-col justify-center items-center active:scale-95 transition-transform shrink-0">
+                    <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span class="text-[10px] font-bold">Speichern</span>
                 </button>
             </div>
 
@@ -87,7 +89,7 @@
                 </div>
             </div>
 
-            <!-- Zeiten Eingabe (Nimmt flexibel Platz ein) -->
+            <!-- Zeiten Eingabe (Flexibel, füllt Restplatz) -->
             <div class="grid grid-cols-2 gap-2 flex-1 min-h-0">
                 <div class="bg-white p-2 rounded-xl shadow-sm flex flex-col justify-center">
                     <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Beginn</label>
@@ -113,7 +115,7 @@
             </div>
 
             <!-- Löschen Button -->
-            <button onclick="clearDay()" class="w-full p-3 text-red-500 font-bold bg-red-50 rounded-xl shrink-0 active:bg-red-100">
+            <button onclick="clearDay()" class="w-full p-2.5 text-red-500 font-bold bg-red-50 rounded-xl shrink-0 active:bg-red-100">
                 Tageseintrag leeren
             </button>
 
@@ -122,27 +124,24 @@
         <!-- ================= TAB: KALENDER (100% Scrollfrei Flex-Layout) ================= -->
         <div id="tab-kalender" class="p-2 h-full flex flex-col gap-2 hidden">
             
-            <!-- Monat Navigation (Feste Höhe) -->
+            <!-- Monat Navigation -->
             <div class="flex justify-between items-center bg-blue-600 text-white p-2 rounded-xl shadow-sm shrink-0">
                 <button onclick="changeMonth(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                 <div class="text-base font-bold" id="cal-month-title">Mai 2026</div>
                 <button onclick="changeMonth(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
-            <!-- Kalender Grid Container (Teilt sich dynamisch den restlichen Platz) -->
+            <!-- Kalender Grid Container -->
             <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0">
                 
-                <!-- Wochentage -->
                 <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-slate-400 uppercase shrink-0">
                     <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
                 </div>
                 
-                <!-- Das eigentliche Grid (Exakt 6 Zeilen, füllt den Platz aus) -->
                 <div id="cal-grid" class="grid grid-cols-7 gap-1 grid-rows-6 flex-1 min-h-0">
                     <!-- Wird dynamisch generiert -->
                 </div>
                 
-                <!-- Legende -->
                 <div class="mt-2 flex justify-center gap-3 text-[9px] text-slate-500 font-medium shrink-0">
                     <span class="flex items-center gap-1"><div class="w-2 h-2 bg-yellow-300 rounded-full"></div> Feiertag</span>
                     <span class="flex items-center gap-1"><div class="w-2 h-2 bg-green-300 rounded-full"></div> Ferien</span>
@@ -150,7 +149,7 @@
                 </div>
             </div>
 
-            <!-- Saldo Übersicht (Feste Höhe ganz unten) -->
+            <!-- Saldo Übersicht -->
             <div class="bg-white p-2 rounded-xl shadow-sm space-y-2 border border-blue-100 shrink-0">
                 <div class="grid grid-cols-2 gap-2 text-center">
                     <div class="p-1 bg-slate-50 rounded-lg border border-slate-100">
@@ -390,20 +389,19 @@
         }
 
         function switchTab(tabName) {
+            // Alle Tabs verstecken
             document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
+            
+            // Buttons auf inaktiv setzen
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.classList.remove('text-blue-600');
                 b.classList.add('text-slate-400');
             });
             
+            // Gewählten Tab einblenden (Das 'flex' greift hier automatisch wieder, da wir 'hidden' wegnehmen)
             document.getElementById('tab-' + tabName).classList.remove('hidden');
-            // Bei Kalender und Heute Flex-Layout anwenden
-            if(tabName === 'kalender' || tabName === 'heute') {
-                document.getElementById('tab-' + tabName).style.display = 'flex';
-            } else {
-                document.getElementById('tab-' + tabName).style.display = 'block';
-            }
-
+            
+            // Button blau färben
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-slate-400');
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
             
@@ -504,7 +502,7 @@
             
             let btn = document.querySelector('#tab-heute button[onclick="saveDay()"]');
             let oldHtml = btn.innerHTML;
-            btn.innerHTML = `<svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[11px] font-bold">Safe!</span>`;
+            btn.innerHTML = `<svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[10px] font-bold">Safe!</span>`;
             btn.classList.add('bg-emerald-500');
             btn.classList.remove('bg-blue-600');
             setTimeout(() => {
@@ -633,7 +631,6 @@
             }
 
             // Das Grid auffüllen, damit wir IMMER exakt 42 Zellen (6 Zeilen) haben
-            // Dadurch springt das Layout nicht bei kurzen/langen Monaten
             while(totalCells < 42) {
                 grid.innerHTML += `<div class="bg-transparent"></div>`;
                 totalCells++;
@@ -958,3 +955,6 @@
     </script>
 </body>
 </html>
+
+
+
