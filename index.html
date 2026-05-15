@@ -60,7 +60,7 @@
                 </button>
             </div>
 
-            <!-- NEU: Feiertags-Banner in der Tagesansicht -->
+            <!-- Feiertags-Banner in der Tagesansicht -->
             <div id="heute-holiday-banner" class="hidden text-center text-[11px] font-bold p-1.5 rounded-lg shrink-0 shadow-sm mt-[-4px]">
                 <!-- Wird dynamisch befüllt -->
             </div>
@@ -386,27 +386,34 @@
         }
 
         function switchTab(tabName) {
+            // 1. Alle Tabs hart ausblenden
             document.querySelectorAll('main > div').forEach(d => {
                 d.style.display = 'none';
             });
             
+            // 2. Button-Styling zurücksetzen
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.classList.remove('text-blue-600');
                 b.classList.add('text-slate-400');
             });
             
+            // 3. Neuen Tab einblenden
             let targetTab = document.getElementById('tab-' + tabName);
+            targetTab.classList.remove('hidden');
             
+            // Wichtig für das Scroll-Verhalten
             if(tabName === 'planer' || tabName === 'heute' || tabName === 'kalender') {
                 targetTab.style.display = 'flex';
             } else {
                 targetTab.style.display = 'block';
             }
             
+            // 4. Aktiven Button stylen
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-slate-400');
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
             document.getElementById('app-title').innerText = tabName.charAt(0).toUpperCase() + tabName.slice(1);
 
+            // 5. Inhalte für Tab laden
             if (tabName === 'kalender') renderCalendar();
             if (tabName === 'heute') loadDayData();
             if (tabName === 'planer') {
@@ -414,8 +421,13 @@
                 renderPaintTemplateDropdown();
                 updateToggleUI();
             }
-            if (tabName !== 'planer' && paintModeActive) {
-                togglePaintMode(true); 
+
+            // === DER FIX ===
+            // Wenn man auf "Heute" oder "Setup" wechselt UND der Pinsel an ist,
+            // dann wird er sicherheitshalber deaktiviert. 
+            // Kalender und Planer lassen ihn an!
+            if ((tabName === 'heute' || tabName === 'setup') && paintModeActive) {
+                togglePaintMode(true);
             }
         }
 
@@ -606,10 +618,8 @@
                 let bgClass = "bg-white border-slate-100";
                 if (isWeekend) bgClass = "bg-slate-50 border-slate-200";
                 
-                // --- NEUE FEIERTAGS ANZEIGE IM KALENDER (Text statt Badge) ---
                 let holidayNameHtml = "";
                 if (holiday) {
-                    // Klammern entfernen um Text kürzer zu machen, falls vorhanden
                     let shortName = holiday.name.replace(" (regional)", "").replace(" (Feiertag)", "");
                     if (holiday.isSchool) {
                         holidayNameHtml = `<div class="text-[6.5px] leading-none font-bold text-green-600 w-full text-center truncate px-0.5 mt-0.5" title="${holiday.name}">${shortName}</div>`;
@@ -662,7 +672,7 @@
         function handleCellClick(dStr) {
             if (paintModeActive) {
                 let tplId = document.getElementById('paint-template').value;
-                if (!tplId) return;
+                if (!tplId) return; // Passiert nicht mehr, da beim Aktivieren geprüft wird, aber sicher ist sicher.
                 
                 if (db.settings.protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) return;
 
@@ -693,6 +703,14 @@
         }
 
         function togglePaintMode(forceOff = false) {
+            let tplId = document.getElementById('paint-template').value;
+            
+            // NEU: Verhindern, dass der Pinsel ohne Vorlage angemacht wird.
+            if (!forceOff && !paintModeActive && !tplId) {
+                alert("Bitte wähle zuerst eine Vorlage zum Malen aus!");
+                return;
+            }
+
             paintModeActive = forceOff ? false : !paintModeActive;
             let btn = document.getElementById('btn-paint-toggle');
             let ind = document.getElementById('paint-indicator');
