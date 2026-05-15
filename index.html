@@ -19,17 +19,16 @@
             user-select: none;
             font-family: system-ui, -apple-system, sans-serif;
             background-color: #f1f5f9;
-            height: 100dvh; /* Exakte sichtbare Displayhöhe inkl. Navigation */
+            height: 100dvh; 
         }
         input, textarea, select { user-select: text; }
         
-        /* Entferne das Standard-Uhr-Icon in Zeit-Inputs für einen cleanen Look */
+        /* Entferne das Standard-Uhr-Icon in Zeit-Inputs */
         input[type="time"]::-webkit-calendar-picker-indicator {
             display: none;
             -webkit-appearance: none;
         }
         
-        /* Dynamische Kalender-Zellen */
         .cal-cell { 
             display: flex;
             flex-direction: column;
@@ -37,7 +36,6 @@
             width: 100%;
         }
         
-        /* Kompakte Zellen für den Planer-Monat */
         .planer-cell {
             display: flex;
             flex-direction: column;
@@ -75,13 +73,9 @@
                     </button>
                 </div>
 
-                <div id="heute-holiday-banner" class="hidden text-center text-xs font-bold p-2 rounded-xl shadow-sm">
-                    <!-- Dynamisch -->
-                </div>
+                <div id="heute-holiday-banner" class="hidden text-center text-xs font-bold p-2 rounded-xl shadow-sm"></div>
 
-                <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="heute-templates">
-                    <!-- Dynamisch -->
-                </div>
+                <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="heute-templates"></div>
 
                 <div class="flex gap-3">
                     <div class="bg-white py-4 px-2 rounded-2xl shadow-sm flex-1 flex flex-col items-center justify-center border border-slate-100">
@@ -98,7 +92,6 @@
             </div>
 
             <div class="flex-1 flex flex-col justify-center gap-4 min-h-0 py-2">
-                
                 <div class="grid grid-cols-2 gap-3 shrink-0">
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Beginn</label>
@@ -121,7 +114,6 @@
                 <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 shrink-0">
                     <input type="text" id="heute-remark" class="w-full text-base py-2 font-medium bg-transparent outline-none text-slate-700 placeholder-slate-400 text-center" placeholder="💬 Bemerkung (Krank, Urlaub, Notizen)">
                 </div>
-
             </div>
 
             <div class="shrink-0 mt-auto">
@@ -136,20 +128,16 @@
         <div id="tab-kalender" class="h-full flex flex-col gap-2 hidden">
             
             <div class="flex justify-between items-center bg-blue-600 text-white p-2 rounded-xl shadow-sm shrink-0">
-                <button onclick="changeMonth(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <button onclick="changeMonth(-1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                 <div class="text-base font-bold" id="cal-month-title">Mai 2026</div>
-                <button onclick="changeMonth(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                <button onclick="changeMonth(1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
             <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
-                
                 <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-slate-400 uppercase shrink-0">
                     <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
                 </div>
-                
-                <div id="cal-grid" class="grid grid-cols-7 gap-1 grid-rows-6 flex-1 min-h-0">
-                    <!-- Dynamisch -->
-                </div>
+                <div id="cal-grid" class="grid grid-cols-7 gap-1 grid-rows-6 flex-1 min-h-0"></div>
                 
                 <div class="mt-2 flex justify-center gap-3 text-[9px] text-slate-500 font-medium shrink-0">
                     <span class="flex items-center gap-1"><div class="w-2 h-2 bg-yellow-300 rounded-full"></div> Feiertag</span>
@@ -196,18 +184,16 @@
 
             <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
                 <div class="flex justify-between items-center mb-2 shrink-0">
-                    <button onclick="changeMonth(-1)" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <button onclick="changeMonth(-1, 'planer')" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                     <div class="text-sm font-bold text-slate-700" id="planer-month-title">Mai 2026</div>
-                    <button onclick="changeMonth(1)" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                    <button onclick="changeMonth(1, 'planer')" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                 </div>
 
                 <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[9px] font-bold text-slate-400 uppercase shrink-0">
                     <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
                 </div>
                 
-                <div id="planer-grid" class="grid grid-cols-7 gap-1 grid-rows-6 flex-1 min-h-0">
-                    <!-- Kompaktes Grid -->
-                </div>
+                <div id="planer-grid" class="grid grid-cols-7 gap-1 grid-rows-6 flex-1 min-h-0"></div>
                 
                 <div class="mt-2 text-center text-[9px] text-slate-400 shrink-0 font-medium">
                     Tippe auf einen Tag, um die gewählte Vorlage einzutragen.
@@ -235,9 +221,7 @@
                         </label>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-1.5 mb-2" id="pattern-container">
-                        <!-- Mo-So Dropdowns -->
-                    </div>
+                    <div class="grid grid-cols-2 gap-1.5 mb-2" id="pattern-container"></div>
 
                     <div class="flex items-center justify-between pt-1 border-t border-slate-100">
                         <label class="flex items-center gap-1.5 cursor-pointer p-1">
@@ -253,14 +237,23 @@
 
         </div>
 
-        <!-- ================= TAB: STATISTIK (Neues Modul) ================= -->
-        <div id="tab-statistik" class="p-2 space-y-3 hidden flex-col h-full">
+        <!-- ================= TAB: STATISTIK (Mit Intervallen) ================= -->
+        <div id="tab-statistik" class="space-y-3 hidden flex-col h-full">
             
-            <!-- Monat Navigation -->
-            <div class="flex justify-between items-center bg-blue-600 text-white p-2 rounded-xl shadow-sm shrink-0">
-                <button onclick="changeMonth(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                <div class="text-base font-bold" id="stat-month-title">Mai 2026</div>
-                <button onclick="changeMonth(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+            <div class="bg-blue-600 p-2 rounded-xl shadow-sm shrink-0 flex flex-col gap-2">
+                <!-- Navigation -->
+                <div class="flex justify-between items-center text-white">
+                    <button onclick="changeStatPeriod(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <div class="text-base font-bold" id="stat-period-title">Mai 2026</div>
+                    <button onclick="changeStatPeriod(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                </div>
+                
+                <!-- Toggle (Monat / Quartal / Jahr) -->
+                <div class="flex bg-blue-700/50 p-1 rounded-lg">
+                    <button onclick="setStatMode('month')" id="btn-stat-month" class="flex-1 text-[10px] font-bold py-1.5 rounded-md bg-white text-blue-600 shadow-sm transition-all">Monat</button>
+                    <button onclick="setStatMode('quarter')" id="btn-stat-quarter" class="flex-1 text-[10px] font-bold py-1.5 rounded-md text-blue-100 hover:text-white transition-all">Quartal</button>
+                    <button onclick="setStatMode('year')" id="btn-stat-year" class="flex-1 text-[10px] font-bold py-1.5 rounded-md text-blue-100 hover:text-white transition-all">Jahr</button>
+                </div>
             </div>
 
             <!-- KPI Cards -->
@@ -279,10 +272,10 @@
                 </div>
             </div>
 
-            <!-- Vorlagen Verteilung (Scrollbar falls sehr viele Vorlagen) -->
+            <!-- Vorlagen Verteilung -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex-1 flex flex-col min-h-0">
                 <h2 class="font-bold text-slate-800 text-xs mb-3 shrink-0 border-b border-slate-100 pb-2 uppercase tracking-wide">
-                    Verteilung nach Vorlagen
+                    Verteilung der Arbeitszeit
                 </h2>
                 <div id="stat-breakdown" class="flex-1 overflow-y-auto space-y-4 pr-1 no-scrollbar">
                     <!-- Wird dynamisch mit Fortschrittsbalken gefüllt -->
@@ -329,9 +322,7 @@
                     <input type="number" id="tpl-pause" placeholder="Pause (Min)" class="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                     <button onclick="addTemplate()" class="col-span-2 bg-indigo-600 text-white font-bold rounded-lg text-sm active:bg-indigo-700">Speichern</button>
                 </div>
-                <div id="setup-templates-list" class="space-y-2 mt-2">
-                    <!-- Vorlagen Liste -->
-                </div>
+                <div id="setup-templates-list" class="space-y-2 mt-2"></div>
             </div>
 
             <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
@@ -398,14 +389,12 @@
     </nav>
 
     <script>
-        // --- SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(() => {});
             });
         }
 
-        // --- DATEN ---
         let db = {
             entries: {},
             templates: [
@@ -424,8 +413,8 @@
         let selectedDate = new Date();    
         let paintModeActive = false;
         let activePaintTemplate = null;
+        let statMode = 'month'; // 'month', 'quarter', 'year'
 
-        // --- INIT ---
         function init() {
             const saved = localStorage.getItem('zeiterfassung_db');
             if (saved) {
@@ -618,12 +607,13 @@
             });
         }
 
-        // Globale Monats-Wechsel Funktion (Aktualisiert Kalender, Planer & Statistik)
-        function changeMonth(m) {
+        function changeMonth(m, target = 'kalender') {
             currentViewDate.setMonth(currentViewDate.getMonth() + m);
-            renderCalendar('kalender');
-            renderCalendar('planer');
-            renderStatistik();
+            if(target === 'kalender' || target === 'planer') {
+                renderCalendar(target);
+                if(target === 'planer') renderCalendar('kalender');
+                if(target === 'kalender') renderCalendar('planer');
+            }
         }
 
         function renderCalendar(target = 'kalender') {
@@ -632,7 +622,7 @@
             
             if(target === 'kalender') {
                 document.getElementById('cal-month-title').innerText = currentViewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
-            } else if (target === 'planer') {
+            } else if(target === 'planer') {
                 document.getElementById('planer-month-title').innerText = currentViewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
             }
             
@@ -743,59 +733,104 @@
             }
         }
 
-        // --- STATISTIK LOGIK ---
+        // --- STATISTIK FUNKTIONEN ---
+        function setStatMode(mode) {
+            statMode = mode;
+            ['month', 'quarter', 'year'].forEach(m => {
+                let btn = document.getElementById('btn-stat-' + m);
+                if(m === mode) {
+                    btn.className = "flex-1 text-[10px] font-bold py-1.5 rounded-md bg-white text-blue-600 shadow-sm transition-all";
+                } else {
+                    btn.className = "flex-1 text-[10px] font-bold py-1.5 rounded-md text-blue-100 hover:text-white transition-all";
+                }
+            });
+            renderStatistik();
+        }
+
+        function changeStatPeriod(dir) {
+            if (statMode === 'month') {
+                changeMonth(dir); // Verwendet die Standard changeMonth für 1 Monat
+                renderStatistik();
+            } else if (statMode === 'quarter') {
+                currentViewDate.setMonth(currentViewDate.getMonth() + (dir * 3));
+                renderStatistik();
+            } else if (statMode === 'year') {
+                currentViewDate.setFullYear(currentViewDate.getFullYear() + dir);
+                renderStatistik();
+            }
+        }
+
         function renderStatistik() {
             let year = currentViewDate.getFullYear();
             let month = currentViewDate.getMonth();
-            document.getElementById('stat-month-title').innerText = currentViewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
+            let startMonth, endMonth, titleStr;
 
-            let daysInMonth = new Date(year, month + 1, 0).getDate();
+            if (statMode === 'month') {
+                startMonth = month;
+                endMonth = month;
+                titleStr = currentViewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
+            } else if (statMode === 'quarter') {
+                let q = Math.floor(month / 3);
+                startMonth = q * 3;
+                endMonth = startMonth + 2;
+                titleStr = `Q${q + 1} ${year}`;
+            } else if (statMode === 'year') {
+                startMonth = 0;
+                endMonth = 11;
+                titleStr = `Jahr ${year}`;
+            }
+            
+            document.getElementById('stat-period-title').innerText = titleStr;
+
             let totalNet = 0;
             let daysWorked = 0;
+            let totalDaysInPeriod = 0;
             let tplDistribution = {};
 
             db.templates.forEach(t => tplDistribution[t.name] = 0);
             tplDistribution['Individuell / Sonstige'] = 0;
 
-            for (let i = 1; i <= daysInMonth; i++) {
-                let dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                let entry = db.entries[dStr];
+            for (let m = startMonth; m <= endMonth; m++) {
+                let daysInMonth = new Date(year, m + 1, 0).getDate();
+                totalDaysInPeriod += daysInMonth;
 
-                if (entry && entry.begin && entry.end) {
-                    let bMin = calculateMinutes(entry.begin, entry.end);
-                    let netStd = (bMin - (entry.pause || 0)) / 60;
-                    if (netStd > 0) {
-                        totalNet += netStd;
-                        daysWorked++;
+                for (let i = 1; i <= daysInMonth; i++) {
+                    let dStr = `${year}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                    let entry = db.entries[dStr];
 
-                        // Passende Vorlage finden
-                        let matchedTpl = db.templates.find(t => t.begin === entry.begin && t.end === entry.end && (t.pause || 0) == (entry.pause || 0));
-                        if (matchedTpl) {
-                            tplDistribution[matchedTpl.name] += netStd;
-                        } else {
-                            tplDistribution['Individuell / Sonstige'] += netStd;
+                    if (entry && entry.begin && entry.end) {
+                        let bMin = calculateMinutes(entry.begin, entry.end);
+                        let netStd = (bMin - (entry.pause || 0)) / 60;
+                        if (netStd > 0) {
+                            totalNet += netStd;
+                            daysWorked++;
+
+                            let matchedTpl = db.templates.find(t => t.begin === entry.begin && t.end === entry.end && (t.pause || 0) == (entry.pause || 0));
+                            if (matchedTpl) {
+                                tplDistribution[matchedTpl.name] += netStd;
+                            } else {
+                                tplDistribution['Individuell / Sonstige'] += netStd;
+                            }
                         }
                     }
                 }
             }
 
             let avgDay = daysWorked > 0 ? (totalNet / daysWorked) : 0;
-            let weeksInMonth = daysInMonth / 7;
-            let avgWeek = totalNet / weeksInMonth;
+            let avgWeek = totalNet / (totalDaysInPeriod / 7);
 
             document.getElementById('stat-total').innerText = totalNet.toFixed(1) + ' h';
             document.getElementById('stat-avg-day').innerText = avgDay.toFixed(1) + ' h';
             document.getElementById('stat-avg-week').innerText = avgWeek.toFixed(1) + ' h';
 
             let breakdownHtml = '';
-            // Array erstellen, nach Stunden sortieren
             let sortedTpls = Object.keys(tplDistribution)
                 .map(k => ({name: k, hours: tplDistribution[k]}))
                 .filter(x => x.hours > 0)
                 .sort((a,b) => b.hours - a.hours);
 
             if (sortedTpls.length === 0) {
-                breakdownHtml = '<div class="text-xs font-medium text-slate-400 text-center py-6">Keine Arbeitszeiten in diesem Monat erfasst.</div>';
+                breakdownHtml = '<div class="text-xs font-medium text-slate-400 text-center py-6">Keine Arbeitszeiten in diesem Zeitraum erfasst.</div>';
             } else {
                 sortedTpls.forEach(item => {
                     let percent = (item.hours / totalNet) * 100;
@@ -834,7 +869,7 @@
                 }
                 saveData();
                 renderCalendar('planer'); 
-                // Statistik im Hintergrund updaten, falls man rüberwechselt
+                // Statistik im Hintergrund updaten
                 renderStatistik();
             } else if (source === 'kalender') {
                 document.getElementById('heute-date').value = dStr;
