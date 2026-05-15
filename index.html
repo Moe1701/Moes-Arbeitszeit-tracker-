@@ -58,15 +58,13 @@
     <div id="paint-indicator" class="hidden"></div>
     <span id="paint-mode-text" class="hidden"></span>
 
-    <!-- Hauptinhalt (Startet direkt oben ohne Header) -->
+    <!-- Hauptinhalt -->
     <main class="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative pt-3 pb-2 px-3">
         
-        <!-- ================= TAB: HEUTE (Elegantes Layout) ================= -->
+        <!-- ================= TAB: HEUTE ================= -->
         <div id="tab-heute" class="h-full flex flex-col hidden">
             
-            <!-- ====== OBERER BEREICH (Datum & Netto) ====== -->
             <div class="flex flex-col gap-3 shrink-0">
-                <!-- Datum Navigation -->
                 <div class="flex justify-between items-center bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
                     <button onclick="changeDate(-1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -77,17 +75,14 @@
                     </button>
                 </div>
 
-                <!-- Feiertags-Banner -->
                 <div id="heute-holiday-banner" class="hidden text-center text-xs font-bold p-2 rounded-xl shadow-sm">
                     <!-- Dynamisch -->
                 </div>
 
-                <!-- Vorlagen Schnellzugriff -->
                 <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="heute-templates">
                     <!-- Dynamisch -->
                 </div>
 
-                <!-- Netto & Speichern -->
                 <div class="flex gap-3">
                     <div class="bg-white py-4 px-2 rounded-2xl shadow-sm flex-1 flex flex-col items-center justify-center border border-slate-100">
                         <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5">Netto-Arbeitszeit</div>
@@ -102,10 +97,8 @@
                 </div>
             </div>
 
-            <!-- ====== MITTLERER BEREICH (Zentriert & Elegant) ====== -->
             <div class="flex-1 flex flex-col justify-center gap-4 min-h-0 py-2">
                 
-                <!-- Zeiten Eingabe (Kompakte Boxen, Großer Text) -->
                 <div class="grid grid-cols-2 gap-3 shrink-0">
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Beginn</label>
@@ -125,14 +118,12 @@
                     </div>
                 </div>
 
-                <!-- Bemerkung Feld (Breiter und eleganter) -->
                 <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 shrink-0">
                     <input type="text" id="heute-remark" class="w-full text-base py-2 font-medium bg-transparent outline-none text-slate-700 placeholder-slate-400 text-center" placeholder="💬 Bemerkung (Krank, Urlaub, Notizen)">
                 </div>
 
             </div>
 
-            <!-- ====== UNTERER BEREICH ====== -->
             <div class="shrink-0 mt-auto">
                 <button onclick="clearDay()" class="w-full p-3 text-red-500 font-bold bg-red-50 rounded-xl active:bg-red-100 border border-red-100 transition-colors">
                     Tageseintrag leeren
@@ -145,9 +136,9 @@
         <div id="tab-kalender" class="h-full flex flex-col gap-2 hidden">
             
             <div class="flex justify-between items-center bg-blue-600 text-white p-2 rounded-xl shadow-sm shrink-0">
-                <button onclick="changeMonth(-1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <button onclick="changeMonth(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                 <div class="text-base font-bold" id="cal-month-title">Mai 2026</div>
-                <button onclick="changeMonth(1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                <button onclick="changeMonth(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
             <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
@@ -192,7 +183,6 @@
         <!-- ================= TAB: PLANER ================= -->
         <div id="tab-planer" class="space-y-2 hidden flex-col h-full">
             
-            <!-- Pinsel Palette -->
             <div class="bg-white p-2 rounded-xl shadow-sm border-l-4 border-indigo-500 shrink-0 border-y border-r border-slate-100">
                 <div class="flex justify-between items-center mb-1.5">
                     <h2 class="font-bold text-indigo-700 flex items-center gap-1 text-[11px] uppercase tracking-wide">
@@ -201,18 +191,14 @@
                     </h2>
                     <button onclick="togglePaintMode(true)" class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full active:bg-slate-200">Deaktivieren</button>
                 </div>
-                
-                <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar" id="paint-palette">
-                    <!-- Wird dynamisch gefüllt -->
-                </div>
+                <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar" id="paint-palette"></div>
             </div>
 
-            <!-- Kompakte Monatsansicht -->
             <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
                 <div class="flex justify-between items-center mb-2 shrink-0">
-                    <button onclick="changeMonth(-1, 'planer')" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <button onclick="changeMonth(-1)" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                     <div class="text-sm font-bold text-slate-700" id="planer-month-title">Mai 2026</div>
-                    <button onclick="changeMonth(1, 'planer')" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                    <button onclick="changeMonth(1)" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                 </div>
 
                 <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[9px] font-bold text-slate-400 uppercase shrink-0">
@@ -228,7 +214,6 @@
                 </div>
             </div>
 
-            <!-- Automatisches Muster -->
             <details class="bg-white rounded-xl shadow-sm shrink-0 border border-slate-100 group">
                 <summary class="p-2.5 font-bold text-blue-700 flex items-center justify-between text-xs cursor-pointer list-none outline-none">
                     <span class="flex items-center gap-1.5">
@@ -265,6 +250,44 @@
                     </div>
                 </div>
             </details>
+
+        </div>
+
+        <!-- ================= TAB: STATISTIK (Neues Modul) ================= -->
+        <div id="tab-statistik" class="p-2 space-y-3 hidden flex-col h-full">
+            
+            <!-- Monat Navigation -->
+            <div class="flex justify-between items-center bg-blue-600 text-white p-2 rounded-xl shadow-sm shrink-0">
+                <button onclick="changeMonth(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <div class="text-base font-bold" id="stat-month-title">Mai 2026</div>
+                <button onclick="changeMonth(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-3 gap-2 shrink-0">
+                <div class="bg-white py-3 px-1 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Gesamt</div>
+                    <div class="text-lg font-black text-blue-600" id="stat-total">0.0 h</div>
+                </div>
+                <div class="bg-white py-3 px-1 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Ø pro Tag</div>
+                    <div class="text-lg font-black text-indigo-600" id="stat-avg-day">0.0 h</div>
+                </div>
+                <div class="bg-white py-3 px-1 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Ø pro Woche</div>
+                    <div class="text-lg font-black text-emerald-600" id="stat-avg-week">0.0 h</div>
+                </div>
+            </div>
+
+            <!-- Vorlagen Verteilung (Scrollbar falls sehr viele Vorlagen) -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex-1 flex flex-col min-h-0">
+                <h2 class="font-bold text-slate-800 text-xs mb-3 shrink-0 border-b border-slate-100 pb-2 uppercase tracking-wide">
+                    Verteilung nach Vorlagen
+                </h2>
+                <div id="stat-breakdown" class="flex-1 overflow-y-auto space-y-4 pr-1 no-scrollbar">
+                    <!-- Wird dynamisch mit Fortschrittsbalken gefüllt -->
+                </div>
+            </div>
 
         </div>
 
@@ -347,21 +370,28 @@
 
     </main>
 
-    <!-- Bottom Navigation -->
+    <!-- Bottom Navigation (Mit 5 Buttons) -->
     <nav class="bg-white border-t border-slate-200 flex justify-around p-0.5 pb-1 shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] z-20 relative">
-        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/4 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-heute">
+        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-heute">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span class="text-[9px] font-bold">Heute</span>
         </button>
-        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/4 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-kalender">
+        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-kalender">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <span class="text-[9px] font-bold">Kalender</span>
         </button>
-        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/4 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-planer">
+        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-planer">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
             <span class="text-[9px] font-bold">Planer</span>
         </button>
-        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/4 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-setup">
+        <button onclick="switchTab('statistik')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-statistik">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+            </svg>
+            <span class="text-[9px] font-bold">Statistik</span>
+        </button>
+        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-setup">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             <span class="text-[9px] font-bold">Setup</span>
         </button>
@@ -440,7 +470,7 @@
             let targetTab = document.getElementById('tab-' + tabName);
             targetTab.classList.remove('hidden');
             
-            if(tabName === 'planer' || tabName === 'heute' || tabName === 'kalender') {
+            if(tabName === 'planer' || tabName === 'heute' || tabName === 'kalender' || tabName === 'statistik') {
                 targetTab.style.display = 'flex';
             } else {
                 targetTab.style.display = 'block';
@@ -456,6 +486,9 @@
                 renderPaintPalette();
                 renderCalendar('planer');
                 updateToggleUI();
+            }
+            if (tabName === 'statistik') {
+                renderStatistik();
             }
 
             if (tabName !== 'planer' && paintModeActive) {
@@ -585,11 +618,12 @@
             });
         }
 
-        function changeMonth(m, target = 'kalender') {
+        // Globale Monats-Wechsel Funktion (Aktualisiert Kalender, Planer & Statistik)
+        function changeMonth(m) {
             currentViewDate.setMonth(currentViewDate.getMonth() + m);
-            renderCalendar(target);
-            if(target === 'planer') renderCalendar('kalender');
-            if(target === 'kalender') renderCalendar('planer');
+            renderCalendar('kalender');
+            renderCalendar('planer');
+            renderStatistik();
         }
 
         function renderCalendar(target = 'kalender') {
@@ -598,12 +632,14 @@
             
             if(target === 'kalender') {
                 document.getElementById('cal-month-title').innerText = currentViewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
-            } else {
+            } else if (target === 'planer') {
                 document.getElementById('planer-month-title').innerText = currentViewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
             }
             
             let gridId = target === 'kalender' ? 'cal-grid' : 'planer-grid';
             let grid = document.getElementById(gridId);
+            if(!grid) return;
+            
             grid.innerHTML = '';
 
             let firstDay = new Date(year, month, 1).getDay();
@@ -669,9 +705,9 @@
                             <div class="text-[11px] font-black ${diffColor} mt-0.5 text-center">${netStd.toFixed(1)}h</div>
                         `;
                     } else {
-                        let tplMatch = db.templates.find(t => t.begin === entry.begin && t.end === entry.end);
-                        let label = tplMatch ? tplMatch.name.substring(0,3) : netStd.toFixed(1)+'h';
-                        textHtml = `<div class="text-[9px] font-bold text-blue-600 mt-0.5">${label}</div>`;
+                        let tplMatch = db.templates.find(t => t.begin === entry.begin && t.end === entry.end && (t.pause||0) == (entry.pause||0));
+                        let label = tplMatch ? tplMatch.name.substring(0,4) : netStd.toFixed(1)+'h';
+                        textHtml = `<div class="text-[9px] font-bold text-blue-600 mt-0.5 truncate w-full text-center">${label}</div>`;
                     }
                 }
 
@@ -707,6 +743,78 @@
             }
         }
 
+        // --- STATISTIK LOGIK ---
+        function renderStatistik() {
+            let year = currentViewDate.getFullYear();
+            let month = currentViewDate.getMonth();
+            document.getElementById('stat-month-title').innerText = currentViewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
+
+            let daysInMonth = new Date(year, month + 1, 0).getDate();
+            let totalNet = 0;
+            let daysWorked = 0;
+            let tplDistribution = {};
+
+            db.templates.forEach(t => tplDistribution[t.name] = 0);
+            tplDistribution['Individuell / Sonstige'] = 0;
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                let dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                let entry = db.entries[dStr];
+
+                if (entry && entry.begin && entry.end) {
+                    let bMin = calculateMinutes(entry.begin, entry.end);
+                    let netStd = (bMin - (entry.pause || 0)) / 60;
+                    if (netStd > 0) {
+                        totalNet += netStd;
+                        daysWorked++;
+
+                        // Passende Vorlage finden
+                        let matchedTpl = db.templates.find(t => t.begin === entry.begin && t.end === entry.end && (t.pause || 0) == (entry.pause || 0));
+                        if (matchedTpl) {
+                            tplDistribution[matchedTpl.name] += netStd;
+                        } else {
+                            tplDistribution['Individuell / Sonstige'] += netStd;
+                        }
+                    }
+                }
+            }
+
+            let avgDay = daysWorked > 0 ? (totalNet / daysWorked) : 0;
+            let weeksInMonth = daysInMonth / 7;
+            let avgWeek = totalNet / weeksInMonth;
+
+            document.getElementById('stat-total').innerText = totalNet.toFixed(1) + ' h';
+            document.getElementById('stat-avg-day').innerText = avgDay.toFixed(1) + ' h';
+            document.getElementById('stat-avg-week').innerText = avgWeek.toFixed(1) + ' h';
+
+            let breakdownHtml = '';
+            // Array erstellen, nach Stunden sortieren
+            let sortedTpls = Object.keys(tplDistribution)
+                .map(k => ({name: k, hours: tplDistribution[k]}))
+                .filter(x => x.hours > 0)
+                .sort((a,b) => b.hours - a.hours);
+
+            if (sortedTpls.length === 0) {
+                breakdownHtml = '<div class="text-xs font-medium text-slate-400 text-center py-6">Keine Arbeitszeiten in diesem Monat erfasst.</div>';
+            } else {
+                sortedTpls.forEach(item => {
+                    let percent = (item.hours / totalNet) * 100;
+                    breakdownHtml += `
+                        <div class="mb-3">
+                            <div class="flex justify-between text-[11px] font-bold mb-1.5 px-1">
+                                <span class="text-slate-700">${item.name}</span>
+                                <span class="text-blue-600">${item.hours.toFixed(1)} h <span class="text-slate-400 font-normal ml-1">(${percent.toFixed(0)}%)</span></span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('stat-breakdown').innerHTML = breakdownHtml;
+        }
+
         function handleCellClick(dStr, source) {
             if (source === 'planer' && paintModeActive && activePaintTemplate) {
                 
@@ -726,6 +834,8 @@
                 }
                 saveData();
                 renderCalendar('planer'); 
+                // Statistik im Hintergrund updaten, falls man rüberwechselt
+                renderStatistik();
             } else if (source === 'kalender') {
                 document.getElementById('heute-date').value = dStr;
                 switchTab('heute');
