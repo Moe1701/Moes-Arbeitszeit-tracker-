@@ -7,7 +7,7 @@
     
     <!-- PWA Verknüpfungen -->
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#f1f5f9">
     <link rel="apple-touch-icon" href="./icon-192.png">
     
     <!-- Tailwind CSS -->
@@ -22,6 +22,12 @@
             height: 100dvh; /* Exakte sichtbare Displayhöhe inkl. Navigation */
         }
         input, textarea, select { user-select: text; }
+        
+        /* Entferne das Standard-Uhr-Icon in Zeit-Inputs (Android/Chrome) für einen cleanen Look */
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            display: none;
+            -webkit-appearance: none;
+        }
         
         /* Dynamische Kalender-Zellen */
         .cal-cell { 
@@ -47,77 +53,81 @@
 </head>
 <body class="text-slate-800 flex flex-col overflow-hidden">
 
-    <!-- Kopfzeile -->
-    <header class="bg-blue-600 text-white p-3 shadow-md flex justify-between items-center z-10 shrink-0">
-        <h1 class="text-lg font-bold" id="app-title">Heute</h1>
-        <div id="paint-indicator" class="hidden bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse shadow-sm">
-            <span id="paint-mode-text">PINSEL AKTIV</span>
-        </div>
-    </header>
+    <!-- Versteckte Elemente für JS-Kompatibilität, da der sichtbare Header gelöscht wurde -->
+    <h1 id="app-title" class="hidden"></h1>
+    <div id="paint-indicator" class="hidden"></div>
+    <span id="paint-mode-text" class="hidden"></span>
 
-    <!-- Hauptinhalt -->
-    <main class="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative">
+    <!-- Hauptinhalt (Nimmt jetzt den vollen Platz nach oben ein!) -->
+    <main class="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative pt-2">
         
-        <!-- ================= TAB: HEUTE ================= -->
+        <!-- ================= TAB: HEUTE (Optimiertes Layout) ================= -->
         <div id="tab-heute" class="p-2 h-full flex flex-col gap-2 hidden">
             
-            <div class="flex justify-between items-center bg-white p-2 rounded-xl shadow-sm shrink-0">
-                <button onclick="changeDate(-1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg active:bg-blue-100">
+            <!-- Datum Navigation (Zentriert & Größer) -->
+            <div class="flex justify-between items-center bg-white p-1 rounded-xl shadow-sm shrink-0 border border-slate-100">
+                <button onclick="changeDate(-1)" class="p-3 bg-slate-50 text-slate-600 rounded-lg active:bg-slate-200 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
-                <input type="date" id="heute-date" class="text-lg font-bold bg-transparent border-none text-center outline-none" onchange="loadDayData()">
-                <button onclick="changeDate(1)" class="p-2 bg-blue-50 text-blue-600 rounded-lg active:bg-blue-100">
+                <input type="date" id="heute-date" class="text-xl font-black bg-transparent border-none text-center outline-none flex-1 tracking-tight text-slate-800" onchange="loadDayData()">
+                <button onclick="changeDate(1)" class="p-3 bg-slate-50 text-slate-600 rounded-lg active:bg-slate-200 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
             </div>
 
-            <!-- Feiertags-Banner in der Tagesansicht -->
+            <!-- Feiertags-Banner -->
             <div id="heute-holiday-banner" class="hidden text-center text-[11px] font-bold p-1.5 rounded-lg shrink-0 shadow-sm mt-[-4px]">
                 <!-- Wird dynamisch befüllt -->
             </div>
 
-            <div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center border-l-4 border-blue-500 shrink-0">
-                <div>
-                    <div class="text-xs text-slate-500 font-bold mb-1 uppercase tracking-wide">Netto-Arbeitszeit</div>
-                    <div class="text-4xl font-black text-blue-600" id="heute-netto">0.0h</div>
-                    <div id="heute-diff" class="text-xs font-bold mt-1 text-slate-400">0.0h zum Soll</div>
+            <!-- Netto & Speichern Box (Netto zentriert in der Mitte) -->
+            <div class="flex gap-2 shrink-0">
+                <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col items-center justify-center border border-slate-100 relative">
+                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Netto-Arbeitszeit</div>
+                    <div class="text-[2.75rem] leading-none font-black text-blue-600 my-1 tracking-tighter" id="heute-netto">0.0h</div>
+                    <div id="heute-diff" class="text-[10px] font-bold text-slate-400">0.0h zum Soll</div>
                 </div>
-                <button onclick="saveDay()" class="bg-blue-600 text-white w-[70px] h-[70px] rounded-2xl shadow-lg flex flex-col justify-center items-center active:scale-95 transition-transform shrink-0">
-                    <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    <span class="text-[10px] font-bold">Speichern</span>
+                
+                <button onclick="saveDay()" class="bg-blue-600 text-white w-[80px] rounded-xl shadow-md flex flex-col justify-center items-center active:bg-blue-700 transition-colors shrink-0">
+                    <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span class="text-[10px] font-bold uppercase tracking-wider">Speichern</span>
                 </button>
             </div>
 
+            <!-- Vorlagen Schnellzugriff -->
             <div class="shrink-0">
                 <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="heute-templates">
                     <!-- Dynamisch -->
                 </div>
             </div>
 
+            <!-- Zeiten Eingabe (Riesige Zahlen, kompakter Hintergrund) -->
             <div class="grid grid-cols-2 gap-2 flex-1 min-h-0">
-                <div class="bg-white p-2 rounded-xl shadow-sm flex flex-col justify-center">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Beginn</label>
-                    <input type="time" id="heute-begin" class="w-full text-2xl font-bold bg-slate-50 p-1 rounded-lg outline-none text-center" onchange="autoSuggestBreak(); calculateNetto()">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase absolute top-2">Beginn</label>
+                    <input type="time" id="heute-begin" class="w-full mt-4 text-4xl font-black bg-transparent border-none outline-none text-center text-slate-800" onchange="autoSuggestBreak(); calculateNetto()">
                 </div>
-                <div class="bg-white p-2 rounded-xl shadow-sm flex flex-col justify-center">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Ende</label>
-                    <input type="time" id="heute-end" class="w-full text-2xl font-bold bg-slate-50 p-1 rounded-lg outline-none text-center" onchange="autoSuggestBreak(); calculateNetto()">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase absolute top-2">Ende</label>
+                    <input type="time" id="heute-end" class="w-full mt-4 text-4xl font-black bg-transparent border-none outline-none text-center text-slate-800" onchange="autoSuggestBreak(); calculateNetto()">
                 </div>
-                <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-center">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Pause (Min)</label>
-                    <input type="number" id="heute-pause" class="w-full text-2xl font-bold bg-slate-50 p-1 rounded-lg outline-none text-center text-indigo-600" onchange="calculateNetto()" placeholder="0">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase absolute top-2">Pause (Min)</label>
+                    <input type="number" id="heute-pause" class="w-full mt-4 text-4xl font-black bg-transparent border-none outline-none text-center text-indigo-600" onchange="calculateNetto()" placeholder="0">
                 </div>
-                <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-center">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Soll (Std)</label>
-                    <input type="number" step="0.1" id="heute-soll" class="w-full text-2xl font-bold bg-slate-50 p-1 rounded-lg outline-none text-center text-slate-500" onchange="calculateNetto()">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase absolute top-2">Soll (Std)</label>
+                    <input type="number" step="0.1" id="heute-soll" class="w-full mt-4 text-3xl font-black bg-transparent border-none outline-none text-center text-slate-500" onchange="calculateNetto()">
                 </div>
             </div>
 
-            <div class="bg-white p-2 rounded-xl shadow-sm shrink-0">
-                <input type="text" id="heute-remark" class="w-full text-sm font-medium bg-slate-50 p-2 rounded-lg outline-none text-slate-700 placeholder-slate-400" placeholder="💬 Bemerkung (Krank, Urlaub, Notizen...)">
+            <!-- Bemerkung Feld -->
+            <div class="bg-white p-1 rounded-xl shadow-sm border border-slate-100 shrink-0">
+                <input type="text" id="heute-remark" class="w-full text-sm font-bold bg-transparent p-2 rounded-lg outline-none text-slate-700 placeholder-slate-400 text-center" placeholder="💬 Bemerkung (Krank, Urlaub, Notizen)">
             </div>
 
-            <button onclick="clearDay()" class="w-full p-2.5 text-red-500 font-bold bg-red-50 rounded-xl shrink-0 active:bg-red-100">
+            <!-- Löschen Button -->
+            <button onclick="clearDay()" class="w-full p-2.5 text-red-500 font-bold bg-red-50 rounded-xl shrink-0 active:bg-red-100 border border-red-100">
                 Tageseintrag leeren
             </button>
 
@@ -132,7 +142,7 @@
                 <button onclick="changeMonth(1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
-            <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0">
+            <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
                 
                 <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-slate-400 uppercase shrink-0">
                     <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
@@ -175,13 +185,13 @@
         <div id="tab-planer" class="p-2 space-y-2 hidden flex-col h-full">
             
             <!-- Pinsel Palette (Schnellauswahl für Schichten) -->
-            <div class="bg-white p-2 rounded-xl shadow-sm border-l-4 border-indigo-500 shrink-0">
+            <div class="bg-white p-2 rounded-xl shadow-sm border-l-4 border-indigo-500 shrink-0 border-y border-r border-slate-100">
                 <div class="flex justify-between items-center mb-1.5">
                     <h2 class="font-bold text-indigo-700 flex items-center gap-1 text-[11px] uppercase tracking-wide">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
                         Aktiver Pinsel
                     </h2>
-                    <button onclick="togglePaintMode(true)" class="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full active:bg-slate-200">Deaktivieren</button>
+                    <button onclick="togglePaintMode(true)" class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full active:bg-slate-200">Deaktivieren</button>
                 </div>
                 
                 <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar" id="paint-palette">
@@ -205,14 +215,14 @@
                     <!-- Kompaktes Grid zum schnellen Antippen -->
                 </div>
                 
-                <div class="mt-2 text-center text-[9px] text-slate-400 shrink-0">
+                <div class="mt-2 text-center text-[9px] text-slate-400 shrink-0 font-medium">
                     Tippe auf einen Tag, um die gewählte Vorlage einzutragen.
                 </div>
             </div>
 
             <!-- Automatisches Muster (Zugeklappt / Sehr Kompakt) -->
             <details class="bg-white rounded-xl shadow-sm shrink-0 border border-slate-100 group">
-                <summary class="p-2.5 font-bold text-blue-700 flex items-center justify-between text-xs cursor-pointer list-none">
+                <summary class="p-2.5 font-bold text-blue-700 flex items-center justify-between text-xs cursor-pointer list-none outline-none">
                     <span class="flex items-center gap-1.5">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         Ganzen Monat automatisch füllen
@@ -253,7 +263,7 @@
         <!-- ================= TAB: SETUP ================= -->
         <div id="tab-setup" class="p-3 space-y-4 hidden">
             
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
                 <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Arbeitszeit-Modell</h2>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
@@ -279,7 +289,7 @@
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
                 <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Vorlagen anlegen</h2>
                 <div class="grid grid-cols-4 gap-2">
                     <input type="text" id="tpl-name" placeholder="Name (z.B. Früh)" class="col-span-4 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none">
@@ -293,7 +303,7 @@
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3">
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
                 <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Bundesland</h2>
                 <select id="state-select" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none" onchange="saveSettings()">
                     <option value="BW">Baden-Württemberg</option><option value="BY">Bayern</option><option value="BE">Berlin</option>
@@ -329,21 +339,21 @@
 
     </main>
 
-    <!-- Bottom Navigation (Extrem schlank) -->
+    <!-- Bottom Navigation -->
     <nav class="bg-white border-t border-slate-200 flex justify-around p-0.5 pb-1 shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] z-20">
-        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-1 text-slate-400 w-1/4 rounded-lg active:bg-slate-50" data-target="tab-heute">
+        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-1 text-slate-400 w-1/4 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-heute">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span class="text-[9px] font-bold">Heute</span>
         </button>
-        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-1 text-slate-400 w-1/4 rounded-lg active:bg-slate-50" data-target="tab-kalender">
+        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-1 text-slate-400 w-1/4 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-kalender">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <span class="text-[9px] font-bold">Kalender</span>
         </button>
-        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-1 text-slate-400 w-1/4 rounded-lg active:bg-slate-50" data-target="tab-planer">
+        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-1 text-slate-400 w-1/4 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-planer">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
             <span class="text-[9px] font-bold">Planer</span>
         </button>
-        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-1 text-slate-400 w-1/4 rounded-lg active:bg-slate-50" data-target="tab-setup">
+        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-1 text-slate-400 w-1/4 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-setup">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             <span class="text-[9px] font-bold">Setup</span>
         </button>
@@ -375,7 +385,7 @@
         let currentViewDate = new Date();
         let selectedDate = new Date();    
         let paintModeActive = false;
-        let activePaintTemplate = null; // Speichert die ID der gewählten Pinsel-Vorlage
+        let activePaintTemplate = null;
 
         // --- INIT ---
         function init() {
@@ -430,14 +440,13 @@
             
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-slate-400');
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
-            document.getElementById('app-title').innerText = tabName.charAt(0).toUpperCase() + tabName.slice(1);
 
             if (tabName === 'kalender') renderCalendar('kalender');
             if (tabName === 'heute') loadDayData();
             if (tabName === 'planer') {
                 renderPatternDropdowns();
                 renderPaintPalette();
-                renderCalendar('planer'); // Rendert den kompakten Planer-Monat
+                renderCalendar('planer');
                 updateToggleUI();
             }
 
@@ -518,7 +527,7 @@
             document.getElementById('heute-netto').innerText = nettoStr;
             let diffEl = document.getElementById('heute-diff');
             diffEl.innerText = diffStr;
-            diffEl.className = "text-xs font-bold mt-1 " + (isPositive ? "text-emerald-500" : "text-red-400");
+            diffEl.className = "text-[10px] font-bold mt-1 " + (isPositive ? "text-emerald-500" : "text-red-400");
         }
 
         function saveDay() {
@@ -538,7 +547,7 @@
             
             let btn = document.querySelector('#tab-heute button[onclick="saveDay()"]');
             let oldHtml = btn.innerHTML;
-            btn.innerHTML = `<svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[10px] font-bold">Safe!</span>`;
+            btn.innerHTML = `<svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[10px] font-bold uppercase tracking-wider">Safe!</span>`;
             btn.classList.add('bg-emerald-500'); btn.classList.remove('bg-blue-600');
             setTimeout(() => {
                 btn.innerHTML = oldHtml;
@@ -577,12 +586,10 @@
             if(target === 'kalender') renderCalendar('planer');
         }
 
-        // --- Kombinierte Render-Funktion für Kalender & Planer ---
         function renderCalendar(target = 'kalender') {
             let year = currentViewDate.getFullYear();
             let month = currentViewDate.getMonth();
             
-            // Titel updaten
             if(target === 'kalender') {
                 document.getElementById('cal-month-title').innerText = currentViewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
             } else {
@@ -651,13 +658,11 @@
                     let diffColor = dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
                     
                     if (target === 'kalender') {
-                        // Detailansicht für Kalender
                         textHtml = `
                             <div class="text-[8px] text-slate-500 leading-tight text-center">${entry.begin}<br>${entry.end}</div>
                             <div class="text-[10px] font-black ${diffColor} mt-0.5 text-center">${netStd.toFixed(1)}h</div>
                         `;
                     } else {
-                        // Kompakte Ansicht für Planer (Zeigt den Template-Namen, falls es passt, sonst nur Stunden)
                         let tplMatch = db.templates.find(t => t.begin === entry.begin && t.end === entry.end);
                         let label = tplMatch ? tplMatch.name.substring(0,3) : netStd.toFixed(1)+'h';
                         textHtml = `<div class="text-[9px] font-bold text-blue-600 mt-0.5">${label}</div>`;
@@ -696,10 +701,7 @@
             }
         }
 
-        // --- Klick auf eine Zelle (Kalender oder Planer) ---
         function handleCellClick(dStr, source) {
-            // Im Planer malen wir immer, sofern der Pinsel an ist.
-            // Im Kalender öffnen wir die Tagesansicht, DA ES DORT KEINEN PINSEL MEHR GIBT.
             if (source === 'planer' && paintModeActive && activePaintTemplate) {
                 
                 if (db.settings.protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) return;
@@ -717,7 +719,7 @@
                     }
                 }
                 saveData();
-                renderCalendar('planer'); // Nur den Planer updaten für Geschwindigkeit
+                renderCalendar('planer'); 
             } else if (source === 'kalender') {
                 document.getElementById('heute-date').value = dStr;
                 switchTab('heute');
@@ -730,33 +732,15 @@
             renderCalendar('kalender');
         }
 
-        // --- NEUE PINSEL LOGIK FÜR PALETTE ---
         function setPaintTemplate(tplId) {
             activePaintTemplate = tplId;
             paintModeActive = true;
-            
-            // Indicator Header Update
-            let ind = document.getElementById('paint-indicator');
-            let text = document.getElementById('paint-mode-text');
-            ind.classList.remove('hidden');
-            
-            if(tplId === 'clear') {
-                text.innerText = "LÖSCH-MODUS";
-                ind.className = "hidden bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse shadow-sm";
-            } else {
-                let t = db.templates.find(x => x.id == tplId);
-                text.innerText = "PINSEL: " + (t ? t.name.toUpperCase() : '');
-                ind.className = "hidden bg-indigo-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse shadow-sm";
-            }
-            ind.classList.remove('hidden');
-
-            renderPaintPalette(); // UI updaten
+            renderPaintPalette();
         }
 
         function togglePaintMode(forceOff = false) {
             paintModeActive = false;
             activePaintTemplate = null;
-            document.getElementById('paint-indicator').classList.add('hidden');
             renderPaintPalette();
         }
 
@@ -765,7 +749,6 @@
             if(!container) return;
             container.innerHTML = '';
             
-            // Löschen Button
             let clearClass = activePaintTemplate === 'clear' 
                 ? 'bg-red-500 text-white shadow-inner scale-95 border-red-600' 
                 : 'bg-red-50 text-red-600 border-red-200 active:bg-red-100';
@@ -776,7 +759,6 @@
                 </button>
             `;
 
-            // Template Buttons
             db.templates.forEach(t => {
                 let isAct = activePaintTemplate == t.id;
                 let btnClass = isAct 
@@ -849,7 +831,7 @@
                 }
             }
             saveData();
-            renderCalendar('planer'); // Update die Ansicht
+            renderCalendar('planer');
             alert(`${count} Schichten in diesen Monat eingetragen!`);
         }
 
