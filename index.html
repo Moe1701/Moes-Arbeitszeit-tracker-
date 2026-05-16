@@ -300,15 +300,19 @@
                 </div>
             </div>
 
-            <!-- KPI Cards -->
-            <div class="grid grid-cols-3 gap-3 shrink-0">
+            <!-- KPI Cards: Umgebaut auf 2x2 Grid für HR-Soll Vergleich -->
+            <div class="grid grid-cols-2 gap-3 shrink-0">
                 <div class="bg-white py-4 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center">
-                    <div class="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">Gesamt</div>
-                    <div class="text-xl font-black text-violet-400" id="stat-total">0.0 h</div>
+                    <div class="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">Ist-Arbeitszeit</div>
+                    <div class="text-xl font-black text-violet-500" id="stat-total">0.0 h</div>
+                </div>
+                <div class="bg-white py-4 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center">
+                    <div class="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">HR-Soll (Formel)</div>
+                    <div class="text-xl font-black text-stone-700" id="stat-hr-soll">0.0 h</div>
                 </div>
                 <div class="bg-white py-4 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center">
                     <div class="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">Ø pro Tag</div>
-                    <div class="text-xl font-black text-stone-700" id="stat-avg-day">0.0 h</div>
+                    <div class="text-xl font-black text-stone-600" id="stat-avg-day">0.0 h</div>
                 </div>
                 <div class="bg-white py-4 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center">
                     <div class="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">Ø pro Woche</div>
@@ -337,16 +341,29 @@
                     <svg class="w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Arbeitszeit-Modell
                 </h2>
-                <div class="grid grid-cols-2 gap-3">
+                
+                <div class="grid grid-cols-2 gap-3 mb-3">
                     <div class="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                        <label class="block text-[10px] font-bold text-stone-500 mb-1.5 uppercase tracking-wide">Wochenstunden</label>
+                        <label class="block text-[10px] font-bold text-stone-500 mb-1.5 uppercase tracking-wide">Basis-Wochenstunden</label>
                         <input type="number" id="set-weekly-hours" class="w-full bg-transparent font-black text-xl text-center outline-none text-stone-800 p-0 m-0" value="40" onchange="saveSettings()">
                     </div>
+                    <div class="bg-stone-50 p-3 rounded-xl border border-stone-100">
+                        <label class="block text-[10px] font-bold text-stone-500 mb-1.5 uppercase tracking-wide">Stellenanteil (%)</label>
+                        <input type="number" id="set-percentage" class="w-full bg-transparent font-black text-xl text-center outline-none text-stone-800 p-0 m-0" value="100" onchange="saveSettings()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
                     <div class="bg-violet-50/50 p-3 rounded-xl border border-violet-100">
                         <label class="block text-[10px] font-bold text-violet-400 mb-1.5 uppercase tracking-wide text-center">Tages-Soll (Auto)</label>
                         <div id="calc-daily-soll" class="font-black text-xl text-violet-500 text-center">8.0 h</div>
                     </div>
+                    <div class="bg-violet-50/50 p-3 rounded-xl border border-violet-100">
+                        <label class="block text-[10px] font-bold text-violet-400 mb-1.5 uppercase tracking-wide text-center">HR Monats-Soll</label>
+                        <div id="calc-hr-monthly" class="font-black text-xl text-violet-500 text-center">173.3 h</div>
+                    </div>
                 </div>
+
                 <div class="pt-2 border-t border-stone-50">
                     <label class="block text-[10px] font-bold text-stone-400 mb-2.5 uppercase tracking-widest">Reguläre Arbeitstage</label>
                     <div class="flex justify-between gap-1.5">
@@ -378,7 +395,7 @@
 
             <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4 border border-stone-100">
                 <h2 class="font-bold text-stone-800 text-sm tracking-wide flex items-center gap-2">
-                    <svg class="w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <svg class="w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Regionales Setup
                 </h2>
                 <select id="state-select" class="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl font-bold text-sm text-stone-700 outline-none focus:ring-2 ring-stone-200" onchange="saveSettings()">
@@ -469,7 +486,7 @@
             ],
             settings: {
                 state: "NW", agSaldo: 0.0,
-                model: { hours: 40, days: [1, 2, 3, 4, 5] },
+                model: { hours: 40, days: [1, 2, 3, 4, 5], percentage: 100 },
                 protectHolidays: true
             },
             holidays: {} 
@@ -486,7 +503,9 @@
             if (saved) {
                 try { 
                     db = { ...db, ...JSON.parse(saved) }; 
-                    if(!db.settings.model) db.settings.model = { hours: 40, days: [1,2,3,4,5] };
+                    if(!db.settings.model) db.settings.model = { hours: 40, days: [1,2,3,4,5], percentage: 100 };
+                    // Abwärtskompatibilität für ältere Versionen der DB
+                    if(db.settings.model.percentage === undefined) db.settings.model.percentage = 100;
                     if(db.settings.protectHolidays === undefined) db.settings.protectHolidays = true;
                 } catch(e) {}
             }
@@ -514,7 +533,6 @@
 
         function saveData() { localStorage.setItem('zeiterfassung_db', JSON.stringify(db)); }
 
-        // --- UI UPDATE LOGIK FÜR PERFEKTE ZENTRIERUNG ---
         function updateDisplays() {
             let dVal = document.getElementById('heute-date').value;
             if(dVal) {
@@ -529,19 +547,21 @@
             document.getElementById('display-heute-end').innerText = eVal || '--:--';
         }
 
-        // RECHTLICH KORREKTE LOGIK FÜR DEUTSCHLAND: Feiertage reduzieren das Soll auf 0!
+        // Tägliches Soll berechnet sich nun aus den effektiven Stunden (inkl. Stellenanteil %)
         function getDailySoll(dateString) {
             let date = new Date(dateString);
             let day = date.getDay();
             let isWorkDay = db.settings.model.days.includes(day);
             if (!isWorkDay) return 0.0;
             
-            // Wenn "Feiertage schützen" aktiv ist und es ein gesetzlicher Feiertag ist -> Soll = 0!
             if (db.settings.protectHolidays && db.holidays[dateString] && !db.holidays[dateString].isSchool) {
                 return 0.0;
             }
 
-            let hoursPerDay = db.settings.model.hours / db.settings.model.days.length;
+            let percent = db.settings.model.percentage || 100;
+            let effWeekly = db.settings.model.hours * (percent / 100);
+            let hoursPerDay = effWeekly / db.settings.model.days.length;
+            
             return parseFloat(hoursPerDay.toFixed(2));
         }
 
@@ -747,7 +767,6 @@
             let totalCells = 0;
             let appTotalDiff = 0;
             
-            // Abgleich für Minusstunden nur bis "heute" (nicht für die Zukunft)
             let today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -850,13 +869,12 @@
             }
         }
 
-        // --- STATISTIK FUNKTIONEN ---
         function setStatMode(mode) {
             statMode = mode;
             ['month', 'quarter', 'year'].forEach(m => {
                 let btn = document.getElementById('btn-stat-' + m);
                 if(m === mode) {
-                    btn.className = "flex-1 text-[11px] font-bold py-2 rounded-lg bg-white text-violet-500 shadow-sm transition-all";
+                    btn.className = "flex-1 text-[11px] font-bold py-2 rounded-lg bg-white text-violet-600 shadow-sm transition-all";
                 } else {
                     btn.className = "flex-1 text-[11px] font-bold py-2 rounded-lg text-stone-500 hover:text-stone-700 transition-all";
                 }
@@ -936,7 +954,18 @@
             let avgDay = daysWorked > 0 ? (totalNet / daysWorked) : 0;
             let avgWeek = totalNet / (totalDaysInPeriod / 7);
 
+            // NEU: Berechnung des offiziellen HR Solls (13/3 Formel) für die Statistik Anzeige
+            let percent = db.settings.model.percentage || 100;
+            let effWeekly = db.settings.model.hours * (percent / 100);
+            let hrMonthlySoll = effWeekly * 13 / 3;
+            let hrPeriodSoll = 0;
+            
+            if (statMode === 'month') hrPeriodSoll = hrMonthlySoll;
+            else if (statMode === 'quarter') hrPeriodSoll = hrMonthlySoll * 3;
+            else if (statMode === 'year') hrPeriodSoll = hrMonthlySoll * 12;
+
             document.getElementById('stat-total').innerText = totalNet.toFixed(1) + ' h';
+            document.getElementById('stat-hr-soll').innerText = hrPeriodSoll.toFixed(1) + ' h';
             document.getElementById('stat-avg-day').innerText = avgDay.toFixed(1) + ' h';
             document.getElementById('stat-avg-week').innerText = avgWeek.toFixed(1) + ' h';
 
@@ -1106,6 +1135,7 @@
 
         function updateSetupUI() {
             document.getElementById('set-weekly-hours').value = db.settings.model.hours;
+            document.getElementById('set-percentage').value = db.settings.model.percentage || 100;
             document.getElementById('state-select').value = db.settings.state || "NW";
             
             document.querySelectorAll('.day-btn').forEach(btn => {
@@ -1117,8 +1147,14 @@
                 }
             });
             
-            let daily = (db.settings.model.hours / Math.max(1, db.settings.model.days.length)).toFixed(2);
+            let percent = db.settings.model.percentage || 100;
+            let effWeekly = db.settings.model.hours * (percent / 100);
+            
+            let daily = (effWeekly / Math.max(1, db.settings.model.days.length)).toFixed(2);
             document.getElementById('calc-daily-soll').innerText = daily + " h";
+            
+            let hrMonthly = (effWeekly * 13 / 3).toFixed(1);
+            document.getElementById('calc-hr-monthly').innerText = hrMonthly + " h";
 
             document.getElementById('protect-holidays').checked = db.settings.protectHolidays;
             updateToggleUI();
@@ -1133,13 +1169,16 @@
         }
 
         function saveSettings() {
-            let alterSollWert = db.settings.model.hours / Math.max(1, db.settings.model.days.length);
+            let oldPercent = db.settings.model.percentage || 100;
+            let alterSollWert = (db.settings.model.hours * (oldPercent / 100)) / Math.max(1, db.settings.model.days.length);
 
             db.settings.model.hours = parseFloat(document.getElementById('set-weekly-hours').value) || 40;
+            db.settings.model.percentage = parseFloat(document.getElementById('set-percentage').value) || 100;
             db.settings.state = document.getElementById('state-select').value;
             db.settings.protectHolidays = document.getElementById('protect-holidays').checked;
             
-            let neuerSollWert = db.settings.model.hours / Math.max(1, db.settings.model.days.length);
+            let newPercent = db.settings.model.percentage;
+            let neuerSollWert = (db.settings.model.hours * (newPercent / 100)) / Math.max(1, db.settings.model.days.length);
 
             if (alterSollWert !== neuerSollWert) {
                 for (let dateStr in db.entries) {
