@@ -7,7 +7,7 @@
     
     <!-- PWA Verknüpfungen -->
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#fafaf9">
+    <meta name="theme-color" content="#f1f5f9">
     <link rel="apple-touch-icon" href="./icon-192.png">
     
     <!-- Tailwind CSS -->
@@ -18,41 +18,10 @@
             -webkit-tap-highlight-color: transparent; 
             user-select: none;
             font-family: system-ui, -apple-system, sans-serif;
-            background-color: #fafaf9; /* Warmes stone-50 */
+            background-color: #f1f5f9;
             height: 100dvh; 
         }
         input, textarea, select { user-select: text; }
-        
-        /* OVERLAY-TRICK: Perfekte Zentrierung ohne Android-Pfeile */
-        input[type="date"], input[type="time"] {
-            text-align: center !important;
-            position: relative;
-            background: transparent;
-            width: 100%;
-        }
-
-        input::-webkit-datetime-edit,
-        input::-webkit-datetime-edit-fields-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            padding: 0;
-            margin: 0;
-        }
-
-        /* Natives Icon unsichtbar über das Feld legen */
-        input[type="date"]::-webkit-calendar-picker-indicator,
-        input[type="time"]::-webkit-calendar-picker-indicator {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            box-sizing: border-box;
-        }
         
         .cal-cell { 
             display: flex;
@@ -74,7 +43,7 @@
         ::-webkit-scrollbar { width: 0px; background: transparent; display: none; }
     </style>
 </head>
-<body class="text-stone-800 flex flex-col overflow-hidden">
+<body class="text-slate-800 flex flex-col overflow-hidden">
 
     <!-- Versteckte Elemente für JS-Kompatibilität -->
     <h1 id="app-title" class="hidden"></h1>
@@ -82,86 +51,86 @@
     <span id="paint-mode-text" class="hidden"></span>
 
     <!-- Hauptinhalt -->
-    <main class="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative pt-4 pb-2 px-4">
+    <main class="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative pt-3 pb-2 px-3">
         
         <!-- ================= TAB: HEUTE ================= -->
         <div id="tab-heute" class="h-full flex flex-col hidden">
             
-            <div class="flex flex-col gap-4 shrink-0">
-                <!-- Datum Navigation -->
-                <div class="flex justify-between items-center bg-white p-2 rounded-2xl shadow-sm border border-stone-100">
-                    <button onclick="changeDate(-1)" class="p-3 bg-stone-50 text-stone-500 rounded-xl active:bg-stone-100 transition-colors z-10">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            <div class="flex flex-col gap-3 shrink-0">
+                <!-- Datum Navigation (KOMPLETT NEUE LOGIK) -->
+                <div class="flex justify-between items-center bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+                    <button onclick="changeDate(-1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
                     
-                    <!-- Text zentriert drunter, unsichtbares Input darüber -->
-                    <div class="flex-1 relative flex justify-center items-center h-10">
-                        <span id="display-heute-date" class="text-xl font-bold tracking-tight text-stone-800">--.--.----</span>
-                        <input type="date" id="heute-date" class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer" onchange="loadDayData()">
+                    <!-- Der klickbare Bereich (Reines HTML-Textfeld, garantiert zu 100% zentriert) -->
+                    <div class="flex-1 flex justify-center items-center h-full cursor-pointer active:scale-95 transition-transform" onclick="openPicker('heute-date')">
+                        <span id="display-heute-date" class="text-xl font-black tracking-tight text-slate-800">--.--.----</span>
+                        <!-- Das echte Input ist unsichtbar und greift nicht mehr in das Layout ein -->
+                        <input type="date" id="heute-date" class="sr-only" onchange="loadDayData()">
                     </div>
 
-                    <button onclick="changeDate(1)" class="p-3 bg-stone-50 text-stone-500 rounded-xl active:bg-stone-100 transition-colors z-10">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <button onclick="changeDate(1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>
                 </div>
 
-                <div id="heute-holiday-banner" class="hidden text-center text-xs font-medium p-3 rounded-xl shadow-sm tracking-wide"></div>
+                <div id="heute-holiday-banner" class="hidden text-center text-xs font-bold p-2 rounded-xl shadow-sm"></div>
 
                 <!-- Vorlagen -->
                 <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="heute-templates"></div>
 
                 <!-- Netto & Speichern -->
                 <div class="flex gap-3">
-                    <div class="bg-white py-5 px-3 rounded-2xl shadow-md flex-1 flex flex-col items-center justify-center border border-stone-50">
-                        <div class="text-[10px] text-stone-400 font-bold uppercase tracking-widest mb-1.5">Netto-Arbeitszeit</div>
-                        <div class="text-[2.75rem] leading-none font-black text-violet-400 tracking-tight" id="heute-netto">0.0h</div>
-                        <div id="heute-diff" class="text-[10px] font-bold text-stone-400 mt-2">0.0h zum Soll</div>
+                    <div class="bg-white py-4 px-2 rounded-2xl shadow-sm flex-1 flex flex-col items-center justify-center border border-slate-100">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5">Netto-Arbeitszeit</div>
+                        <div class="text-[2.5rem] leading-none font-black text-blue-600 tracking-tight" id="heute-netto">0.0h</div>
+                        <div id="heute-diff" class="text-[10px] font-bold text-slate-400 mt-2">0.0h zum Soll</div>
                     </div>
                     
-                    <button onclick="saveDay()" class="bg-violet-400 text-white w-[90px] rounded-2xl shadow-md flex flex-col justify-center items-center active:bg-violet-500 transition-colors shrink-0">
-                        <svg class="w-7 h-7 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <button onclick="saveDay()" class="bg-blue-600 text-white w-[85px] rounded-2xl shadow-md flex flex-col justify-center items-center active:bg-blue-700 transition-colors shrink-0">
+                        <svg class="w-8 h-8 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         <span class="text-[10px] font-bold uppercase tracking-wider">Speichern</span>
                     </button>
                 </div>
             </div>
 
             <!-- Eingabefelder -->
-            <div class="flex-1 flex flex-col justify-center gap-4 min-h-0 py-4">
+            <div class="flex-1 flex flex-col justify-center gap-4 min-h-0 py-2">
                 <div class="grid grid-cols-2 gap-3 shrink-0">
                     
-                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-center items-center focus-within:ring-2 ring-violet-100 transition-all relative">
-                        <label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Beginn</label>
-                        <div class="relative w-full flex justify-center items-center h-10">
-                            <span id="display-heute-begin" class="text-3xl font-black text-stone-800">--:--</span>
-                            <input type="time" id="heute-begin" class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
-                        </div>
+                    <!-- BEGINN BUTTON (NEUE LOGIK) -->
+                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center cursor-pointer active:bg-slate-50 transition-colors" onclick="openPicker('heute-begin')">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none">Beginn</label>
+                        <span id="display-heute-begin" class="text-3xl font-black text-slate-800">--:--</span>
+                        <input type="time" id="heute-begin" class="sr-only" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
-                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-center items-center focus-within:ring-2 ring-violet-100 transition-all relative">
-                        <label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Ende</label>
-                        <div class="relative w-full flex justify-center items-center h-10">
-                            <span id="display-heute-end" class="text-3xl font-black text-stone-800">--:--</span>
-                            <input type="time" id="heute-end" class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
-                        </div>
+                    <!-- ENDE BUTTON (NEUE LOGIK) -->
+                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center cursor-pointer active:bg-slate-50 transition-colors" onclick="openPicker('heute-end')">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none">Ende</label>
+                        <span id="display-heute-end" class="text-3xl font-black text-slate-800">--:--</span>
+                        <input type="time" id="heute-end" class="sr-only" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
-                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-center items-center focus-within:ring-2 ring-stone-200 transition-all">
-                        <label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Pause (Min)</label>
-                        <input type="number" id="heute-pause" class="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-violet-400" onchange="calculateNetto()" placeholder="0">
+                    <!-- Pause & Soll bleiben Inputfelder für direkte Zahleneingabe -->
+                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center focus-within:ring-2 ring-slate-200 transition-all">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pause (Min)</label>
+                        <input type="number" id="heute-pause" class="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-indigo-600" onchange="calculateNetto()" placeholder="0">
                     </div>
-                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-center items-center focus-within:ring-2 ring-stone-200 transition-all">
-                        <label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Soll (Std)</label>
-                        <input type="number" step="0.1" id="heute-soll" class="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-stone-500" onchange="calculateNetto()">
+                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center focus-within:ring-2 ring-slate-200 transition-all">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Soll (Std)</label>
+                        <input type="number" step="0.1" id="heute-soll" class="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-slate-500" onchange="calculateNetto()">
                     </div>
                 </div>
 
-                <div class="bg-white p-2 rounded-2xl shadow-sm border border-stone-100 shrink-0 focus-within:ring-2 ring-stone-200 transition-all">
-                    <input type="text" id="heute-remark" class="w-full text-sm py-2 font-medium bg-transparent outline-none text-stone-700 placeholder-stone-400 text-center" placeholder="💬 Bemerkung (Krank, Urlaub, Notiz)">
+                <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 shrink-0">
+                    <input type="text" id="heute-remark" class="w-full text-base py-2 font-medium bg-transparent outline-none text-slate-700 placeholder-slate-400 text-center" placeholder="💬 Bemerkung (Krank, Urlaub, Notizen)">
                 </div>
             </div>
 
-            <div class="shrink-0 mt-auto pb-2">
-                <button onclick="clearDay()" class="w-full p-3.5 text-rose-400 font-bold bg-rose-50/50 rounded-xl active:bg-rose-100 border border-rose-100 transition-colors text-sm">
+            <div class="shrink-0 mt-auto">
+                <button onclick="clearDay()" class="w-full p-3 text-red-500 font-bold bg-red-50 rounded-xl active:bg-red-100 border border-red-100 transition-colors">
                     Tageseintrag leeren
                 </button>
             </div>
@@ -169,51 +138,49 @@
         </div>
 
         <!-- ================= TAB: KALENDER ================= -->
-        <div id="tab-kalender" class="h-full flex flex-col gap-4 hidden">
+        <div id="tab-kalender" class="h-full flex flex-col gap-2 hidden">
             
-            <div class="flex justify-between items-center bg-white p-2 rounded-2xl shadow-sm shrink-0 border border-stone-100">
-                <button onclick="changeMonth(-1, 'kalender')" class="p-2.5 bg-stone-50 text-stone-500 rounded-xl active:bg-stone-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                <div class="text-base font-bold text-stone-800 tracking-wide" id="cal-month-title">Mai 2026</div>
-                <button onclick="changeMonth(1, 'kalender')" class="p-2.5 bg-stone-50 text-stone-500 rounded-xl active:bg-stone-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+            <div class="flex justify-between items-center bg-blue-600 text-white p-2 rounded-xl shadow-sm shrink-0">
+                <button onclick="changeMonth(-1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <div class="text-base font-bold" id="cal-month-title">Mai 2026</div>
+                <button onclick="changeMonth(1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
-            <div class="bg-white p-3 rounded-2xl shadow-sm flex-1 flex flex-col min-h-0 border border-stone-100">
-                <div class="grid grid-cols-7 gap-1 mb-2 text-center text-[10px] font-bold text-stone-400 uppercase shrink-0 tracking-wider">
+            <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
+                <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-slate-400 uppercase shrink-0">
                     <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
                 </div>
                 <div id="cal-grid" class="grid grid-cols-7 gap-1 grid-rows-6 flex-1 min-h-0"></div>
                 
-                <div class="mt-3 flex justify-center gap-4 text-[10px] text-stone-500 font-medium shrink-0">
-                    <span class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 bg-rose-200 rounded-full"></div> Feiertag</span>
-                    <span class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 bg-violet-200 rounded-full"></div> Ferien</span>
-                    <span class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 bg-stone-200 rounded-full"></div> Wochenende</span>
+                <div class="mt-2 flex justify-center gap-3 text-[9px] text-slate-500 font-medium shrink-0">
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-yellow-300 rounded-full"></div> Feiertag</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-green-300 rounded-full"></div> Ferien</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-slate-200 rounded-full"></div> Wochenende</span>
                 </div>
             </div>
 
-            <!-- Kalender Übersicht (Überarbeitet) -->
-            <div class="bg-white p-3 rounded-2xl shadow-sm space-y-3 border border-stone-100 shrink-0">
-                <div class="grid grid-cols-2 gap-3 text-center">
-                    
-                    <div class="p-2 bg-stone-50 rounded-xl border border-stone-100 flex flex-col items-center">
-                        <div class="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-0.5 pointer-events-none">Übertrag (AG)</div>
-                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-lg font-bold bg-transparent text-center outline-none text-stone-700 p-0 m-0" value="0" onchange="saveAGSaldo()">
-                    </div>
-
-                    <!-- HR Soll Anzeige -->
-                    <div class="p-2 bg-stone-50 rounded-xl border border-stone-100 flex flex-col items-center justify-center">
-                        <div class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-0.5">HR Soll</div>
-                        <div class="text-lg font-bold text-stone-700" id="kalender-hr-soll">0.0 h</div>
+            <div class="bg-white p-2 rounded-xl shadow-sm space-y-2 border border-blue-100 shrink-0">
+                
+                <!-- Neu arrangiertes Grid für Übertrag und HR Soll -->
+                <div class="grid grid-cols-2 gap-2 text-center">
+                    <div class="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide pointer-events-none">Übertrag (AG)</div>
+                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-lg font-bold bg-transparent text-center outline-none text-slate-700 p-0 m-0" value="0" onchange="saveAGSaldo()">
                     </div>
                     
+                    <div class="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">HR Soll (Monat)</div>
+                        <div class="text-lg font-bold text-slate-700" id="kalender-hr-soll">0.0 h</div>
+                    </div>
                 </div>
                 
-                <!-- Gesamtsaldo Button (Klein und Flieder) -->
-                <div class="flex justify-end mt-2">
-                   <div class="bg-violet-100 p-2.5 px-4 rounded-xl text-violet-800 flex justify-between items-center shadow-sm w-full md:w-auto gap-4 border border-violet-200">
+                <!-- Neuer, kompakterer Gesamtsaldo-Button in hellem Blau/Indigo statt Schwarz -->
+                <div class="flex justify-end mt-1">
+                   <div class="bg-blue-50 py-2 px-4 rounded-xl text-blue-900 flex justify-between items-center shadow-sm w-full md:w-auto gap-4 border border-blue-100">
                         <div>
                             <div class="text-xs font-bold tracking-wide">Gesamtsaldo</div>
                         </div>
-                        <div class="text-lg font-black tracking-tight" id="saldo-total">+0.00 h</div>
+                        <div class="text-xl font-black tracking-tight" id="saldo-total">+0.00 h</div>
                     </div>
                 </div>
             </div>
@@ -221,67 +188,67 @@
         </div>
 
         <!-- ================= TAB: PLANER ================= -->
-        <div id="tab-planer" class="space-y-3 hidden flex-col h-full">
+        <div id="tab-planer" class="space-y-2 hidden flex-col h-full">
             
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-stone-100 shrink-0">
-                <div class="flex justify-between items-center mb-2">
-                    <h2 class="font-bold text-stone-700 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
-                        <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+            <div class="bg-white p-2 rounded-xl shadow-sm border-l-4 border-indigo-500 shrink-0 border-y border-r border-slate-100">
+                <div class="flex justify-between items-center mb-1.5">
+                    <h2 class="font-bold text-indigo-700 flex items-center gap-1 text-[11px] uppercase tracking-wide">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
                         Aktiver Pinsel
                     </h2>
-                    <button onclick="togglePaintMode(true)" class="text-[10px] font-bold text-stone-400 bg-stone-100 px-2.5 py-1 rounded-full active:bg-stone-200 transition-colors">Deaktivieren</button>
+                    <button onclick="togglePaintMode(true)" class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full active:bg-slate-200">Deaktivieren</button>
                 </div>
-                <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" id="paint-palette"></div>
+                <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar" id="paint-palette"></div>
             </div>
 
-            <div class="bg-white p-3 rounded-2xl shadow-sm flex-1 flex flex-col min-h-0 border border-stone-100">
-                <div class="flex justify-between items-center mb-3 shrink-0 bg-stone-50 rounded-xl p-1">
-                    <button onclick="changeMonth(-1, 'planer')" class="p-2 text-stone-500 rounded-lg active:bg-stone-200 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                    <div class="text-sm font-bold text-stone-700 tracking-wide" id="planer-month-title">Mai 2026</div>
-                    <button onclick="changeMonth(1, 'planer')" class="p-2 text-stone-500 rounded-lg active:bg-stone-200 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+            <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
+                <div class="flex justify-between items-center mb-2 shrink-0">
+                    <button onclick="changeMonth(-1, 'planer')" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <div class="text-sm font-bold text-slate-700" id="planer-month-title">Mai 2026</div>
+                    <button onclick="changeMonth(1, 'planer')" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                 </div>
 
-                <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-stone-400 uppercase shrink-0 tracking-wider">
+                <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[9px] font-bold text-slate-400 uppercase shrink-0">
                     <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
                 </div>
                 
                 <div id="planer-grid" class="grid grid-cols-7 gap-1 grid-rows-6 flex-1 min-h-0"></div>
                 
-                <div class="mt-3 text-center text-[10px] text-stone-400 shrink-0 font-medium bg-stone-50 py-1.5 rounded-lg">
-                    Tippe auf einen Tag, um die Vorlage farbig einzutragen.
+                <div class="mt-2 text-center text-[9px] text-slate-400 shrink-0 font-medium">
+                    Tippe auf einen Tag, um die farbige Vorlage einzutragen.
                 </div>
             </div>
 
-            <details class="bg-white rounded-2xl shadow-sm shrink-0 border border-stone-100 group">
-                <summary class="p-3 font-bold text-stone-700 flex items-center justify-between text-sm cursor-pointer list-none outline-none">
-                    <span class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        Automatisch füllen
+            <details class="bg-white rounded-xl shadow-sm shrink-0 border border-slate-100 group">
+                <summary class="p-2.5 font-bold text-blue-700 flex items-center justify-between text-xs cursor-pointer list-none outline-none">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Ganzen Monat automatisch füllen
                     </span>
-                    <svg class="w-5 h-5 transition-transform group-open:rotate-180 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg class="w-4 h-4 transition-transform group-open:rotate-180 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </summary>
                 
-                <div class="p-3 pt-1 border-t border-stone-50 mt-1">
-                    <div class="flex justify-between items-center mb-3 bg-stone-50 p-2 rounded-xl">
-                        <span class="text-xs font-bold text-stone-600">Feiertage schützen</span>
-                        <label class="flex items-center gap-2 cursor-pointer">
+                <div class="p-2 border-t border-slate-100">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold text-slate-500">Wochenmuster</span>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase">Feiertage frei</span>
                             <input type="checkbox" id="protect-holidays" class="sr-only" checked onchange="saveSettings()">
-                            <div class="w-9 h-5 bg-stone-300 rounded-full relative transition-colors" id="toggle-bg">
-                                <div class="w-4 h-4 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform shadow-sm" id="toggle-dot"></div>
+                            <div class="w-7 h-3.5 bg-slate-300 rounded-full relative transition-colors" id="toggle-bg">
+                                <div class="w-2.5 h-2.5 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform" id="toggle-dot"></div>
                             </div>
                         </label>
                     </div>
 
-                    <div class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2 px-1">Wochenmuster</div>
-                    <div class="grid grid-cols-2 gap-2 mb-4" id="pattern-container"></div>
+                    <div class="grid grid-cols-2 gap-1.5 mb-2" id="pattern-container"></div>
 
-                    <div class="flex items-center justify-between pt-3 border-t border-stone-100">
-                        <label class="flex items-center gap-2 cursor-pointer p-1">
-                            <input type="checkbox" id="overwrite-pattern" class="w-4 h-4 text-violet-400 rounded border-stone-300 focus:ring-violet-400">
-                            <span class="text-xs font-medium text-stone-600">Überschreiben</span>
+                    <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+                        <label class="flex items-center gap-1.5 cursor-pointer p-1">
+                            <input type="checkbox" id="overwrite-pattern" class="w-3.5 h-3.5 text-blue-600 rounded">
+                            <span class="text-[9px] font-bold text-slate-500">Überschreiben</span>
                         </label>
-                        <button onclick="applyPattern()" class="px-4 py-2 rounded-xl font-bold bg-violet-400 text-white shadow-sm active:bg-violet-500 text-xs transition-colors">
-                            Anwenden
+                        <button onclick="applyPattern()" class="px-3 py-1.5 rounded-md font-bold bg-blue-600 text-white shadow-sm active:bg-blue-700 text-[10px]">
+                            Eintragen
                         </button>
                     </div>
                 </div>
@@ -290,123 +257,113 @@
         </div>
 
         <!-- ================= TAB: STATISTIK ================= -->
-        <div id="tab-statistik" class="space-y-4 hidden flex-col h-full">
+        <div id="tab-statistik" class="space-y-3 hidden flex-col h-full">
             
-            <div class="bg-white p-2 rounded-2xl shadow-sm shrink-0 flex flex-col gap-3 border border-stone-100">
+            <div class="bg-blue-600 p-2 rounded-xl shadow-sm shrink-0 flex flex-col gap-2">
                 <!-- Navigation -->
-                <div class="flex justify-between items-center text-stone-800 px-1 pt-1">
-                    <button onclick="changeStatPeriod(-1)" class="p-2 bg-stone-50 text-stone-500 rounded-xl active:bg-stone-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                    <div class="text-base font-bold tracking-wide" id="stat-period-title">Mai 2026</div>
-                    <button onclick="changeStatPeriod(1)" class="p-2 bg-stone-50 text-stone-500 rounded-xl active:bg-stone-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                <div class="flex justify-between items-center text-white">
+                    <button onclick="changeStatPeriod(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <div class="text-base font-bold" id="stat-period-title">Mai 2026</div>
+                    <button onclick="changeStatPeriod(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                 </div>
                 
                 <!-- Toggle -->
-                <div class="flex bg-stone-100 p-1 rounded-xl">
-                    <button onclick="setStatMode('month')" id="btn-stat-month" class="flex-1 text-[11px] font-bold py-2 rounded-lg bg-white text-violet-600 shadow-sm transition-all">Monat</button>
-                    <button onclick="setStatMode('quarter')" id="btn-stat-quarter" class="flex-1 text-[11px] font-bold py-2 rounded-lg text-stone-500 hover:text-stone-700 transition-all">Quartal</button>
-                    <button onclick="setStatMode('year')" id="btn-stat-year" class="flex-1 text-[11px] font-bold py-2 rounded-lg text-stone-500 hover:text-stone-700 transition-all">Jahr</button>
+                <div class="flex bg-blue-700/50 p-1 rounded-lg">
+                    <button onclick="setStatMode('month')" id="btn-stat-month" class="flex-1 text-[10px] font-bold py-1.5 rounded-md bg-white text-blue-600 shadow-sm transition-all">Monat</button>
+                    <button onclick="setStatMode('quarter')" id="btn-stat-quarter" class="flex-1 text-[10px] font-bold py-1.5 rounded-md text-blue-100 hover:text-white transition-all">Quartal</button>
+                    <button onclick="setStatMode('year')" id="btn-stat-year" class="flex-1 text-[10px] font-bold py-1.5 rounded-md text-blue-100 hover:text-white transition-all">Jahr</button>
                 </div>
             </div>
 
-            <!-- KPI Cards -->
-            <div class="grid grid-cols-2 gap-3 shrink-0">
-                <div class="bg-white py-4 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center">
-                    <div class="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">Gesamt (Ist)</div>
-                    <div class="text-xl font-black text-violet-500" id="stat-total">0.0 h</div>
+            <!-- KPI Cards mit HR-Vergleich -->
+            <div class="grid grid-cols-2 gap-2 shrink-0">
+                <div class="bg-white py-3 px-1 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Gesamt (Ist)</div>
+                    <div class="text-lg font-black text-blue-600" id="stat-total">0.0 h</div>
                 </div>
-                <div class="bg-white py-4 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center">
-                    <div class="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">HR Soll</div>
-                    <div class="text-xl font-black text-stone-700" id="stat-hr-soll">0.0 h</div>
+                <div class="bg-white py-3 px-1 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">HR Soll (Formel)</div>
+                    <div class="text-lg font-black text-slate-700" id="stat-hr-soll">0.0 h</div>
                 </div>
-                <div class="bg-white py-4 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center">
-                    <div class="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">Ø pro Tag</div>
-                    <div class="text-xl font-black text-stone-600" id="stat-avg-day">0.0 h</div>
+                <div class="bg-white py-3 px-1 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Ø pro Tag</div>
+                    <div class="text-lg font-black text-indigo-600" id="stat-avg-day">0.0 h</div>
                 </div>
-                <div class="bg-white py-4 px-2 rounded-2xl shadow-sm border border-stone-100 flex flex-col items-center justify-center">
-                    <div class="text-[9px] font-bold text-stone-400 uppercase tracking-widest mb-1">Ø pro Woche</div>
-                    <div class="text-xl font-black text-stone-600" id="stat-avg-week">0.0 h</div>
+                <div class="bg-white py-3 px-1 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Ø pro Woche</div>
+                    <div class="text-lg font-black text-emerald-600" id="stat-avg-week">0.0 h</div>
                 </div>
             </div>
 
             <!-- Vorlagen Verteilung -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex-1 flex flex-col min-h-0">
-                <h2 class="font-bold text-stone-800 text-xs mb-4 shrink-0 border-b border-stone-50 pb-3 uppercase tracking-wider flex items-center gap-2">
-                    <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex-1 flex flex-col min-h-0">
+                <h2 class="font-bold text-slate-800 text-xs mb-3 shrink-0 border-b border-slate-100 pb-2 uppercase tracking-wide">
                     Verteilung der Arbeitszeit
                 </h2>
-                <div id="stat-breakdown" class="flex-1 overflow-y-auto space-y-5 pr-2 no-scrollbar">
-                    <!-- Wird dynamisch gefüllt -->
+                <div id="stat-breakdown" class="flex-1 overflow-y-auto space-y-4 pr-1 no-scrollbar">
+                    <!-- Wird dynamisch mit Fortschrittsbalken gefüllt -->
                 </div>
             </div>
 
         </div>
 
         <!-- ================= TAB: SETUP ================= -->
-        <div id="tab-setup" class="space-y-4 hidden pb-6">
+        <div id="tab-setup" class="space-y-4 hidden pb-4">
             
-            <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4 border border-stone-100">
-                <h2 class="font-bold text-stone-800 text-sm tracking-wide flex items-center gap-2">
-                    <svg class="w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Arbeitszeit-Modell
-                </h2>
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
+                <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Arbeitszeit-Modell</h2>
                 
                 <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div class="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                        <label class="block text-[10px] font-bold text-stone-500 mb-1.5 uppercase tracking-wide">Basis-Woche</label>
-                        <input type="number" id="set-weekly-hours" class="w-full bg-transparent font-black text-xl text-center outline-none text-stone-800 p-0 m-0" value="40" onchange="saveSettings()">
+                    <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Basis-Woche</label>
+                        <input type="number" id="set-weekly-hours" class="w-full bg-transparent font-bold text-lg text-center outline-none p-0 m-0" value="40" onchange="saveSettings()">
                     </div>
-                    <div class="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                        <label class="block text-[10px] font-bold text-stone-500 mb-1.5 uppercase tracking-wide">Stellenanteil (%)</label>
-                        <input type="number" id="set-percentage" class="w-full bg-transparent font-black text-xl text-center outline-none text-stone-800 p-0 m-0" value="100" onchange="saveSettings()">
+                    <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Stellenanteil (%)</label>
+                        <input type="number" id="set-percentage" class="w-full bg-transparent font-bold text-lg text-center outline-none p-0 m-0" value="100" onchange="saveSettings()">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-violet-50/50 p-3 rounded-xl border border-violet-100">
-                        <label class="block text-[10px] font-bold text-violet-400 mb-1.5 uppercase tracking-wide text-center">Tages-Soll</label>
-                        <div id="calc-daily-soll" class="font-black text-xl text-violet-500 text-center">8.0 h</div>
+                    <div class="bg-blue-50 p-2 rounded-lg border border-blue-100">
+                        <label class="block text-[10px] font-bold text-blue-400 mb-1 uppercase text-center">Tages-Soll (Ist)</label>
+                        <div id="calc-daily-soll" class="font-bold text-lg text-blue-600 text-center">8.0 h</div>
                     </div>
-                    <div class="bg-violet-50/50 p-3 rounded-xl border border-violet-100">
-                        <label class="block text-[10px] font-bold text-violet-400 mb-1.5 uppercase tracking-wide text-center">HR Monats-Soll</label>
-                        <div id="calc-hr-monthly" class="font-black text-xl text-violet-500 text-center">173.3 h</div>
+                    <div class="bg-blue-50 p-2 rounded-lg border border-blue-100">
+                        <label class="block text-[10px] font-bold text-blue-400 mb-1 uppercase text-center">HR Monats-Soll</label>
+                        <div id="calc-hr-monthly" class="font-bold text-lg text-blue-600 text-center">173.3 h</div>
                     </div>
                 </div>
 
-                <div class="pt-2 border-t border-stone-50">
-                    <label class="block text-[10px] font-bold text-stone-400 mb-2.5 uppercase tracking-widest">Reguläre Arbeitstage</label>
-                    <div class="flex justify-between gap-1.5">
-                        <button class="day-btn flex-1 py-2.5 text-xs font-bold rounded-xl" data-day="1" onclick="toggleWorkDay(1)">Mo</button>
-                        <button class="day-btn flex-1 py-2.5 text-xs font-bold rounded-xl" data-day="2" onclick="toggleWorkDay(2)">Di</button>
-                        <button class="day-btn flex-1 py-2.5 text-xs font-bold rounded-xl" data-day="3" onclick="toggleWorkDay(3)">Mi</button>
-                        <button class="day-btn flex-1 py-2.5 text-xs font-bold rounded-xl" data-day="4" onclick="toggleWorkDay(4)">Do</button>
-                        <button class="day-btn flex-1 py-2.5 text-xs font-bold rounded-xl" data-day="5" onclick="toggleWorkDay(5)">Fr</button>
-                        <button class="day-btn flex-1 py-2.5 text-xs font-bold rounded-xl" data-day="6" onclick="toggleWorkDay(6)">Sa</button>
-                        <button class="day-btn flex-1 py-2.5 text-xs font-bold rounded-xl" data-day="0" onclick="toggleWorkDay(0)">So</button>
+                <div class="pt-2 border-t border-slate-50">
+                    <label class="block text-[10px] font-bold text-slate-400 mb-2.5 uppercase">Reguläre Arbeitstage</label>
+                    <div class="flex justify-between gap-1">
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="1" onclick="toggleWorkDay(1)">Mo</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="2" onclick="toggleWorkDay(2)">Di</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="3" onclick="toggleWorkDay(3)">Mi</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="4" onclick="toggleWorkDay(4)">Do</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="5" onclick="toggleWorkDay(5)">Fr</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="6" onclick="toggleWorkDay(6)">Sa</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="0" onclick="toggleWorkDay(0)">So</button>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4 border border-stone-100">
-                <h2 class="font-bold text-stone-800 text-sm tracking-wide flex items-center gap-2">
-                    <svg class="w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                    Vorlagen anlegen
-                </h2>
-                <div class="grid grid-cols-4 gap-2 bg-stone-50 p-2 rounded-xl border border-stone-100">
-                    <input type="text" id="tpl-name" placeholder="Name (z.B. Früh)" class="col-span-4 p-2.5 bg-white border border-stone-200 rounded-lg text-sm font-bold outline-none placeholder-stone-400">
-                    <input type="time" id="tpl-begin" class="col-span-2 p-2.5 bg-white border border-stone-200 rounded-lg text-sm outline-none text-stone-600">
-                    <input type="time" id="tpl-end" class="col-span-2 p-2.5 bg-white border border-stone-200 rounded-lg text-sm outline-none text-stone-600">
-                    <input type="number" id="tpl-pause" placeholder="Pause (Min)" class="col-span-2 p-2.5 bg-white border border-stone-200 rounded-lg text-sm outline-none placeholder-stone-400">
-                    <button onclick="addTemplate()" class="col-span-2 bg-violet-400 text-white font-bold rounded-lg text-sm active:bg-violet-500 transition-colors shadow-sm">Neu</button>
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
+                <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Vorlagen anlegen</h2>
+                <div class="grid grid-cols-4 gap-2">
+                    <input type="text" id="tpl-name" placeholder="Name (z.B. Früh)" class="col-span-4 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none">
+                    <input type="time" id="tpl-begin" class="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                    <input type="time" id="tpl-end" class="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                    <input type="number" id="tpl-pause" placeholder="Pause (Min)" class="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
+                    <button onclick="addTemplate()" class="col-span-2 bg-indigo-600 text-white font-bold rounded-lg text-sm active:bg-indigo-700">Speichern</button>
                 </div>
-                <div id="setup-templates-list" class="space-y-2 mt-3"></div>
+                <div id="setup-templates-list" class="space-y-2 mt-2"></div>
             </div>
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4 border border-stone-100">
-                <h2 class="font-bold text-stone-800 text-sm tracking-wide flex items-center gap-2">
-                    <svg class="w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Regionales Setup
-                </h2>
-                <select id="state-select" class="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl font-bold text-sm text-stone-700 outline-none focus:ring-2 ring-stone-200" onchange="saveSettings()">
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
+                <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Bundesland</h2>
+                <select id="state-select" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none" onchange="saveSettings()">
                     <option value="BW">Baden-Württemberg</option><option value="BY">Bayern</option><option value="BE">Berlin</option>
                     <option value="BB">Brandenburg</option><option value="HB">Bremen</option><option value="HH">Hamburg</option>
                     <option value="HE">Hessen</option><option value="MV">Mecklenburg-Vorpommern</option><option value="NI">Niedersachsen</option>
@@ -414,26 +371,23 @@
                     <option value="SN">Sachsen</option><option value="ST">Sachsen-Anhalt</option><option value="SH">Schleswig-Holstein</option>
                     <option value="TH">Thüringen</option>
                 </select>
-                <button onclick="fetchHolidays()" class="w-full py-3.5 bg-stone-800 text-white font-bold rounded-xl shadow-md active:bg-stone-900 text-sm transition-colors">
-                    Feiertage aktualisieren
+                <button onclick="fetchHolidays()" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-sm active:bg-emerald-600 text-sm">
+                    Jahresdaten aktualisieren
                 </button>
             </div>
 
-            <div class="bg-stone-100 p-5 rounded-2xl shadow-sm space-y-4 border border-stone-200/50">
-                <h2 class="font-bold text-stone-800 text-sm tracking-wide flex items-center gap-2">
-                    <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                    Daten sichern & übertragen
-                </h2>
+            <div class="bg-indigo-50 p-4 rounded-xl shadow-sm space-y-3 border border-indigo-100">
+                <h2 class="font-bold text-indigo-800 border-b border-indigo-200 pb-2 text-sm">Daten sichern & übertragen</h2>
                 
-                <button onclick="exportData()" class="w-full py-3.5 bg-white border border-stone-300 text-stone-800 font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 active:bg-stone-50 transition-colors text-sm">
-                    <svg class="w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                <button onclick="exportData()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 active:bg-indigo-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                     Backup-Code kopieren
                 </button>
                 
-                <div class="pt-3 border-t border-stone-200/50">
-                    <label class="block text-[10px] font-bold text-stone-500 mb-2 uppercase tracking-widest">Code hier einfügen für Import</label>
-                    <textarea id="import-data" class="w-full p-3 bg-white border border-stone-200 rounded-xl text-xs font-mono h-20 outline-none focus:ring-2 ring-stone-300 placeholder-stone-300" placeholder="eyJkYXRh..."></textarea>
-                    <button onclick="importData()" class="w-full mt-3 py-3 bg-rose-50 border border-rose-100 text-rose-600 font-bold rounded-xl text-sm active:bg-rose-100 transition-colors">
+                <div class="pt-2">
+                    <label class="block text-[10px] font-bold text-indigo-500 mb-1 uppercase">Code hier einfügen für Import:</label>
+                    <textarea id="import-data" class="w-full p-2 bg-white border border-indigo-200 rounded-lg text-xs font-mono h-16 outline-none" placeholder="eyJkYXRh..."></textarea>
+                    <button onclick="importData()" class="w-full mt-2 py-2 bg-red-100 text-red-700 font-bold rounded-lg text-sm active:bg-red-200">
                         Wiederherstellen
                     </button>
                 </div>
@@ -444,29 +398,29 @@
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="bg-white/90 backdrop-blur-md border-t border-stone-200 flex justify-around p-1 pb-2 shrink-0 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.05)] z-20 relative">
-        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-2 text-stone-400 w-1/5 rounded-xl active:bg-stone-100/50 transition-all" data-target="tab-heute">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span class="text-[10px] font-bold tracking-wide">Heute</span>
+    <nav class="bg-white border-t border-slate-200 flex justify-around p-0.5 pb-1 shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] z-20 relative">
+        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-heute">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="text-[9px] font-bold">Heute</span>
         </button>
-        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-2 text-stone-400 w-1/5 rounded-xl active:bg-stone-100/50 transition-all" data-target="tab-kalender">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            <span class="text-[10px] font-bold tracking-wide">Kalender</span>
+        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-kalender">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span class="text-[9px] font-bold">Kalender</span>
         </button>
-        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-2 text-stone-400 w-1/5 rounded-xl active:bg-stone-100/50 transition-all" data-target="tab-planer">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-            <span class="text-[10px] font-bold tracking-wide">Planer</span>
+        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-planer">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            <span class="text-[9px] font-bold">Planer</span>
         </button>
-        <button onclick="switchTab('statistik')" class="nav-btn flex flex-col items-center p-2 text-stone-400 w-1/5 rounded-xl active:bg-stone-100/50 transition-all" data-target="tab-statistik">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button onclick="switchTab('statistik')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-statistik">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
             </svg>
-            <span class="text-[10px] font-bold tracking-wide">Statistik</span>
+            <span class="text-[9px] font-bold">Statistik</span>
         </button>
-        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-2 text-stone-400 w-1/5 rounded-xl active:bg-stone-100/50 transition-all" data-target="tab-setup">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            <span class="text-[10px] font-bold tracking-wide">Setup</span>
+        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-setup">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span class="text-[9px] font-bold">Setup</span>
         </button>
     </nav>
 
@@ -477,12 +431,13 @@
             });
         }
 
+        // Farbpalette für Planer-Vorlagen (angepasst ans blaue Theme)
         const plannerColors = [
-            { bg: 'bg-violet-100', text: 'text-violet-700', border: 'border-violet-200' },
-            { bg: 'bg-sky-100', text: 'text-sky-700', border: 'border-sky-200' },
+            { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
+            { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-200' },
             { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200' },
             { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
-            { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-200' }
+            { bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-200' }
         ];
 
         let db = {
@@ -516,6 +471,7 @@
                 } catch(e) {}
             }
 
+            // AUTO-REPARATUR für Feiertage
             if (db.settings.protectHolidays) {
                 let changed = false;
                 for (let dStr in db.entries) {
@@ -538,6 +494,21 @@
 
         function saveData() { localStorage.setItem('zeiterfassung_db', JSON.stringify(db)); }
 
+        // ====== NEUE LOGIK: DIESE FUNKTION ÖFFNET DEN VERSTECKTEN NATIVEN PICKER ======
+        function openPicker(id) {
+            let el = document.getElementById(id);
+            if(el) {
+                try {
+                    el.showPicker(); // Das zwingt Android, die System-Uhr/Kalender zu öffnen!
+                } catch(e) {
+                    // Fallback für sehr alte Browser
+                    el.focus();
+                    el.click();
+                }
+            }
+        }
+
+        // ====== NEUE LOGIK: ÜBERTRÄGT DIE GEWÄHLTE ZEIT/DATUM IN DEN SICHTBAREN TEXT ======
         function updateDisplays() {
             let dVal = document.getElementById('heute-date').value;
             if(dVal) {
@@ -581,7 +552,7 @@
         function switchTab(tabName) {
             document.querySelectorAll('main > div').forEach(d => { d.style.display = 'none'; });
             document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.remove('text-violet-400'); b.classList.add('text-stone-400');
+                b.classList.remove('text-blue-600'); b.classList.add('text-slate-400');
             });
             
             let targetTab = document.getElementById('tab-' + tabName);
@@ -593,8 +564,8 @@
                 targetTab.style.display = 'block';
             }
             
-            document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-stone-400');
-            document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-violet-400');
+            document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.remove('text-slate-400');
+            document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
 
             if (tabName === 'kalender') renderCalendar('kalender');
             if (tabName === 'heute') loadDayData();
@@ -628,8 +599,8 @@
             let banner = document.getElementById('heute-holiday-banner');
             if (hol) {
                 banner.innerText = (hol.isSchool ? "🎒 " : "🎉 ") + hol.name;
-                banner.className = "text-center text-xs font-medium p-2.5 rounded-xl shadow-sm mb-1 " + 
-                                   (hol.isSchool ? "bg-violet-50 text-violet-600" : "bg-rose-50 text-rose-600");
+                banner.className = "text-center text-xs font-bold p-2 rounded-xl shadow-sm mb-1 " + 
+                                   (hol.isSchool ? "bg-blue-50 text-blue-600" : "bg-yellow-50 text-yellow-600");
                 banner.classList.remove('hidden');
             } else {
                 banner.classList.add('hidden');
@@ -641,7 +612,7 @@
             document.getElementById('heute-soll').value = entry.soll;
             document.getElementById('heute-remark').value = entry.remark || '';
             
-            updateDisplays(); 
+            updateDisplays(); // WICHTIG: Übersetzt das Datum/Zeit direkt in den schönen Text
             renderHeuteTemplates();
             calculateNetto();
         }
@@ -685,7 +656,7 @@
             document.getElementById('heute-netto').innerText = nettoStr;
             let diffEl = document.getElementById('heute-diff');
             diffEl.innerText = diffStr;
-            diffEl.className = "text-[10px] font-bold mt-2 " + (isPositive ? "text-violet-400" : "text-rose-400");
+            diffEl.className = "text-[10px] font-bold mt-2 " + (isPositive ? "text-blue-500" : "text-red-400");
         }
 
         function saveDay() {
@@ -705,12 +676,12 @@
             
             let btn = document.querySelector('#tab-heute button[onclick="saveDay()"]');
             let oldHtml = btn.innerHTML;
-            btn.innerHTML = `<svg class="w-7 h-7 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[10px] font-bold uppercase tracking-wider">Safe!</span>`;
+            btn.innerHTML = `<svg class="w-8 h-8 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[10px] font-bold uppercase tracking-wider">Safe!</span>`;
             
-            btn.classList.add('bg-stone-800'); btn.classList.remove('bg-violet-400');
+            btn.classList.add('bg-emerald-500'); btn.classList.remove('bg-blue-600');
             setTimeout(() => {
                 btn.innerHTML = oldHtml;
-                btn.classList.remove('bg-stone-800'); btn.classList.add('bg-violet-400');
+                btn.classList.remove('bg-emerald-500'); btn.classList.add('bg-blue-600');
             }, 1000);
         }
 
@@ -726,7 +697,7 @@
             let c = document.getElementById('heute-templates'); c.innerHTML = '';
             db.templates.forEach(t => {
                 let b = document.createElement('button');
-                b.className = "px-4 py-2 bg-stone-100 text-stone-700 rounded-xl font-bold text-sm shadow-sm whitespace-nowrap active:bg-stone-200 border border-stone-200 transition-colors";
+                b.className = "px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-bold text-sm shadow-sm whitespace-nowrap active:bg-indigo-100 border border-indigo-100";
                 b.innerText = t.name;
                 b.onclick = () => {
                     document.getElementById('heute-begin').value = t.begin;
@@ -807,17 +778,17 @@
                 
                 appTotalDiff += dayDiff;
 
-                let bgClass = target === 'kalender' ? "bg-white border-stone-100" : "bg-stone-50 border-stone-200";
-                if (isWeekend) bgClass = target === 'kalender' ? "bg-stone-50 border-stone-200" : "bg-stone-100 border-stone-200";
+                let bgClass = target === 'kalender' ? "bg-white border-slate-100" : "bg-slate-50 border-slate-200";
+                if (isWeekend) bgClass = target === 'kalender' ? "bg-slate-50 border-slate-200" : "bg-slate-100 border-slate-200";
                 
                 let holidayNameHtml = "";
                 if (holiday) {
                     let shortName = holiday.name.replace(" (regional)", "").replace(" (Feiertag)", "");
                     if (holiday.isSchool) {
-                        holidayNameHtml = `<div class="text-[6.5px] leading-none font-bold text-violet-400 w-full text-center truncate px-0.5 mt-0.5" title="${holiday.name}">${shortName}</div>`;
+                        holidayNameHtml = `<div class="text-[6.5px] leading-none font-bold text-blue-500 w-full text-center truncate px-0.5 mt-0.5" title="${holiday.name}">${shortName}</div>`;
                     } else {
-                        bgClass = "bg-rose-50 border-rose-100"; 
-                        holidayNameHtml = `<div class="text-[6.5px] leading-none font-bold text-rose-500 w-full text-center truncate px-0.5 mt-0.5" title="${holiday.name}">${shortName}</div>`;
+                        bgClass = "bg-yellow-50 border-yellow-200"; 
+                        holidayNameHtml = `<div class="text-[6.5px] leading-none font-bold text-yellow-600 w-full text-center truncate px-0.5 mt-0.5" title="${holiday.name}">${shortName}</div>`;
                     }
                 }
 
@@ -825,9 +796,9 @@
                 let hasRemark = entry && entry.remark ? `<div class="absolute bottom-1 right-1 text-[10px] opacity-70">💬</div>` : '';
 
                 if (target === 'kalender' && entry && entry.begin && entry.end) {
-                    let diffColor = dayDiff >= 0 ? 'text-violet-400' : 'text-rose-400';
+                    let diffColor = dayDiff >= 0 ? 'text-blue-500' : 'text-red-500';
                     textHtml = `
-                        <div class="text-[9px] text-stone-500 mt-0.5 leading-tight text-center">${entry.begin}<br>${entry.end}</div>
+                        <div class="text-[9px] text-slate-500 mt-0.5 leading-tight text-center">${entry.begin}<br>${entry.end}</div>
                         <div class="text-[11px] font-black ${diffColor} mt-0.5 text-center">${netStd.toFixed(1)}h</div>
                     `;
                 } else if (target === 'planer' && tplMatch) {
@@ -837,8 +808,8 @@
                     bgClass = `${color.bg} ${color.border}`;
                     textHtml = `<div class="text-[9px] font-bold ${color.text} mt-0.5 truncate w-full text-center">${tplMatch.name.substring(0,6)}</div>`;
                 } else if (target === 'planer' && entry && entry.begin) {
-                    bgClass = "bg-stone-200 border-stone-300";
-                    textHtml = `<div class="text-[9px] font-bold text-stone-700 mt-0.5 truncate w-full text-center">${netStd.toFixed(1)}h</div>`;
+                    bgClass = "bg-slate-200 border-slate-300";
+                    textHtml = `<div class="text-[9px] font-bold text-slate-700 mt-0.5 truncate w-full text-center">${netStd.toFixed(1)}h</div>`;
                 }
 
                 let cellClass = target === 'kalender' ? 'cal-cell p-1 justify-start' : 'planer-cell p-1';
@@ -846,7 +817,7 @@
                 let cellHtml = `
                     <div class="${cellClass} relative border rounded-xl shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
                          onclick="handleCellClick('${dStr}', '${target}')">
-                        <div class="text-xs font-bold text-center ${isWeekend ? 'text-stone-400' : 'text-stone-800'}">${i}</div>
+                        <div class="text-xs font-bold text-center ${isWeekend ? 'text-slate-400' : 'text-slate-800'}">${i}</div>
                         ${target === 'kalender' ? holidayNameHtml : ''}
                         <div class="mt-auto flex flex-col items-center justify-center w-full">
                             ${textHtml}
@@ -866,10 +837,12 @@
             if (target === 'kalender') {
                 let agSaldo = parseFloat(db.settings.agSaldo || 0);
                 let total = agSaldo + appTotalDiff;
+                document.getElementById('saldo-app').innerText = (appTotalDiff > 0 ? '+' : '') + appTotalDiff.toFixed(2) + " h";
+                document.getElementById('saldo-app').className = "text-xl font-bold " + (appTotalDiff >= 0 ? "text-emerald-500" : "text-red-500");
                 document.getElementById('saldo-ag').value = agSaldo;
                 document.getElementById('saldo-total').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + " h";
                 
-                // HR Soll für diesen speziellen Monat berechnen und im Kalender anzeigen
+                // HR Soll im Kalender
                 let percent = db.settings.model.percentage || 100;
                 let effWeekly = db.settings.model.hours * (percent / 100);
                 let hrMonthlySoll = effWeekly * 13 / 3;
@@ -882,9 +855,9 @@
             ['month', 'quarter', 'year'].forEach(m => {
                 let btn = document.getElementById('btn-stat-' + m);
                 if(m === mode) {
-                    btn.className = "flex-1 text-[11px] font-bold py-2 rounded-lg bg-white text-violet-600 shadow-sm transition-all";
+                    btn.className = "flex-1 text-[10px] font-bold py-1.5 rounded-md bg-white text-blue-600 shadow-sm transition-all";
                 } else {
-                    btn.className = "flex-1 text-[11px] font-bold py-2 rounded-lg text-stone-500 hover:text-stone-700 transition-all";
+                    btn.className = "flex-1 text-[10px] font-bold py-1.5 rounded-md text-blue-100 hover:text-white transition-all";
                 }
             });
             renderStatistik();
@@ -983,18 +956,18 @@
                 .sort((a,b) => b.hours - a.hours);
 
             if (sortedTpls.length === 0) {
-                breakdownHtml = '<div class="text-xs font-medium text-stone-400 text-center py-6">Keine Arbeitszeiten in diesem Zeitraum erfasst.</div>';
+                breakdownHtml = '<div class="text-xs font-medium text-slate-400 text-center py-6">Keine Arbeitszeiten in diesem Zeitraum erfasst.</div>';
             } else {
                 sortedTpls.forEach(item => {
                     let percent = (item.hours / totalNet) * 100;
                     breakdownHtml += `
                         <div class="mb-3">
                             <div class="flex justify-between text-[11px] font-bold mb-1.5 px-1">
-                                <span class="text-stone-700">${item.name}</span>
-                                <span class="text-violet-400">${item.hours.toFixed(1)} h <span class="text-stone-400 font-normal ml-1">(${percent.toFixed(0)}%)</span></span>
+                                <span class="text-slate-700">${item.name}</span>
+                                <span class="text-blue-600">${item.hours.toFixed(1)} h <span class="text-slate-400 font-normal ml-1">(${percent.toFixed(0)}%)</span></span>
                             </div>
-                            <div class="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden border border-stone-200/50">
-                                <div class="bg-violet-300 h-2.5 rounded-full" style="width: ${percent}%"></div>
+                            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: ${percent}%"></div>
                             </div>
                         </div>
                     `;
@@ -1053,8 +1026,8 @@
             container.innerHTML = '';
             
             let clearClass = activePaintTemplate === 'clear' 
-                ? 'bg-rose-500 text-white shadow-inner scale-95 border-rose-600' 
-                : 'bg-rose-50 text-rose-600 border-rose-200 active:bg-rose-100';
+                ? 'bg-red-500 text-white shadow-inner scale-95 border-red-600' 
+                : 'bg-red-50 text-red-600 border-red-200 active:bg-red-100';
                 
             container.innerHTML += `
                 <button onclick="setPaintTemplate('clear')" class="flex-shrink-0 px-3.5 py-2 rounded-xl font-bold text-xs border transition-all ${clearClass}">
@@ -1067,7 +1040,7 @@
                 let color = plannerColors[index % plannerColors.length];
                 
                 let btnClass = isAct 
-                    ? `${color.bg.replace('100', '400')} text-white shadow-inner scale-95 ${color.border.replace('200', '500')}` 
+                    ? `${color.bg.replace('100', '500')} text-white shadow-inner scale-95 ${color.border.replace('200', '600')}` 
                     : `${color.bg} ${color.text} ${color.border} active:brightness-95 shadow-sm`;
                     
                 container.innerHTML += `
@@ -1089,9 +1062,9 @@
             days.forEach((d, i) => {
                 let extraClass = i === 6 ? "col-span-2" : "";
                 c.innerHTML += `
-                    <div class="flex items-center gap-2 p-1.5 bg-white border border-stone-200 rounded-xl flex-1 shadow-sm ${extraClass}">
-                        <span class="text-[10px] font-bold w-5 text-center text-stone-500">${d}</span>
-                        <select id="pat-day-${i+1}" class="flex-1 p-1 border-none bg-transparent rounded text-[11px] font-bold text-stone-700 outline-none">
+                    <div class="flex items-center gap-2 p-1 bg-slate-50 border border-slate-100 rounded-lg flex-1 shadow-sm ${extraClass}">
+                        <span class="text-[10px] font-bold w-5 text-center text-slate-500">${d}</span>
+                        <select id="pat-day-${i+1}" class="flex-1 p-1.5 border border-slate-200 rounded-md text-[10px] font-bold bg-white outline-none">
                             ${tplOptions}
                         </select>
                     </div>
@@ -1148,9 +1121,9 @@
             document.querySelectorAll('.day-btn').forEach(btn => {
                 let d = parseInt(btn.getAttribute('data-day'));
                 if (db.settings.model.days.includes(d)) {
-                    btn.className = "day-btn flex-1 py-2.5 text-xs font-bold rounded-xl bg-violet-50 text-violet-600 border-2 border-violet-400 transition-colors";
+                    btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500 transition-colors";
                 } else {
-                    btn.className = "day-btn flex-1 py-2.5 text-xs font-bold rounded-xl bg-stone-100 text-stone-400 border-2 border-transparent transition-colors";
+                    btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent transition-colors";
                 }
             });
             
@@ -1210,10 +1183,10 @@
             let bg = document.getElementById('toggle-bg');
             let dot = document.getElementById('toggle-dot');
             if (isChecked) {
-                bg.classList.remove('bg-stone-300'); bg.classList.add('bg-violet-400');
-                dot.style.transform = 'translateX(16px)';
+                bg.classList.remove('bg-slate-300'); bg.classList.add('bg-blue-500');
+                dot.style.transform = 'translateX(12px)';
             } else {
-                bg.classList.remove('bg-violet-400'); bg.classList.add('bg-stone-300');
+                bg.classList.remove('bg-blue-500'); bg.classList.add('bg-slate-300');
                 dot.style.transform = 'translateX(0)';
             }
         }
@@ -1247,15 +1220,15 @@
                 let color = plannerColors[index % plannerColors.length];
                 
                 c.innerHTML += `
-                    <div class="flex justify-between items-center p-3.5 bg-stone-50 border border-stone-100 rounded-xl">
+                    <div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-lg">
                         <div class="flex items-center gap-3">
-                            <div class="w-3 h-3 rounded-full ${color.bg.replace('100', '400')}"></div>
+                            <div class="w-3 h-3 rounded-full ${color.bg.replace('100', '500')}"></div>
                             <div>
-                                <div class="font-bold text-sm text-stone-800">${t.name}</div>
-                                <div class="text-[11px] text-stone-500 font-medium mt-0.5">${t.begin} - ${t.end} (${t.pause || 0}m Pause)</div>
+                                <div class="font-bold text-sm text-slate-800">${t.name}</div>
+                                <div class="text-xs text-slate-500">${t.begin} - ${t.end} (${t.pause || 0}m Pause)</div>
                             </div>
                         </div>
-                        <button onclick="deleteTemplate(${t.id})" class="text-rose-400 p-2.5 active:bg-rose-50 rounded-lg transition-colors">
+                        <button onclick="deleteTemplate(${t.id})" class="text-red-400 p-2 active:bg-red-50 rounded-lg">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
@@ -1316,7 +1289,7 @@
             } catch (e) {
                 alert("Fehler beim Abrufen der Daten. Bitte prüfen Sie Ihre Internetverbindung.");
             }
-            btn.innerText = "Feiertage aktualisieren";
+            btn.innerText = "Jahresdaten aktualisieren";
             btn.classList.remove("opacity-50");
         }
 
