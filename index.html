@@ -12,6 +12,11 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Bibliotheken für den lokalen PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
     <style>
         /* Touch-Optimierungen für Smartphones */
         body { 
@@ -82,7 +87,7 @@
     <span id="paint-mode-text" class="hidden"></span>
 
     <!-- Hauptinhalt -->
-    <main class="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative pt-3 pb-2 px-3">
+    <main class="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative pt-3 pb-2 px-3 flex flex-col">
         
         <!-- ================= TAB: HEUTE ================= -->
         <div id="tab-heute" class="h-full flex flex-col hidden">
@@ -94,7 +99,6 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
                     
-                    <!-- Text zentriert drunter, unsichtbares Input darüber -->
                     <div class="flex-1 relative flex justify-center items-center h-10 cursor-pointer active:scale-95 transition-transform" onclick="openPicker('heute-date')">
                         <span id="display-heute-date" class="text-xl font-black tracking-tight text-slate-800">--.--.----</span>
                         <input type="date" id="heute-date" class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer sr-only" onchange="loadDayData()">
@@ -128,7 +132,7 @@
             <!-- Eingabefelder und Quick Actions -->
             <div class="flex-1 flex flex-col justify-center gap-3 min-h-0 py-2">
                 
-                <!-- NEU: Quick Action Bar (Kommen/Gehen & Pause) -->
+                <!-- Quick Action Bar -->
                 <div id="quick-action-bar" class="grid grid-cols-2 gap-3 shrink-0 mb-1">
                     <button id="btn-kommen-gehen" onclick="toggleKommenGehen()" class="py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 active:bg-emerald-100">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
@@ -141,21 +145,18 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 shrink-0">
-                    <!-- Beginn -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center cursor-pointer active:bg-slate-50 transition-colors" onclick="openPicker('heute-begin')">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none">Beginn</label>
                         <span id="display-heute-begin" class="text-3xl font-black text-slate-800">--:--</span>
                         <input type="time" id="heute-begin" class="sr-only" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
-                    <!-- Ende -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center cursor-pointer active:bg-slate-50 transition-colors" onclick="openPicker('heute-end')">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none">Ende</label>
                         <span id="display-heute-end" class="text-3xl font-black text-slate-800">--:--</span>
                         <input type="time" id="heute-end" class="sr-only" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
-                    <!-- Pause & Soll -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center focus-within:ring-2 ring-slate-200 transition-all">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pause (Min)</label>
                         <input type="number" id="heute-pause" class="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-indigo-600" onchange="calculateNetto()" placeholder="0">
@@ -202,7 +203,6 @@
             </div>
 
             <div class="bg-white p-2 rounded-xl shadow-sm space-y-2 border border-blue-100 shrink-0">
-                
                 <div class="grid grid-cols-2 gap-2 text-center">
                     <div class="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
                         <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide pointer-events-none">Übertrag (AG)</div>
@@ -296,7 +296,7 @@
 
         </div>
 
-        <!-- ================= TAB: STATISTIK ================= -->
+        <!-- ================= TAB: STATISTIK & PDF EXPORT ================= -->
         <div id="tab-statistik" class="space-y-3 hidden flex-col h-full">
             
             <div class="bg-blue-600 p-2 rounded-xl shadow-sm shrink-0 flex flex-col gap-2">
@@ -343,6 +343,14 @@
                 <div id="stat-breakdown" class="flex-1 overflow-y-auto space-y-4 pr-1 no-scrollbar">
                     <!-- Wird dynamisch mit Fortschrittsbalken gefüllt -->
                 </div>
+            </div>
+
+            <!-- NEU: PDF EXPORT BUTTON -->
+            <div class="shrink-0 mt-auto">
+                <button onclick="exportMonthPDF()" class="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 active:bg-indigo-700 text-sm transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Gewählten Monat als PDF exportieren
+                </button>
             </div>
 
         </div>
@@ -491,7 +499,7 @@
                 protectHolidays: true
             },
             holidays: {},
-            activePauseStart: null // NEU: Merkt sich den Live-Pausenstart
+            activePauseStart: null
         };
 
         let currentViewDate = new Date();
@@ -533,7 +541,6 @@
 
         function saveData() { localStorage.setItem('zeiterfassung_db', JSON.stringify(db)); }
 
-        // --- STEUERUNG FÜR DIE NEUEN LIVE-STAMP BUTTONS ---
         function toggleKommenGehen() {
             let now = new Date();
             let timeStr = now.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'});
@@ -549,14 +556,13 @@
             updateDisplays(); 
             autoSuggestBreak(); 
             calculateNetto();
-            saveDay(); // Speichert direkt den neuen Stempel
+            saveDay(); 
         }
 
         function togglePause() {
             if (db.activePauseStart) {
-                // Pause beenden
                 let start = new Date(db.activePauseStart);
-                let diffMins = Math.round((new Date() - start) / 60000); // 60000 ms = 1 Min
+                let diffMins = Math.round((new Date() - start) / 60000); 
                 
                 let pauseEl = document.getElementById('heute-pause');
                 let currentPause = parseInt(pauseEl.value) || 0;
@@ -564,14 +570,13 @@
                 
                 db.activePauseStart = null;
             } else {
-                // Pause starten
                 db.activePauseStart = new Date().toISOString();
             }
             
             saveData();
             calculateNetto();
             saveDay();
-            updateQuickButtons(); // Aktualisiert die Button-Farbe
+            updateQuickButtons();
         }
 
         function updateQuickButtons() {
@@ -579,7 +584,6 @@
             let currentStr = document.getElementById('heute-date').value;
             let bar = document.getElementById('quick-action-bar');
             
-            // Buttons nur anzeigen, wenn man wirklich auf dem *heutigen* Tag ist
             if (todayStr !== currentStr) {
                 bar.style.display = 'none';
                 return;
@@ -591,7 +595,6 @@
             let btnKG = document.getElementById('btn-kommen-gehen');
             let textKG = document.getElementById('text-kommen-gehen');
 
-            // Kommen / Gehen Toggle Style
             if (!beginVal) {
                 btnKG.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 active:bg-emerald-100";
                 btnKG.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg><span id="text-kommen-gehen" class="text-[10px] uppercase tracking-wider">Kommen</span>`;
@@ -600,7 +603,6 @@
                 btnKG.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span id="text-kommen-gehen" class="text-[10px] uppercase tracking-wider">Gehen</span>`;
             }
 
-            // Pause Toggle Style
             let btnPause = document.getElementById('btn-pause-toggle');
             if (db.activePauseStart) {
                 btnPause.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-amber-500 text-white border-amber-600 active:bg-amber-600 animate-pulse";
@@ -635,7 +637,7 @@
             let eVal = document.getElementById('heute-end').value;
             document.getElementById('display-heute-end').innerText = eVal || '--:--';
 
-            updateQuickButtons(); // Aktualisiert die Stempel-Buttons
+            updateQuickButtons(); 
         }
 
         function getDailySoll(dateString) {
@@ -908,7 +910,7 @@
                 }
 
                 let textHtml = "";
-                let hasRemark = entry && entry.remark ? `<div class="absolute bottom-1 right-1 text-xs">💬</div>` : '';
+                let hasRemark = entry && entry.remark ? `<div class="absolute bottom-1 right-1 text-[10px] opacity-70">💬</div>` : '';
 
                 if (target === 'kalender' && entry && entry.begin && entry.end) {
                     let diffColor = dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
@@ -1089,6 +1091,121 @@
             }
             document.getElementById('stat-breakdown').innerHTML = breakdownHtml;
         }
+
+        // ================= PDF EXPORT LOGIK =================
+        function exportMonthPDF() {
+            if (!window.jspdf) {
+                alert("Die PDF-Erstellung wird noch geladen. Bitte einen Moment warten.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            let year = currentViewDate.getFullYear();
+            let month = currentViewDate.getMonth();
+            let monthName = currentViewDate.toLocaleString('de-DE', { month: 'long' });
+            
+            // Titel
+            doc.setFontSize(16);
+            doc.text(`Arbeitszeitnachweis - ${monthName} ${year}`, 14, 20);
+
+            let tableData = [];
+            let daysInMonth = new Date(year, month + 1, 0).getDate();
+            let totalNet = 0;
+            let monthDiffSum = 0;
+
+            let today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                let dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                let dateObj = new Date(dStr);
+                let dayName = dateObj.toLocaleDateString('de-DE', { weekday: 'short' });
+                let dateFormatted = `${String(i).padStart(2,'0')}.${String(month+1).padStart(2,'0')}.`;
+
+                let entry = db.entries[dStr];
+                let daySoll = entry && entry.soll !== undefined ? entry.soll : getDailySoll(dStr);
+                
+                let begin = entry && entry.begin ? entry.begin : '-';
+                let end = entry && entry.end ? entry.end : '-';
+                let pause = entry && entry.pause ? entry.pause : '0';
+                let remark = entry && entry.remark ? entry.remark : '';
+                
+                let netStd = 0;
+                if (entry && entry.begin && entry.end) {
+                    let bMin = calculateMinutes(entry.begin, entry.end);
+                    netStd = (bMin - (entry.pause || 0)) / 60;
+                    if(netStd < 0) netStd = 0;
+                }
+                
+                let dayDiff = netStd - daySoll;
+                let isFuture = dateObj > today; 
+                
+                if(!entry && isFuture) dayDiff = 0;
+                else if (!entry && !isFuture && daySoll > 0) dayDiff = -daySoll;
+
+                totalNet += netStd;
+                monthDiffSum += dayDiff;
+
+                let netStr = netStd > 0 ? netStd.toFixed(2) : '-';
+                let sollStr = daySoll > 0 ? daySoll.toFixed(2) : '0.00';
+                let diffStr = dayDiff !== 0 ? (dayDiff > 0 ? '+' : '') + dayDiff.toFixed(2) : '0.00';
+
+                tableData.push([
+                    `${dayName}, ${dateFormatted}`,
+                    begin,
+                    end,
+                    pause,
+                    netStr,
+                    sollStr,
+                    diffStr,
+                    remark
+                ]);
+            }
+
+            let percent = db.settings.model.percentage || 100;
+            let effWeekly = db.settings.model.hours * (percent / 100);
+            let hrMonthlySoll = effWeekly * 13 / 3;
+
+            // Tabelle generieren
+            doc.autoTable({
+                startY: 28,
+                head: [['Datum', 'Beginn', 'Ende', 'Pause (m)', 'Ist (h)', 'Soll (h)', '+/- (h)', 'Bemerkung']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [37, 99, 235] }, // Entspricht tailwind blue-600
+                styles: { fontSize: 8 },
+                columnStyles: {
+                    0: { cellWidth: 26 },
+                    1: { cellWidth: 16, halign: 'center' },
+                    2: { cellWidth: 16, halign: 'center' },
+                    3: { cellWidth: 18, halign: 'center' },
+                    4: { cellWidth: 15, halign: 'right' },
+                    5: { cellWidth: 15, halign: 'right' },
+                    6: { cellWidth: 15, halign: 'right' },
+                    7: { cellWidth: 'auto' }
+                }
+            });
+
+            // Zusammenfassung unten
+            let finalY = doc.lastAutoTable.finalY + 12;
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text('Zusammenfassung:', 14, finalY);
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Gesamt Ist-Arbeitszeit: ${totalNet.toFixed(2)} h`, 14, finalY + 8);
+            doc.text(`HR Monats-Soll (Formel): ${hrMonthlySoll.toFixed(2)} h`, 14, finalY + 14);
+            
+            let hrDiff = totalNet - hrMonthlySoll;
+            let hrDiffStr = (hrDiff > 0 ? '+' : '') + hrDiff.toFixed(2);
+            doc.text(`Monats-Differenz (Ist vs. Formel): ${hrDiffStr} h`, 14, finalY + 20);
+
+            doc.save(`Zeiterfassung_${monthName}_${year}.pdf`);
+        }
+        // ====================================================
 
         function handleCellClick(dStr, source) {
             if (source === 'planer' && paintModeActive && activePaintTemplate) {
