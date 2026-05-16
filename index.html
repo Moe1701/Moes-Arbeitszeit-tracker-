@@ -23,6 +23,37 @@
         }
         input, textarea, select { user-select: text; }
         
+        /* OVERLAY-TRICK: Perfekte Zentrierung ohne Android-Pfeile */
+        input[type="date"], input[type="time"] {
+            text-align: center !important;
+            position: relative;
+            background: transparent;
+            width: 100%;
+        }
+
+        input::-webkit-datetime-edit,
+        input::-webkit-datetime-edit-fields-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Natives Icon unsichtbar über das Feld legen */
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        
         .cal-cell { 
             display: flex;
             flex-direction: column;
@@ -57,20 +88,19 @@
         <div id="tab-heute" class="h-full flex flex-col hidden">
             
             <div class="flex flex-col gap-3 shrink-0">
-                <!-- Datum Navigation (KOMPLETT NEUE LOGIK) -->
+                <!-- Datum Navigation -->
                 <div class="flex justify-between items-center bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
-                    <button onclick="changeDate(-1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors">
+                    <button onclick="changeDate(-1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-10">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
                     
-                    <!-- Der klickbare Bereich (Reines HTML-Textfeld, garantiert zu 100% zentriert) -->
-                    <div class="flex-1 flex justify-center items-center h-full cursor-pointer active:scale-95 transition-transform" onclick="openPicker('heute-date')">
+                    <!-- Text zentriert drunter, unsichtbares Input darüber -->
+                    <div class="flex-1 relative flex justify-center items-center h-10 cursor-pointer active:scale-95 transition-transform" onclick="openPicker('heute-date')">
                         <span id="display-heute-date" class="text-xl font-black tracking-tight text-slate-800">--.--.----</span>
-                        <!-- Das echte Input ist unsichtbar und greift nicht mehr in das Layout ein -->
-                        <input type="date" id="heute-date" class="sr-only" onchange="loadDayData()">
+                        <input type="date" id="heute-date" class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer sr-only" onchange="loadDayData()">
                     </div>
 
-                    <button onclick="changeDate(1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors">
+                    <button onclick="changeDate(1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-10">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>
                 </div>
@@ -95,25 +125,37 @@
                 </div>
             </div>
 
-            <!-- Eingabefelder -->
-            <div class="flex-1 flex flex-col justify-center gap-4 min-h-0 py-2">
+            <!-- Eingabefelder und Quick Actions -->
+            <div class="flex-1 flex flex-col justify-center gap-3 min-h-0 py-2">
+                
+                <!-- NEU: Quick Action Bar (Kommen/Gehen & Pause) -->
+                <div id="quick-action-bar" class="grid grid-cols-2 gap-3 shrink-0 mb-1">
+                    <button id="btn-kommen-gehen" onclick="toggleKommenGehen()" class="py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 active:bg-emerald-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                        <span id="text-kommen-gehen" class="text-[10px] uppercase tracking-wider">Kommen</span>
+                    </button>
+                    <button id="btn-pause-toggle" onclick="togglePause()" class="py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-amber-50 text-amber-700 border-amber-200 active:bg-amber-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span id="text-pause-toggle" class="text-[10px] uppercase tracking-wider">Pause starten</span>
+                    </button>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3 shrink-0">
-                    
-                    <!-- BEGINN BUTTON (NEUE LOGIK) -->
+                    <!-- Beginn -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center cursor-pointer active:bg-slate-50 transition-colors" onclick="openPicker('heute-begin')">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none">Beginn</label>
                         <span id="display-heute-begin" class="text-3xl font-black text-slate-800">--:--</span>
                         <input type="time" id="heute-begin" class="sr-only" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
-                    <!-- ENDE BUTTON (NEUE LOGIK) -->
+                    <!-- Ende -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center cursor-pointer active:bg-slate-50 transition-colors" onclick="openPicker('heute-end')">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none">Ende</label>
                         <span id="display-heute-end" class="text-3xl font-black text-slate-800">--:--</span>
                         <input type="time" id="heute-end" class="sr-only" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
-                    <!-- Pause & Soll bleiben Inputfelder für direkte Zahleneingabe -->
+                    <!-- Pause & Soll -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center focus-within:ring-2 ring-slate-200 transition-all">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pause (Min)</label>
                         <input type="number" id="heute-pause" class="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-indigo-600" onchange="calculateNetto()" placeholder="0">
@@ -161,7 +203,6 @@
 
             <div class="bg-white p-2 rounded-xl shadow-sm space-y-2 border border-blue-100 shrink-0">
                 
-                <!-- Neu arrangiertes Grid für Übertrag und HR Soll -->
                 <div class="grid grid-cols-2 gap-2 text-center">
                     <div class="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
                         <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide pointer-events-none">Übertrag (AG)</div>
@@ -174,7 +215,6 @@
                     </div>
                 </div>
                 
-                <!-- Neuer, kompakterer Gesamtsaldo-Button in hellem Blau/Indigo statt Schwarz -->
                 <div class="flex justify-end mt-1">
                    <div class="bg-blue-50 py-2 px-4 rounded-xl text-blue-900 flex justify-between items-center shadow-sm w-full md:w-auto gap-4 border border-blue-100">
                         <div>
@@ -431,7 +471,6 @@
             });
         }
 
-        // Farbpalette für Planer-Vorlagen (angepasst ans blaue Theme)
         const plannerColors = [
             { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
             { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-200' },
@@ -451,7 +490,8 @@
                 model: { hours: 40, days: [1, 2, 3, 4, 5], percentage: 100 },
                 protectHolidays: true
             },
-            holidays: {} 
+            holidays: {},
+            activePauseStart: null // NEU: Merkt sich den Live-Pausenstart
         };
 
         let currentViewDate = new Date();
@@ -471,7 +511,6 @@
                 } catch(e) {}
             }
 
-            // AUTO-REPARATUR für Feiertage
             if (db.settings.protectHolidays) {
                 let changed = false;
                 for (let dStr in db.entries) {
@@ -494,21 +533,95 @@
 
         function saveData() { localStorage.setItem('zeiterfassung_db', JSON.stringify(db)); }
 
-        // ====== NEUE LOGIK: DIESE FUNKTION ÖFFNET DEN VERSTECKTEN NATIVEN PICKER ======
+        // --- STEUERUNG FÜR DIE NEUEN LIVE-STAMP BUTTONS ---
+        function toggleKommenGehen() {
+            let now = new Date();
+            let timeStr = now.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'});
+            let beginEl = document.getElementById('heute-begin');
+            let endEl = document.getElementById('heute-end');
+
+            if (!beginEl.value) {
+                beginEl.value = timeStr; // Kommen
+            } else {
+                endEl.value = timeStr;   // Gehen
+            }
+            
+            updateDisplays(); 
+            autoSuggestBreak(); 
+            calculateNetto();
+            saveDay(); // Speichert direkt den neuen Stempel
+        }
+
+        function togglePause() {
+            if (db.activePauseStart) {
+                // Pause beenden
+                let start = new Date(db.activePauseStart);
+                let diffMins = Math.round((new Date() - start) / 60000); // 60000 ms = 1 Min
+                
+                let pauseEl = document.getElementById('heute-pause');
+                let currentPause = parseInt(pauseEl.value) || 0;
+                pauseEl.value = currentPause + diffMins;
+                
+                db.activePauseStart = null;
+            } else {
+                // Pause starten
+                db.activePauseStart = new Date().toISOString();
+            }
+            
+            saveData();
+            calculateNetto();
+            saveDay();
+            updateQuickButtons(); // Aktualisiert die Button-Farbe
+        }
+
+        function updateQuickButtons() {
+            let todayStr = new Date().toISOString().split('T')[0];
+            let currentStr = document.getElementById('heute-date').value;
+            let bar = document.getElementById('quick-action-bar');
+            
+            // Buttons nur anzeigen, wenn man wirklich auf dem *heutigen* Tag ist
+            if (todayStr !== currentStr) {
+                bar.style.display = 'none';
+                return;
+            } else {
+                bar.style.display = 'grid';
+            }
+
+            let beginVal = document.getElementById('heute-begin').value;
+            let btnKG = document.getElementById('btn-kommen-gehen');
+            let textKG = document.getElementById('text-kommen-gehen');
+
+            // Kommen / Gehen Toggle Style
+            if (!beginVal) {
+                btnKG.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 active:bg-emerald-100";
+                btnKG.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg><span id="text-kommen-gehen" class="text-[10px] uppercase tracking-wider">Kommen</span>`;
+            } else {
+                btnKG.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-rose-50 text-rose-700 border-rose-200 active:bg-rose-100";
+                btnKG.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span id="text-kommen-gehen" class="text-[10px] uppercase tracking-wider">Gehen</span>`;
+            }
+
+            // Pause Toggle Style
+            let btnPause = document.getElementById('btn-pause-toggle');
+            if (db.activePauseStart) {
+                btnPause.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-amber-500 text-white border-amber-600 active:bg-amber-600 animate-pulse";
+                btnPause.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path></svg><span class="text-[10px] uppercase tracking-wider">Pause beenden</span>`;
+            } else {
+                btnPause.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-amber-50 text-amber-700 border-amber-200 active:bg-amber-100";
+                btnPause.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-[10px] uppercase tracking-wider">Pause starten</span>`;
+            }
+        }
+
         function openPicker(id) {
             let el = document.getElementById(id);
             if(el) {
                 try {
-                    el.showPicker(); // Das zwingt Android, die System-Uhr/Kalender zu öffnen!
+                    el.showPicker();
                 } catch(e) {
-                    // Fallback für sehr alte Browser
-                    el.focus();
-                    el.click();
+                    el.focus(); el.click();
                 }
             }
         }
 
-        // ====== NEUE LOGIK: ÜBERTRÄGT DIE GEWÄHLTE ZEIT/DATUM IN DEN SICHTBAREN TEXT ======
         function updateDisplays() {
             let dVal = document.getElementById('heute-date').value;
             if(dVal) {
@@ -521,6 +634,8 @@
             
             let eVal = document.getElementById('heute-end').value;
             document.getElementById('display-heute-end').innerText = eVal || '--:--';
+
+            updateQuickButtons(); // Aktualisiert die Stempel-Buttons
         }
 
         function getDailySoll(dateString) {
@@ -612,7 +727,7 @@
             document.getElementById('heute-soll').value = entry.soll;
             document.getElementById('heute-remark').value = entry.remark || '';
             
-            updateDisplays(); // WICHTIG: Übersetzt das Datum/Zeit direkt in den schönen Text
+            updateDisplays(); 
             renderHeuteTemplates();
             calculateNetto();
         }
@@ -656,7 +771,7 @@
             document.getElementById('heute-netto').innerText = nettoStr;
             let diffEl = document.getElementById('heute-diff');
             diffEl.innerText = diffStr;
-            diffEl.className = "text-[10px] font-bold mt-2 " + (isPositive ? "text-blue-500" : "text-red-400");
+            diffEl.className = "text-[10px] font-bold mt-2 " + (isPositive ? "text-emerald-500" : "text-red-400");
         }
 
         function saveDay() {
@@ -785,7 +900,7 @@
                 if (holiday) {
                     let shortName = holiday.name.replace(" (regional)", "").replace(" (Feiertag)", "");
                     if (holiday.isSchool) {
-                        holidayNameHtml = `<div class="text-[6.5px] leading-none font-bold text-blue-500 w-full text-center truncate px-0.5 mt-0.5" title="${holiday.name}">${shortName}</div>`;
+                        holidayNameHtml = `<div class="text-[6.5px] leading-none font-bold text-green-600 w-full text-center truncate px-0.5 mt-0.5" title="${holiday.name}">${shortName}</div>`;
                     } else {
                         bgClass = "bg-yellow-50 border-yellow-200"; 
                         holidayNameHtml = `<div class="text-[6.5px] leading-none font-bold text-yellow-600 w-full text-center truncate px-0.5 mt-0.5" title="${holiday.name}">${shortName}</div>`;
@@ -793,10 +908,10 @@
                 }
 
                 let textHtml = "";
-                let hasRemark = entry && entry.remark ? `<div class="absolute bottom-1 right-1 text-[10px] opacity-70">💬</div>` : '';
+                let hasRemark = entry && entry.remark ? `<div class="absolute bottom-1 right-1 text-xs">💬</div>` : '';
 
                 if (target === 'kalender' && entry && entry.begin && entry.end) {
-                    let diffColor = dayDiff >= 0 ? 'text-blue-500' : 'text-red-500';
+                    let diffColor = dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
                     textHtml = `
                         <div class="text-[9px] text-slate-500 mt-0.5 leading-tight text-center">${entry.begin}<br>${entry.end}</div>
                         <div class="text-[11px] font-black ${diffColor} mt-0.5 text-center">${netStd.toFixed(1)}h</div>
@@ -815,7 +930,7 @@
                 let cellClass = target === 'kalender' ? 'cal-cell p-1 justify-start' : 'planer-cell p-1';
                 
                 let cellHtml = `
-                    <div class="${cellClass} relative border rounded-xl shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
+                    <div class="${cellClass} relative border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
                          onclick="handleCellClick('${dStr}', '${target}')">
                         <div class="text-xs font-bold text-center ${isWeekend ? 'text-slate-400' : 'text-slate-800'}">${i}</div>
                         ${target === 'kalender' ? holidayNameHtml : ''}
@@ -842,7 +957,6 @@
                 document.getElementById('saldo-ag').value = agSaldo;
                 document.getElementById('saldo-total').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + " h";
                 
-                // HR Soll im Kalender
                 let percent = db.settings.model.percentage || 100;
                 let effWeekly = db.settings.model.hours * (percent / 100);
                 let hrMonthlySoll = effWeekly * 13 / 3;
@@ -1030,7 +1144,7 @@
                 : 'bg-red-50 text-red-600 border-red-200 active:bg-red-100';
                 
             container.innerHTML += `
-                <button onclick="setPaintTemplate('clear')" class="flex-shrink-0 px-3.5 py-2 rounded-xl font-bold text-xs border transition-all ${clearClass}">
+                <button onclick="setPaintTemplate('clear')" class="flex-shrink-0 px-3 py-1.5 rounded-lg font-bold text-xs border transition-all ${clearClass}">
                     ❌ Löschen
                 </button>
             `;
@@ -1040,11 +1154,11 @@
                 let color = plannerColors[index % plannerColors.length];
                 
                 let btnClass = isAct 
-                    ? `${color.bg.replace('100', '500')} text-white shadow-inner scale-95 ${color.border.replace('200', '600')}` 
+                    ? `${color.bg.replace('100', '600')} text-white shadow-inner scale-95 ${color.border.replace('200', '700')}` 
                     : `${color.bg} ${color.text} ${color.border} active:brightness-95 shadow-sm`;
                     
                 container.innerHTML += `
-                    <button onclick="setPaintTemplate(${t.id})" class="flex-shrink-0 px-3.5 py-2 rounded-xl font-bold text-xs border transition-all ${btnClass}">
+                    <button onclick="setPaintTemplate(${t.id})" class="flex-shrink-0 px-3 py-1.5 rounded-lg font-bold text-xs border transition-all ${btnClass}">
                         🖌️ ${t.name}
                     </button>
                 `;
@@ -1062,9 +1176,9 @@
             days.forEach((d, i) => {
                 let extraClass = i === 6 ? "col-span-2" : "";
                 c.innerHTML += `
-                    <div class="flex items-center gap-2 p-1 bg-slate-50 border border-slate-100 rounded-lg flex-1 shadow-sm ${extraClass}">
-                        <span class="text-[10px] font-bold w-5 text-center text-slate-500">${d}</span>
-                        <select id="pat-day-${i+1}" class="flex-1 p-1.5 border border-slate-200 rounded-md text-[10px] font-bold bg-white outline-none">
+                    <div class="flex items-center gap-1.5 p-1 bg-slate-50 border border-slate-100 rounded flex-1 ${extraClass}">
+                        <span class="text-[9px] font-bold w-4 text-slate-500">${d}</span>
+                        <select id="pat-day-${i+1}" class="flex-1 p-1 border border-slate-200 rounded text-[9px] font-bold bg-white outline-none">
                             ${tplOptions}
                         </select>
                     </div>
