@@ -145,12 +145,14 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 shrink-0">
+                    <!-- Unsichtbares Overlay für Beginn -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Beginn</label>
                         <span id="display-heute-begin" class="text-3xl font-black text-slate-800 pointer-events-none z-10">--:--</span>
                         <input type="time" id="heute-begin" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
+                    <!-- Unsichtbares Overlay für Ende -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Ende</label>
                         <span id="display-heute-end" class="text-3xl font-black text-slate-800 pointer-events-none z-10">--:--</span>
@@ -481,43 +483,40 @@
     <!-- FIREBASE CLOUD SYNC MODULE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let firebaseApp, auth, dbFirestore, currentUser = null;
-        let isSyncingFromCloud = false;
-        
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'zeiterfassung-app-1';
-
-        // Firebase Setup & Config Injection
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
+        // ====================================================================
+        // 🔥 HIER DEINE WERTE VON FIREBASE EINTRAGEN 🔥
+        // ====================================================================
+        const firebaseConfig = {
   apiKey: "AIzaSyCmRGEkYQ3bpvA1tjtcZf7rDINCNh84QBw",
   authDomain: "moes-aarbeitszeittracker.firebaseapp.com",
   projectId: "moes-aarbeitszeittracker",
   storageBucket: "moes-aarbeitszeittracker.firebasestorage.app",
   messagingSenderId: "989062673925",
   appId: "1:989062673925:web:0630beed889a8e985dce6c"
-};
+        };
+        // ====================================================================
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+        let firebaseApp, auth, dbFirestore, currentUser = null;
+        let isSyncingFromCloud = false;
+        const appId = 'zeiterfassung-app-1';
+
+        try {
+            firebaseApp = initializeApp(firebaseConfig);
+            auth = getAuth(firebaseApp);
+            dbFirestore = getFirestore(firebaseApp);
+        } catch(e) {
+            console.error("Firebase Fehler:", e);
+        }
 
         async function initAuth() {
-            if (!auth) return;
+            if(!auth) return;
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
             } catch(e) {
-                console.error("Auth init failed:", e);
+                console.error("Anmeldung fehlgeschlagen:", e);
                 updateSyncUI(false, "Offline");
             }
         }
@@ -529,7 +528,6 @@ const app = initializeApp(firebaseConfig);
             
             const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'appState', 'main');
             
-            // Listen for Cloud Changes
             onSnapshot(docRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.data();
@@ -538,11 +536,9 @@ const app = initializeApp(firebaseConfig);
                             isSyncingFromCloud = true;
                             let cloudDb = JSON.parse(data.appData);
                             
-                            // Merge and update local state
                             window.appDb = { ...window.appDb, ...cloudDb };
                             localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb));
                             
-                            // Force UI Refresh
                             window.updateSetupUI();
                             window.loadDayData();
                             if (document.getElementById('tab-kalender').style.display !== 'none') window.renderCalendar('kalender');
@@ -552,16 +548,13 @@ const app = initializeApp(firebaseConfig);
                             isSyncingFromCloud = false;
                             updateSyncUI(true, "Synchron");
                         } catch(e) {
-                            console.error("Cloud data parse error", e);
                             isSyncingFromCloud = false;
                         }
                     }
                 } else {
-                    // First time: Upload local data to cloud
                     window.saveDataToCloud();
                 }
             }, (error) => {
-                console.error("Sync listener error:", error);
                 updateSyncUI(false, "Fehler");
             });
         }
@@ -575,10 +568,8 @@ const app = initializeApp(firebaseConfig);
             }
         }
 
-        // Global function to push data to cloud (called by the main save function)
         window.saveDataToCloud = async function() {
             if (!currentUser || !dbFirestore || isSyncingFromCloud) return;
-            
             try {
                 updateSyncUI(true, "Speichern...");
                 const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'appState', 'main');
@@ -588,12 +579,10 @@ const app = initializeApp(firebaseConfig);
                 });
                 updateSyncUI(true, "Synchron");
             } catch(e) {
-                console.error("Cloud push failed:", e);
                 updateSyncUI(false, "Fehler beim Speichern");
             }
         };
 
-        // Start Firebase
         if (auth) {
             onAuthStateChanged(auth, (user) => {
                 if (user) {
@@ -625,7 +614,6 @@ const app = initializeApp(firebaseConfig);
             { bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-200' }
         ];
 
-        // Mache db global für das Cloud Modul zugänglich
         window.appDb = {
             entries: {},
             templates: [
@@ -687,7 +675,6 @@ const app = initializeApp(firebaseConfig);
 
         function saveData() { 
             localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb)); 
-            // Ruft die Cloud-Speichern Funktion im Modul auf, falls vorhanden
             if (window.saveDataToCloud) {
                 window.saveDataToCloud();
             }
@@ -1700,7 +1687,6 @@ const app = initializeApp(firebaseConfig);
             });
         }
 
-        // Window-Export für Inline-Onclick Funktionen
         window.changeDate = changeDate;
         window.openPicker = openPicker;
         window.loadDayData = loadDayData;
@@ -1729,7 +1715,6 @@ const app = initializeApp(firebaseConfig);
         window.setPaintTemplate = setPaintTemplate;
         window.handleCellClick = handleCellClick;
 
-        // Start Local Setup first
         init();
     </script>
 </body>
