@@ -28,37 +28,6 @@
         }
         input, textarea, select { user-select: text; }
         
-        /* OVERLAY-TRICK: Perfekte Zentrierung ohne Android-Pfeile */
-        input[type="date"], input[type="time"] {
-            text-align: center !important;
-            position: relative;
-            background: transparent;
-            width: 100%;
-        }
-
-        input::-webkit-datetime-edit,
-        input::-webkit-datetime-edit-fields-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            padding: 0;
-            margin: 0;
-        }
-
-        /* Natives Icon unsichtbar über das Feld legen */
-        input[type="date"]::-webkit-calendar-picker-indicator,
-        input[type="time"]::-webkit-calendar-picker-indicator {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            box-sizing: border-box;
-        }
-        
         .cal-cell { 
             display: flex;
             flex-direction: column;
@@ -95,16 +64,17 @@
             <div class="flex flex-col gap-3 shrink-0">
                 <!-- Datum Navigation -->
                 <div class="flex justify-between items-center bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
-                    <button onclick="changeDate(-1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-10">
+                    <button onclick="changeDate(-1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-30">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
                     
-                    <div class="flex-1 relative flex justify-center items-center h-10 cursor-pointer active:scale-95 transition-transform" onclick="openPicker('heute-date')">
-                        <span id="display-heute-date" class="text-xl font-black tracking-tight text-slate-800">--.--.----</span>
-                        <input type="date" id="heute-date" class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer sr-only" onchange="loadDayData()">
+                    <!-- FIX: Unsichtbares Overlay-Feld über dem zentrierten Text -->
+                    <div class="flex-1 relative flex justify-center items-center h-10 overflow-hidden rounded-lg">
+                        <span id="display-heute-date" class="text-xl font-black tracking-tight text-slate-800 pointer-events-none">--.--.----</span>
+                        <input type="date" id="heute-date" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" onchange="loadDayData()">
                     </div>
 
-                    <button onclick="changeDate(1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-10">
+                    <button onclick="changeDate(1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-30">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>
                 </div>
@@ -145,16 +115,18 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 shrink-0">
-                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center cursor-pointer active:bg-slate-50 transition-colors" onclick="openPicker('heute-begin')">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none">Beginn</label>
-                        <span id="display-heute-begin" class="text-3xl font-black text-slate-800">--:--</span>
-                        <input type="time" id="heute-begin" class="sr-only" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
+                    <!-- FIX: Unsichtbares Overlay für Beginn -->
+                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Beginn</label>
+                        <span id="display-heute-begin" class="text-3xl font-black text-slate-800 pointer-events-none z-10">--:--</span>
+                        <input type="time" id="heute-begin" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
-                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center cursor-pointer active:bg-slate-50 transition-colors" onclick="openPicker('heute-end')">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none">Ende</label>
-                        <span id="display-heute-end" class="text-3xl font-black text-slate-800">--:--</span>
-                        <input type="time" id="heute-end" class="sr-only" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
+                    <!-- FIX: Unsichtbares Overlay für Ende -->
+                    <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Ende</label>
+                        <span id="display-heute-end" class="text-3xl font-black text-slate-800 pointer-events-none z-10">--:--</span>
+                        <input type="time" id="heute-end" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center focus-within:ring-2 ring-slate-200 transition-all">
@@ -345,7 +317,7 @@
                 </div>
             </div>
 
-            <!-- NEU: PDF EXPORT BUTTON -->
+            <!-- PDF EXPORT BUTTON -->
             <div class="shrink-0 mt-auto">
                 <button onclick="exportMonthPDF()" class="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 active:bg-indigo-700 text-sm transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -508,6 +480,14 @@
         let activePaintTemplate = null;
         let statMode = 'month'; 
 
+        // Hilfsfunktion: Garantiert IMMER das richtige lokale Datum als YYYY-MM-DD
+        function getLocalDateString(d) {
+            let year = d.getFullYear();
+            let month = String(d.getMonth() + 1).padStart(2, '0');
+            let day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         function init() {
             const saved = localStorage.getItem('zeiterfassung_db');
             if (saved) {
@@ -533,7 +513,7 @@
                 if (changed) saveData();
             }
 
-            document.getElementById('heute-date').value = selectedDate.toISOString().split('T')[0];
+            document.getElementById('heute-date').value = getLocalDateString(selectedDate);
             updateSetupUI();
             loadDayData();
             switchTab('heute');
@@ -543,7 +523,10 @@
 
         function toggleKommenGehen() {
             let now = new Date();
-            let timeStr = now.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'});
+            let hh = String(now.getHours()).padStart(2, '0');
+            let mm = String(now.getMinutes()).padStart(2, '0');
+            let timeStr = `${hh}:${mm}`;
+            
             let beginEl = document.getElementById('heute-begin');
             let endEl = document.getElementById('heute-end');
 
@@ -580,7 +563,7 @@
         }
 
         function updateQuickButtons() {
-            let todayStr = new Date().toISOString().split('T')[0];
+            let todayStr = getLocalDateString(new Date());
             let currentStr = document.getElementById('heute-date').value;
             let bar = document.getElementById('quick-action-bar');
             
@@ -593,14 +576,13 @@
 
             let beginVal = document.getElementById('heute-begin').value;
             let btnKG = document.getElementById('btn-kommen-gehen');
-            let textKG = document.getElementById('text-kommen-gehen');
 
             if (!beginVal) {
                 btnKG.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 active:bg-emerald-100";
-                btnKG.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg><span id="text-kommen-gehen" class="text-[10px] uppercase tracking-wider">Kommen</span>`;
+                btnKG.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg><span class="text-[10px] uppercase tracking-wider">Kommen</span>`;
             } else {
                 btnKG.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-rose-50 text-rose-700 border-rose-200 active:bg-rose-100";
-                btnKG.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span id="text-kommen-gehen" class="text-[10px] uppercase tracking-wider">Gehen</span>`;
+                btnKG.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] uppercase tracking-wider">Gehen</span>`;
             }
 
             let btnPause = document.getElementById('btn-pause-toggle');
@@ -610,17 +592,6 @@
             } else {
                 btnPause.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-amber-50 text-amber-700 border-amber-200 active:bg-amber-100";
                 btnPause.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-[10px] uppercase tracking-wider">Pause starten</span>`;
-            }
-        }
-
-        function openPicker(id) {
-            let el = document.getElementById(id);
-            if(el) {
-                try {
-                    el.showPicker();
-                } catch(e) {
-                    el.focus(); el.click();
-                }
             }
         }
 
@@ -703,7 +674,7 @@
 
         function changeDate(days) {
             selectedDate.setDate(selectedDate.getDate() + days);
-            document.getElementById('heute-date').value = selectedDate.toISOString().split('T')[0];
+            document.getElementById('heute-date').value = getLocalDateString(selectedDate);
             loadDayData();
         }
 
@@ -1106,7 +1077,6 @@
             let month = currentViewDate.getMonth();
             let monthName = currentViewDate.toLocaleString('de-DE', { month: 'long' });
             
-            // Titel
             doc.setFontSize(16);
             doc.text(`Arbeitszeitnachweis - ${monthName} ${year}`, 14, 20);
 
@@ -1168,13 +1138,12 @@
             let effWeekly = db.settings.model.hours * (percent / 100);
             let hrMonthlySoll = effWeekly * 13 / 3;
 
-            // Tabelle generieren
             doc.autoTable({
                 startY: 28,
                 head: [['Datum', 'Beginn', 'Ende', 'Pause (m)', 'Ist (h)', 'Soll (h)', '+/- (h)', 'Bemerkung']],
                 body: tableData,
                 theme: 'grid',
-                headStyles: { fillColor: [37, 99, 235] }, // Entspricht tailwind blue-600
+                headStyles: { fillColor: [37, 99, 235] }, 
                 styles: { fontSize: 8 },
                 columnStyles: {
                     0: { cellWidth: 26 },
@@ -1188,7 +1157,6 @@
                 }
             });
 
-            // Zusammenfassung unten
             let finalY = doc.lastAutoTable.finalY + 12;
             doc.setFontSize(11);
             doc.setFont(undefined, 'bold');
