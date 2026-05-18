@@ -95,16 +95,16 @@
             <div class="flex flex-col gap-3 shrink-0">
                 <!-- Datum Navigation -->
                 <div class="flex justify-between items-center bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
-                    <button onclick="window.changeDate(-1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-30">
+                    <button onclick="changeDate(-1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-30">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
                     
                     <div class="flex-1 relative flex justify-center items-center h-10 overflow-hidden rounded-lg">
                         <span id="display-heute-date" class="text-xl font-black tracking-tight text-slate-800 pointer-events-none">--.--.----</span>
-                        <input type="date" id="heute-date" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" oninput="window.loadDayData()" onchange="window.loadDayData()">
+                        <input type="date" id="heute-date" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" oninput="loadDayData()" onchange="loadDayData()">
                     </div>
 
-                    <button onclick="window.changeDate(1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-30">
+                    <button onclick="changeDate(1)" class="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-30">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>
                 </div>
@@ -122,7 +122,7 @@
                         <div id="heute-diff" class="text-[10px] font-bold text-slate-400 mt-2">0.0h zum Soll</div>
                     </div>
                     
-                    <button onclick="window.saveDay()" class="bg-blue-600 text-white w-[85px] rounded-2xl shadow-md flex flex-col justify-center items-center active:bg-blue-700 transition-colors shrink-0">
+                    <button onclick="saveDay()" class="bg-blue-600 text-white w-[85px] rounded-2xl shadow-md flex flex-col justify-center items-center active:bg-blue-700 transition-colors shrink-0">
                         <svg class="w-8 h-8 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         <span class="text-[10px] font-bold uppercase tracking-wider">Speichern</span>
                     </button>
@@ -134,38 +134,36 @@
                 
                 <!-- Quick Action Bar -->
                 <div id="quick-action-bar" class="grid grid-cols-2 gap-3 shrink-0 mb-1">
-                    <button id="btn-kommen-gehen" onclick="window.toggleKommenGehen()" class="py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 active:bg-emerald-100">
+                    <button id="btn-kommen-gehen" onclick="toggleKommenGehen()" class="py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 active:bg-emerald-100">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
                         <span id="text-kommen-gehen" class="text-[10px] uppercase tracking-wider">Kommen</span>
                     </button>
-                    <button id="btn-pause-toggle" onclick="window.togglePause()" class="py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-amber-50 text-amber-700 border-amber-200 active:bg-amber-100">
+                    <button id="btn-pause-toggle" onclick="togglePause()" class="py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-amber-50 text-amber-700 border-amber-200 active:bg-amber-100">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <span id="text-pause-toggle" class="text-[10px] uppercase tracking-wider">Pause starten</span>
                     </button>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 shrink-0">
-                    <!-- Unsichtbares Overlay für Beginn (Aggressive Rechen-Events) -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Beginn</label>
                         <span id="display-heute-begin" class="text-3xl font-black text-slate-800 pointer-events-none z-10">--:--</span>
-                        <input type="time" id="heute-begin" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" oninput="window.updateDisplays(); window.autoSuggestBreak(); window.calculateNetto();" onchange="window.updateDisplays(); window.autoSuggestBreak(); window.calculateNetto();" onblur="window.updateDisplays(); window.autoSuggestBreak(); window.calculateNetto();">
+                        <input type="time" id="heute-begin" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" oninput="updateDisplays(); autoSuggestBreak();" onchange="updateDisplays(); autoSuggestBreak();" onblur="updateDisplays(); autoSuggestBreak();">
                     </div>
 
-                    <!-- Unsichtbares Overlay für Ende (Aggressive Rechen-Events) -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Ende</label>
                         <span id="display-heute-end" class="text-3xl font-black text-slate-800 pointer-events-none z-10">--:--</span>
-                        <input type="time" id="heute-end" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" oninput="window.updateDisplays(); window.autoSuggestBreak(); window.calculateNetto();" onchange="window.updateDisplays(); window.autoSuggestBreak(); window.calculateNetto();" onblur="window.updateDisplays(); window.autoSuggestBreak(); window.calculateNetto();">
+                        <input type="time" id="heute-end" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" oninput="updateDisplays(); autoSuggestBreak();" onchange="updateDisplays(); autoSuggestBreak();" onblur="updateDisplays(); autoSuggestBreak();">
                     </div>
 
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center focus-within:ring-2 ring-slate-200 transition-all">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pause (Min)</label>
-                        <input type="number" id="heute-pause" class="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-indigo-600" oninput="window.calculateNetto()" onchange="window.calculateNetto()" placeholder="0">
+                        <input type="number" id="heute-pause" class="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-indigo-600" oninput="calculateNetto()" onchange="calculateNetto()" placeholder="0">
                     </div>
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center focus-within:ring-2 ring-slate-200 transition-all">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Soll (Std)</label>
-                        <input type="number" step="0.1" id="heute-soll" class="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-slate-500" oninput="window.calculateNetto()" onchange="window.calculateNetto()">
+                        <input type="number" step="0.1" id="heute-soll" class="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-slate-500" oninput="calculateNetto()" onchange="calculateNetto()">
                     </div>
                 </div>
 
@@ -175,7 +173,7 @@
             </div>
 
             <div class="shrink-0 mt-auto">
-                <button onclick="window.clearDay()" class="w-full p-3 text-red-500 font-bold bg-red-50 rounded-xl active:bg-red-100 border border-red-100 transition-colors">
+                <button onclick="clearDay()" class="w-full p-3 text-red-500 font-bold bg-red-50 rounded-xl active:bg-red-100 border border-red-100 transition-colors">
                     Tageseintrag leeren
                 </button>
             </div>
@@ -186,9 +184,9 @@
         <div id="tab-kalender" class="h-full flex flex-col gap-2 hidden">
             
             <div class="flex justify-between items-center bg-blue-600 text-white p-2 rounded-xl shadow-sm shrink-0">
-                <button onclick="window.changeMonth(-1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <button onclick="changeMonth(-1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                 <div class="text-base font-bold" id="cal-month-title">Mai 2026</div>
-                <button onclick="window.changeMonth(1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                <button onclick="changeMonth(1, 'kalender')" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
             </div>
 
             <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
@@ -208,7 +206,7 @@
                 <div class="grid grid-cols-2 gap-2 text-center">
                     <div class="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
                         <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide pointer-events-none">Übertrag (AG)</div>
-                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-lg font-bold bg-transparent text-center outline-none text-slate-700 p-0 m-0" value="0" onchange="window.saveAGSaldo()">
+                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-lg font-bold bg-transparent text-center outline-none text-slate-700 p-0 m-0" value="0" onchange="saveAGSaldo()">
                     </div>
                     
                     <div class="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
@@ -238,16 +236,16 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
                         Aktiver Pinsel
                     </h2>
-                    <button onclick="window.togglePaintMode(true)" class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full active:bg-slate-200">Deaktivieren</button>
+                    <button onclick="togglePaintMode(true)" class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full active:bg-slate-200">Deaktivieren</button>
                 </div>
                 <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar" id="paint-palette"></div>
             </div>
 
             <div class="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
                 <div class="flex justify-between items-center mb-2 shrink-0">
-                    <button onclick="window.changeMonth(-1, 'planer')" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <button onclick="changeMonth(-1, 'planer')" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                     <div class="text-sm font-bold text-slate-700" id="planer-month-title">Mai 2026</div>
-                    <button onclick="window.changeMonth(1, 'planer')" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                    <button onclick="changeMonth(1, 'planer')" class="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                 </div>
 
                 <div class="grid grid-cols-7 gap-1 mb-1 text-center text-[9px] font-bold text-slate-400 uppercase shrink-0">
@@ -275,7 +273,7 @@
                         <span class="text-[10px] font-bold text-slate-500">Wochenmuster</span>
                         <label class="flex items-center gap-1.5 cursor-pointer">
                             <span class="text-[9px] font-bold text-slate-400 uppercase">Feiertage frei</span>
-                            <input type="checkbox" id="protect-holidays" class="sr-only" checked onchange="window.saveSettings()">
+                            <input type="checkbox" id="protect-holidays" class="sr-only" checked onchange="saveSettings()">
                             <div class="w-7 h-3.5 bg-slate-300 rounded-full relative transition-colors" id="toggle-bg">
                                 <div class="w-2.5 h-2.5 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform" id="toggle-dot"></div>
                             </div>
@@ -289,7 +287,7 @@
                             <input type="checkbox" id="overwrite-pattern" class="w-3.5 h-3.5 text-blue-600 rounded">
                             <span class="text-[9px] font-bold text-slate-500">Überschreiben</span>
                         </label>
-                        <button onclick="window.applyPattern()" class="px-3 py-1.5 rounded-md font-bold bg-blue-600 text-white shadow-sm active:bg-blue-700 text-[10px]">
+                        <button onclick="applyPattern()" class="px-3 py-1.5 rounded-md font-bold bg-blue-600 text-white shadow-sm active:bg-blue-700 text-[10px]">
                             Eintragen
                         </button>
                     </div>
@@ -304,16 +302,16 @@
             <div class="bg-blue-600 p-2 rounded-xl shadow-sm shrink-0 flex flex-col gap-2">
                 <!-- Navigation -->
                 <div class="flex justify-between items-center text-white">
-                    <button onclick="window.changeStatPeriod(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <button onclick="changeStatPeriod(-1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                     <div class="text-base font-bold" id="stat-period-title">Mai 2026</div>
-                    <button onclick="window.changeStatPeriod(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                    <button onclick="changeStatPeriod(1)" class="p-2 bg-blue-500 rounded-lg active:bg-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                 </div>
                 
                 <!-- Toggle -->
                 <div class="flex bg-blue-700/50 p-1 rounded-lg">
-                    <button onclick="window.setStatMode('month')" id="btn-stat-month" class="flex-1 text-[10px] font-bold py-1.5 rounded-md bg-white text-blue-600 shadow-sm transition-all">Monat</button>
-                    <button onclick="window.setStatMode('quarter')" id="btn-stat-quarter" class="flex-1 text-[10px] font-bold py-1.5 rounded-md text-blue-100 hover:text-white transition-all">Quartal</button>
-                    <button onclick="window.setStatMode('year')" id="btn-stat-year" class="flex-1 text-[10px] font-bold py-1.5 rounded-md text-blue-100 hover:text-white transition-all">Jahr</button>
+                    <button onclick="setStatMode('month')" id="btn-stat-month" class="flex-1 text-[10px] font-bold py-1.5 rounded-md bg-white text-blue-600 shadow-sm transition-all">Monat</button>
+                    <button onclick="setStatMode('quarter')" id="btn-stat-quarter" class="flex-1 text-[10px] font-bold py-1.5 rounded-md text-blue-100 hover:text-white transition-all">Quartal</button>
+                    <button onclick="setStatMode('year')" id="btn-stat-year" class="flex-1 text-[10px] font-bold py-1.5 rounded-md text-blue-100 hover:text-white transition-all">Jahr</button>
                 </div>
             </div>
 
@@ -349,7 +347,7 @@
 
             <!-- PDF EXPORT BUTTON -->
             <div class="shrink-0 mt-auto">
-                <button onclick="window.exportMonthPDF()" class="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 active:bg-indigo-700 text-sm transition-colors">
+                <button onclick="exportMonthPDF()" class="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 active:bg-indigo-700 text-sm transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     Gewählten Monat als PDF exportieren
                 </button>
@@ -372,11 +370,11 @@
                 <div class="grid grid-cols-2 gap-3 mb-3 pt-2">
                     <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
                         <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Basis-Woche</label>
-                        <input type="number" id="set-weekly-hours" class="w-full bg-transparent font-bold text-lg text-center outline-none p-0 m-0" value="40" onchange="window.saveSettings()">
+                        <input type="number" id="set-weekly-hours" class="w-full bg-transparent font-bold text-lg text-center outline-none p-0 m-0" value="40" onchange="saveSettings()">
                     </div>
                     <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
                         <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Stellenanteil (%)</label>
-                        <input type="number" id="set-percentage" class="w-full bg-transparent font-bold text-lg text-center outline-none p-0 m-0" value="100" onchange="window.saveSettings()">
+                        <input type="number" id="set-percentage" class="w-full bg-transparent font-bold text-lg text-center outline-none p-0 m-0" value="100" onchange="saveSettings()">
                     </div>
                 </div>
 
@@ -394,13 +392,13 @@
                 <div class="pt-2 border-t border-slate-50">
                     <label class="block text-[10px] font-bold text-slate-400 mb-2.5 uppercase">Reguläre Arbeitstage</label>
                     <div class="flex justify-between gap-1">
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="1" onclick="window.toggleWorkDay(1)">Mo</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="2" onclick="window.toggleWorkDay(2)">Di</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="3" onclick="window.toggleWorkDay(3)">Mi</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="4" onclick="window.toggleWorkDay(4)">Do</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="5" onclick="window.toggleWorkDay(5)">Fr</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="6" onclick="window.toggleWorkDay(6)">Sa</button>
-                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="0" onclick="window.toggleWorkDay(0)">So</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="1" onclick="toggleWorkDay(1)">Mo</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="2" onclick="toggleWorkDay(2)">Di</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="3" onclick="toggleWorkDay(3)">Mi</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="4" onclick="toggleWorkDay(4)">Do</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="5" onclick="toggleWorkDay(5)">Fr</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="6" onclick="toggleWorkDay(6)">Sa</button>
+                        <button class="day-btn flex-1 py-2 text-xs font-bold rounded-lg" data-day="0" onclick="toggleWorkDay(0)">So</button>
                     </div>
                 </div>
             </div>
@@ -412,14 +410,14 @@
                     <input type="time" id="tpl-begin" class="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                     <input type="time" id="tpl-end" class="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
                     <input type="number" id="tpl-pause" placeholder="Pause (Min)" class="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none">
-                    <button onclick="window.addTemplate()" class="col-span-2 bg-indigo-600 text-white font-bold rounded-lg text-sm active:bg-indigo-700">Speichern</button>
+                    <button onclick="addTemplate()" class="col-span-2 bg-indigo-600 text-white font-bold rounded-lg text-sm active:bg-indigo-700">Speichern</button>
                 </div>
                 <div id="setup-templates-list" class="space-y-2 mt-2"></div>
             </div>
 
             <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
                 <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Bundesland</h2>
-                <select id="state-select" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none" onchange="window.saveSettings()">
+                <select id="state-select" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none" onchange="saveSettings()">
                     <option value="BW">Baden-Württemberg</option><option value="BY">Bayern</option><option value="BE">Berlin</option>
                     <option value="BB">Brandenburg</option><option value="HB">Bremen</option><option value="HH">Hamburg</option>
                     <option value="HE">Hessen</option><option value="MV">Mecklenburg-Vorpommern</option><option value="NI">Niedersachsen</option>
@@ -427,7 +425,7 @@
                     <option value="SN">Sachsen</option><option value="ST">Sachsen-Anhalt</option><option value="SH">Schleswig-Holstein</option>
                     <option value="TH">Thüringen</option>
                 </select>
-                <button onclick="window.fetchHolidays()" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-sm active:bg-emerald-600 text-sm">
+                <button onclick="fetchHolidays()" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-sm active:bg-emerald-600 text-sm">
                     Jahresdaten aktualisieren
                 </button>
             </div>
@@ -435,7 +433,7 @@
             <div class="bg-indigo-50 p-4 rounded-xl shadow-sm space-y-3 border border-indigo-100">
                 <h2 class="font-bold text-indigo-800 border-b border-indigo-200 pb-2 text-sm">Lokales Backup (Fallback)</h2>
                 
-                <button onclick="window.exportData()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 active:bg-indigo-700">
+                <button onclick="exportData()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 active:bg-indigo-700">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                     Backup-Code kopieren
                 </button>
@@ -443,7 +441,7 @@
                 <div class="pt-2">
                     <label class="block text-[10px] font-bold text-indigo-500 mb-1 uppercase">Code hier einfügen für Import:</label>
                     <textarea id="import-data" class="w-full p-2 bg-white border border-indigo-200 rounded-lg text-xs font-mono h-16 outline-none" placeholder="eyJkYXRh..."></textarea>
-                    <button onclick="window.importData()" class="w-full mt-2 py-2 bg-red-100 text-red-700 font-bold rounded-lg text-sm active:bg-red-200">
+                    <button onclick="importData()" class="w-full mt-2 py-2 bg-red-100 text-red-700 font-bold rounded-lg text-sm active:bg-red-200">
                         Lokal Wiederherstellen
                     </button>
                 </div>
@@ -455,26 +453,26 @@
 
     <!-- Bottom Navigation -->
     <nav class="bg-white border-t border-slate-200 flex justify-around p-0.5 pb-1 shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] z-20 relative">
-        <button onclick="window.switchTab('heute')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-heute">
+        <button onclick="switchTab('heute')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-heute">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span class="text-[9px] font-bold">Heute</span>
         </button>
-        <button onclick="window.switchTab('kalender')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-kalender">
+        <button onclick="switchTab('kalender')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-kalender">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <span class="text-[9px] font-bold">Kalender</span>
         </button>
-        <button onclick="window.switchTab('planer')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-planer">
+        <button onclick="switchTab('planer')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-planer">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
             <span class="text-[9px] font-bold">Planer</span>
         </button>
-        <button onclick="window.switchTab('statistik')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-statistik">
+        <button onclick="switchTab('statistik')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-statistik">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
             </svg>
             <span class="text-[9px] font-bold">Statistik</span>
         </button>
-        <button onclick="window.switchTab('setup')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-setup">
+        <button onclick="switchTab('setup')" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 w-1/5 rounded-lg active:bg-slate-50 transition-colors" data-target="tab-setup">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             <span class="text-[9px] font-bold">Setup</span>
         </button>
@@ -539,11 +537,11 @@
                             window.appDb = { ...window.appDb, ...cloudDb };
                             localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb));
                             
-                            window.updateSetupUI();
-                            window.loadDayData();
-                            if (document.getElementById('tab-kalender').style.display !== 'none') window.renderCalendar('kalender');
-                            if (document.getElementById('tab-planer').style.display !== 'none') window.renderCalendar('planer');
-                            if (document.getElementById('tab-statistik').style.display !== 'none') window.renderStatistik();
+                            updateSetupUI();
+                            loadDayData();
+                            if (document.getElementById('tab-kalender').style.display !== 'none') renderCalendar('kalender');
+                            if (document.getElementById('tab-planer').style.display !== 'none') renderCalendar('planer');
+                            if (document.getElementById('tab-statistik').style.display !== 'none') renderStatistik();
                             
                             isSyncingFromCloud = false;
                             updateSyncUI(true, "Synchron");
@@ -695,10 +693,10 @@
                 endEl.value = timeStr;  
             }
             
-            window.updateDisplays(); 
-            window.autoSuggestBreak(); 
-            window.calculateNetto();
-            window.saveDay(); 
+            updateDisplays(); 
+            autoSuggestBreak(); 
+            calculateNetto();
+            saveDay(); 
         }
 
         function togglePause() {
@@ -716,8 +714,8 @@
             }
             
             saveData();
-            window.calculateNetto();
-            window.saveDay();
+            calculateNetto();
+            saveDay();
             updateQuickButtons();
         }
 
@@ -768,6 +766,9 @@
             document.getElementById('display-heute-end').innerText = eVal || '--:--';
 
             updateQuickButtons(); 
+            
+            // Absolute Absicherung: Sobald sich die Anzeige aktualisiert, wird SOFORT im Hintergrund mitgerechnet.
+            calculateNetto(); 
         }
 
         function getDailySoll(dateString) {
@@ -787,63 +788,50 @@
             return parseFloat(hoursPerDay.toFixed(2));
         }
 
-        // ==========================================
-        // ROBUSTE MATHE-FORMEL (Jetzt 100% kugelsicher)
-        // ==========================================
-        window.calculateMinutes = function(begin, end) {
-            try {
-                if (!begin || !end) return 0;
-                let bParts = begin.split(':');
-                let eParts = end.split(':');
-                let h1 = parseInt(bParts[0], 10) || 0;
-                let m1 = parseInt(bParts[1], 10) || 0;
-                let h2 = parseInt(eParts[0], 10) || 0;
-                let m2 = parseInt(eParts[1], 10) || 0;
+        function calculateMinutes(begin, end) {
+            if (!begin || !end) return 0;
+            let bParts = begin.split(':');
+            let eParts = end.split(':');
+            let h1 = parseInt(bParts[0], 10) || 0;
+            let m1 = parseInt(bParts[1], 10) || 0;
+            let h2 = parseInt(eParts[0], 10) || 0;
+            let m2 = parseInt(eParts[1], 10) || 0;
+            
+            let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+            if (diff < 0) diff += 24 * 60; 
+            return diff;
+        }
+
+        function calculateNetto() {
+            let begin = document.getElementById('heute-begin').value;
+            let end = document.getElementById('heute-end').value;
+            let pause = parseFloat(document.getElementById('heute-pause').value) || 0;
+            let soll = parseFloat(document.getElementById('heute-soll').value) || 0;
+
+            let nettoStr = "0.0h"; let diffStr = ""; let isPositive = false;
+
+            if (begin && end) {
+                let bruttoMin = calculateMinutes(begin, end);
+                let nettoStd = (bruttoMin - pause) / 60;
+                if (nettoStd < 0) nettoStd = 0;
                 
-                let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
-                if (diff < 0) diff += 24 * 60; // Falls Schicht über Mitternacht geht
-                return diff;
-            } catch(e) {
-                console.error("Fehler beim Rechnen:", e);
-                return 0;
-            }
-        };
-
-        window.calculateNetto = function() {
-            try {
-                let begin = document.getElementById('heute-begin').value;
-                let end = document.getElementById('heute-end').value;
-                let pause = parseFloat(document.getElementById('heute-pause').value) || 0;
-                let soll = parseFloat(document.getElementById('heute-soll').value) || 0;
-
-                let nettoStr = "0.0h"; let diffStr = ""; let isPositive = false;
-
-                if (begin && end) {
-                    let bruttoMin = window.calculateMinutes(begin, end);
-                    let nettoStd = (bruttoMin - pause) / 60;
-                    if (nettoStd < 0) nettoStd = 0;
-                    
-                    nettoStr = nettoStd.toFixed(2) + "h";
-                    let diff = nettoStd - soll;
-                    isPositive = diff >= 0;
-                    diffStr = (diff > 0 ? "+" : "") + diff.toFixed(2) + "h " + (diff >= 0 ? "Überstunden" : "Minusstunden");
+                nettoStr = nettoStd.toFixed(2) + "h";
+                let diff = nettoStd - soll;
+                isPositive = diff >= 0;
+                diffStr = (diff > 0 ? "+" : "") + diff.toFixed(2) + "h " + (diff >= 0 ? "Überstunden" : "Minusstunden");
+            } else {
+                if (soll > 0) {
+                    diffStr = "-" + soll.toFixed(2) + "h Minusstunden";
                 } else {
-                    if (soll > 0) {
-                        diffStr = "-" + soll.toFixed(2) + "h Minusstunden";
-                    } else {
-                        diffStr = "0.00h zum Soll"; isPositive = true;
-                    }
+                    diffStr = "0.00h zum Soll"; isPositive = true;
                 }
-
-                document.getElementById('heute-netto').innerText = nettoStr;
-                let diffEl = document.getElementById('heute-diff');
-                diffEl.innerText = diffStr;
-                diffEl.className = "text-[10px] font-bold mt-2 " + (isPositive ? "text-emerald-500" : "text-red-400");
-            } catch(e) {
-                console.error("Fehler bei der Netto-Berechnung:", e);
             }
-        };
-        // ==========================================
+
+            document.getElementById('heute-netto').innerText = nettoStr;
+            let diffEl = document.getElementById('heute-diff');
+            diffEl.innerText = diffStr;
+            diffEl.className = "text-[10px] font-bold mt-2 " + (isPositive ? "text-emerald-500" : "text-red-400");
+        }
 
         function switchTab(tabName) {
             document.querySelectorAll('main > div').forEach(d => { d.style.display = 'none'; });
@@ -864,7 +852,7 @@
             document.querySelector(`.nav-btn[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
 
             if (tabName === 'kalender') renderCalendar('kalender');
-            if (tabName === 'heute') window.loadDayData();
+            if (tabName === 'heute') loadDayData();
             if (tabName === 'planer') {
                 renderPatternDropdowns();
                 renderPaintPalette();
@@ -883,10 +871,10 @@
         function changeDate(days) {
             selectedDate.setDate(selectedDate.getDate() + days);
             document.getElementById('heute-date').value = getLocalDateString(selectedDate);
-            window.loadDayData();
+            loadDayData();
         }
 
-        window.loadDayData = function() {
+        function loadDayData() {
             let dStr = document.getElementById('heute-date').value;
             selectedDate = new Date(dStr);
             let entry = window.appDb.entries[dStr] || { begin: '', end: '', pause: '', soll: getDailySoll(dStr), remark: '' };
@@ -908,26 +896,26 @@
             document.getElementById('heute-soll').value = entry.soll;
             document.getElementById('heute-remark').value = entry.remark || '';
             
-            window.updateDisplays(); 
+            updateDisplays(); 
             renderHeuteTemplates();
-            window.calculateNetto();
-        };
+            calculateNetto();
+        }
 
-        window.autoSuggestBreak = function() {
+        function autoSuggestBreak() {
             let begin = document.getElementById('heute-begin').value;
             let end = document.getElementById('heute-end').value;
             if(!begin || !end) return;
-            let diffMin = window.calculateMinutes(begin, end);
+            let diffMin = calculateMinutes(begin, end);
             let suggestedPause = 0;
             if(diffMin > 9 * 60) suggestedPause = 45;
             else if(diffMin > 6 * 60) suggestedPause = 30;
             document.getElementById('heute-pause').value = suggestedPause;
-        };
+        }
 
-        window.saveDay = function() {
+        function saveDay() {
             // BEVOR gespeichert wird: Mache sicher, dass die App gerechnet hat!
-            window.updateDisplays();
-            window.calculateNetto();
+            updateDisplays();
+            calculateNetto();
 
             let dStr = document.getElementById('heute-date').value;
             let begin = document.getElementById('heute-begin').value;
@@ -943,7 +931,7 @@
             }
             saveData();
             
-            let btn = document.querySelector('#tab-heute button[onclick="window.saveDay()"]');
+            let btn = document.querySelector('#tab-heute button[onclick="saveDay()"]');
             if (btn) {
                 let oldHtml = btn.innerHTML;
                 btn.innerHTML = `<svg class="w-8 h-8 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[10px] font-bold uppercase tracking-wider">Safe!</span>`;
@@ -954,16 +942,16 @@
                     btn.classList.remove('bg-emerald-500'); btn.classList.add('bg-blue-600');
                 }, 1000);
             }
-        };
+        }
 
-        window.clearDay = function() {
+        function clearDay() {
             document.getElementById('heute-begin').value = ''; document.getElementById('heute-end').value = '';
             document.getElementById('heute-pause').value = ''; document.getElementById('heute-remark').value = '';
             document.getElementById('heute-soll').value = getDailySoll(document.getElementById('heute-date').value);
-            window.updateDisplays();
-            window.calculateNetto(); 
-            window.saveDay();
-        };
+            updateDisplays();
+            calculateNetto(); 
+            saveDay();
+        }
 
         function renderHeuteTemplates() {
             let c = document.getElementById('heute-templates'); c.innerHTML = '';
@@ -975,8 +963,8 @@
                     document.getElementById('heute-begin').value = t.begin;
                     document.getElementById('heute-end').value = t.end;
                     document.getElementById('heute-pause').value = t.pause || 30;
-                    window.updateDisplays();
-                    window.calculateNetto();
+                    updateDisplays();
+                    calculateNetto();
                 };
                 c.appendChild(b);
             });
@@ -1035,7 +1023,7 @@
                 
                 let tplMatch = null;
                 if (entry && entry.begin && entry.end) {
-                    let bMin = window.calculateMinutes(entry.begin, entry.end);
+                    let bMin = calculateMinutes(entry.begin, entry.end);
                     netStd = (bMin - (entry.pause || 0)) / 60;
                     if(netStd < 0) netStd = 0;
                     
@@ -1088,7 +1076,7 @@
                 
                 let cellHtml = `
                     <div class="${cellClass} relative border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
-                         onclick="window.handleCellClick('${dStr}', '${target}')">
+                         onclick="handleCellClick('${dStr}', '${target}')">
                         <div class="text-xs font-bold text-center ${isWeekend ? 'text-slate-400' : 'text-slate-800'}">${i}</div>
                         ${target === 'kalender' ? holidayNameHtml : ''}
                         <div class="mt-auto flex flex-col items-center justify-center w-full">
@@ -1186,7 +1174,7 @@
                     let entry = window.appDb.entries[dStr];
 
                     if (entry && entry.begin && entry.end) {
-                        let bMin = window.calculateMinutes(entry.begin, entry.end);
+                        let bMin = calculateMinutes(entry.begin, entry.end);
                         let netStd = (bMin - (entry.pause || 0)) / 60;
                         if (netStd > 0) {
                             totalNet += netStd;
@@ -1247,7 +1235,7 @@
             document.getElementById('stat-breakdown').innerHTML = breakdownHtml;
         }
 
-        window.exportMonthPDF = function() {
+        function exportMonthPDF() {
             if (!window.jspdf) {
                 alert("Die PDF-Erstellung wird noch geladen. Bitte einen Moment warten.");
                 return;
@@ -1287,7 +1275,7 @@
                 
                 let netStd = 0;
                 if (entry && entry.begin && entry.end) {
-                    let bMin = window.calculateMinutes(entry.begin, entry.end);
+                    let bMin = calculateMinutes(entry.begin, entry.end);
                     netStd = (bMin - (entry.pause || 0)) / 60;
                     if(netStd < 0) netStd = 0;
                 }
@@ -1357,7 +1345,7 @@
             doc.save(`Zeiterfassung_${monthName}_${year}.pdf`);
         }
 
-        window.handleCellClick = function(dStr, source) {
+        function handleCellClick(dStr, source) {
             if (source === 'planer' && paintModeActive && activePaintTemplate) {
                 
                 if (window.appDb.settings.protectHolidays && window.appDb.holidays[dStr] && !window.appDb.holidays[dStr].isSchool) return;
@@ -1379,23 +1367,23 @@
                 renderStatistik();
             } else if (source === 'kalender') {
                 document.getElementById('heute-date').value = dStr;
-                window.switchTab('heute');
+                switchTab('heute');
             }
         }
 
-        window.saveAGSaldo = function() {
+        function saveAGSaldo() {
             window.appDb.settings.agSaldo = parseFloat(document.getElementById('saldo-ag').value) || 0;
             saveData();
             renderCalendar('kalender');
         }
 
-        window.setPaintTemplate = function(tplId) {
+        function setPaintTemplate(tplId) {
             activePaintTemplate = tplId;
             paintModeActive = true;
             renderPaintPalette();
         }
 
-        window.togglePaintMode = function(forceOff = false) {
+        function togglePaintMode(forceOff = false) {
             paintModeActive = false;
             activePaintTemplate = null;
             renderPaintPalette();
@@ -1411,7 +1399,7 @@
                 : 'bg-red-50 text-red-600 border-red-200 active:bg-red-100';
                 
             container.innerHTML += `
-                <button onclick="window.setPaintTemplate('clear')" class="flex-shrink-0 px-3 py-1.5 rounded-lg font-bold text-xs border transition-all ${clearClass}">
+                <button onclick="setPaintTemplate('clear')" class="flex-shrink-0 px-3 py-1.5 rounded-lg font-bold text-xs border transition-all ${clearClass}">
                     ❌ Löschen
                 </button>
             `;
@@ -1425,7 +1413,7 @@
                     : `${color.bg} ${color.text} ${color.border} active:brightness-95 shadow-sm`;
                     
                 container.innerHTML += `
-                    <button onclick="window.setPaintTemplate(${t.id})" class="flex-shrink-0 px-3 py-1.5 rounded-lg font-bold text-xs border transition-all ${btnClass}">
+                    <button onclick="setPaintTemplate(${t.id})" class="flex-shrink-0 px-3 py-1.5 rounded-lg font-bold text-xs border transition-all ${btnClass}">
                         🖌️ ${t.name}
                     </button>
                 `;
@@ -1453,7 +1441,7 @@
             });
         }
 
-        window.applyPattern = function() {
+        function applyPattern() {
             let year = currentViewDate.getFullYear();
             let month = currentViewDate.getMonth();
             let daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -1494,7 +1482,7 @@
             alert(`${count} Schichten in diesen Monat eingetragen!`);
         }
 
-        window.updateSetupUI = function() {
+        function updateSetupUI() {
             document.getElementById('set-weekly-hours').value = window.appDb.settings.model.hours;
             document.getElementById('set-percentage').value = window.appDb.settings.model.percentage || 100;
             document.getElementById('state-select').value = window.appDb.settings.state || "NW";
@@ -1522,14 +1510,14 @@
             renderSetupTemplates();
         }
 
-        window.toggleWorkDay = function(dayInt) {
+        function toggleWorkDay(dayInt) {
             let idx = window.appDb.settings.model.days.indexOf(dayInt);
             if(idx > -1) window.appDb.settings.model.days.splice(idx, 1);
             else window.appDb.settings.model.days.push(dayInt);
-            window.saveSettings();
+            saveSettings();
         }
 
-        window.saveSettings = function() {
+        function saveSettings() {
             let oldPercent = window.appDb.settings.model.percentage || 100;
             let alterSollWert = (window.appDb.settings.model.hours * (oldPercent / 100)) / Math.max(1, window.appDb.settings.model.days.length);
 
@@ -1556,7 +1544,7 @@
                 }
             }
             saveData();
-            window.updateSetupUI();
+            updateSetupUI();
         }
 
         function updateToggleUI() {
@@ -1572,7 +1560,7 @@
             }
         }
 
-        window.addTemplate = function() {
+        function addTemplate() {
             let name = document.getElementById('tpl-name').value;
             let begin = document.getElementById('tpl-begin').value;
             let end = document.getElementById('tpl-end').value;
@@ -1588,7 +1576,7 @@
             }
         }
 
-        window.deleteTemplate = function(id) {
+        function deleteTemplate(id) {
             window.appDb.templates = window.appDb.templates.filter(t => t.id !== id);
             saveData();
             renderSetupTemplates();
@@ -1609,7 +1597,7 @@
                                 <div class="text-xs text-slate-500">${t.begin} - ${t.end} (${t.pause || 0}m Pause)</div>
                             </div>
                         </div>
-                        <button onclick="window.deleteTemplate(${t.id})" class="text-red-400 p-2 active:bg-red-50 rounded-lg">
+                        <button onclick="deleteTemplate(${t.id})" class="text-red-400 p-2 active:bg-red-50 rounded-lg">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
@@ -1617,7 +1605,7 @@
             });
         }
 
-        window.exportData = function() {
+        function exportData() {
             let dataStr = btoa(encodeURIComponent(JSON.stringify(window.appDb)));
             if(navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(dataStr).then(() => {
@@ -1632,7 +1620,7 @@
             }
         }
 
-        window.importData = function() {
+        function importData() {
             let dataStr = document.getElementById('import-data').value.trim();
             if(!dataStr) return;
             try {
@@ -1652,8 +1640,8 @@
             }
         }
 
-        window.fetchHolidays = async function() {
-            let btn = document.querySelector('button[onclick="window.fetchHolidays()"]');
+        async function fetchHolidays() {
+            let btn = document.querySelector('button[onclick="fetchHolidays()"]');
             if(btn) {
                 btn.innerText = "Lädt...";
                 btn.classList.add("opacity-50");
@@ -1699,7 +1687,7 @@
             });
         }
 
-        // Start
+        // --- Initiiere die App beim ersten Laden ---
         init();
     </script>
 </body>
