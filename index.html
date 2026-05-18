@@ -28,6 +28,37 @@
         }
         input, textarea, select { user-select: text; }
         
+        /* OVERLAY-TRICK: Perfekte Zentrierung ohne Android-Pfeile */
+        input[type="date"], input[type="time"] {
+            text-align: center !important;
+            position: relative;
+            background: transparent;
+            width: 100%;
+        }
+
+        input::-webkit-datetime-edit,
+        input::-webkit-datetime-edit-fields-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Natives Icon unsichtbar über das Feld legen */
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        
         .cal-cell { 
             display: flex;
             flex-direction: column;
@@ -68,7 +99,6 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
                     
-                    <!-- FIX: Unsichtbares Overlay-Feld über dem zentrierten Text -->
                     <div class="flex-1 relative flex justify-center items-center h-10 overflow-hidden rounded-lg">
                         <span id="display-heute-date" class="text-xl font-black tracking-tight text-slate-800 pointer-events-none">--.--.----</span>
                         <input type="date" id="heute-date" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" onchange="loadDayData()">
@@ -115,14 +145,14 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 shrink-0">
-                    <!-- FIX: Unsichtbares Overlay für Beginn -->
+                    <!-- Unsichtbares Overlay für Beginn -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Beginn</label>
                         <span id="display-heute-begin" class="text-3xl font-black text-slate-800 pointer-events-none z-10">--:--</span>
                         <input type="time" id="heute-begin" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
-                    <!-- FIX: Unsichtbares Overlay für Ende -->
+                    <!-- Unsichtbares Overlay für Ende -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Ende</label>
                         <span id="display-heute-end" class="text-3xl font-black text-slate-800 pointer-events-none z-10">--:--</span>
@@ -330,10 +360,16 @@
         <!-- ================= TAB: SETUP ================= -->
         <div id="tab-setup" class="space-y-4 hidden pb-4">
             
-            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
+            <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100 relative">
+                <!-- CLOUD SYNC STATUS -->
+                <div class="absolute top-4 right-4 flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
+                    <div id="sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></div>
+                    <span id="sync-status" class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Lokal</span>
+                </div>
+
                 <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Arbeitszeit-Modell</h2>
                 
-                <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="grid grid-cols-2 gap-3 mb-3 pt-2">
                     <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
                         <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Basis-Woche</label>
                         <input type="number" id="set-weekly-hours" class="w-full bg-transparent font-bold text-lg text-center outline-none p-0 m-0" value="40" onchange="saveSettings()">
@@ -397,7 +433,7 @@
             </div>
 
             <div class="bg-indigo-50 p-4 rounded-xl shadow-sm space-y-3 border border-indigo-100">
-                <h2 class="font-bold text-indigo-800 border-b border-indigo-200 pb-2 text-sm">Daten sichern & übertragen</h2>
+                <h2 class="font-bold text-indigo-800 border-b border-indigo-200 pb-2 text-sm">Lokales Backup (Fallback)</h2>
                 
                 <button onclick="exportData()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 active:bg-indigo-700">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
@@ -408,7 +444,7 @@
                     <label class="block text-[10px] font-bold text-indigo-500 mb-1 uppercase">Code hier einfügen für Import:</label>
                     <textarea id="import-data" class="w-full p-2 bg-white border border-indigo-200 rounded-lg text-xs font-mono h-16 outline-none" placeholder="eyJkYXRh..."></textarea>
                     <button onclick="importData()" class="w-full mt-2 py-2 bg-red-100 text-red-700 font-bold rounded-lg text-sm active:bg-red-200">
-                        Wiederherstellen
+                        Lokal Wiederherstellen
                     </button>
                 </div>
             </div>
@@ -444,6 +480,131 @@
         </button>
     </nav>
 
+    <!-- FIREBASE CLOUD SYNC MODULE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let firebaseApp, auth, dbFirestore, currentUser = null;
+        let isSyncingFromCloud = false;
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'zeiterfassung-app-1';
+
+        // Firebase Setup & Config Injection
+        if (typeof __firebase_config !== 'undefined') {
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                firebaseApp = initializeApp(firebaseConfig);
+                auth = getAuth(firebaseApp);
+                dbFirestore = getFirestore(firebaseApp);
+            } catch(e) {
+                console.error("Firebase Config Error:", e);
+            }
+        }
+
+        async function initAuth() {
+            if (!auth) return;
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch(e) {
+                console.error("Auth init failed:", e);
+                updateSyncUI(false, "Offline");
+            }
+        }
+
+        function setupCloudSync() {
+            if (!currentUser || !dbFirestore) return;
+            
+            updateSyncUI(true, "Verbunden");
+            
+            const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'appState', 'main');
+            
+            // Listen for Cloud Changes
+            onSnapshot(docRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    if (data.appData) {
+                        try {
+                            isSyncingFromCloud = true;
+                            let cloudDb = JSON.parse(data.appData);
+                            
+                            // Merge and update local state
+                            window.appDb = { ...window.appDb, ...cloudDb };
+                            localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb));
+                            
+                            // Force UI Refresh
+                            window.updateSetupUI();
+                            window.loadDayData();
+                            if (document.getElementById('tab-kalender').style.display !== 'none') window.renderCalendar('kalender');
+                            if (document.getElementById('tab-planer').style.display !== 'none') window.renderCalendar('planer');
+                            if (document.getElementById('tab-statistik').style.display !== 'none') window.renderStatistik();
+                            
+                            isSyncingFromCloud = false;
+                            updateSyncUI(true, "Synchron");
+                        } catch(e) {
+                            console.error("Cloud data parse error", e);
+                            isSyncingFromCloud = false;
+                        }
+                    }
+                } else {
+                    // First time: Upload local data to cloud
+                    window.saveDataToCloud();
+                }
+            }, (error) => {
+                console.error("Sync listener error:", error);
+                updateSyncUI(false, "Fehler");
+            });
+        }
+
+        function updateSyncUI(isActive, text) {
+            const statusEl = document.getElementById('sync-status');
+            const dotEl = document.getElementById('sync-dot');
+            if(statusEl && dotEl) {
+                statusEl.innerText = text;
+                dotEl.className = isActive ? "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]" : "w-2 h-2 rounded-full bg-slate-400";
+            }
+        }
+
+        // Global function to push data to cloud (called by the main save function)
+        window.saveDataToCloud = async function() {
+            if (!currentUser || !dbFirestore || isSyncingFromCloud) return;
+            
+            try {
+                updateSyncUI(true, "Speichern...");
+                const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'appState', 'main');
+                await setDoc(docRef, { 
+                    appData: JSON.stringify(window.appDb), 
+                    updatedAt: Date.now() 
+                });
+                updateSyncUI(true, "Synchron");
+            } catch(e) {
+                console.error("Cloud push failed:", e);
+                updateSyncUI(false, "Fehler beim Speichern");
+            }
+        };
+
+        // Start Firebase
+        if (auth) {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUser = user;
+                    setupCloudSync();
+                } else {
+                    updateSyncUI(false, "Getrennt");
+                }
+            });
+            initAuth();
+        } else {
+            updateSyncUI(false, "Lokal Modus");
+        }
+    </script>
+
+    <!-- MAIN APP LOGIC -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -459,7 +620,8 @@
             { bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-200' }
         ];
 
-        let db = {
+        // Mache db global für das Cloud Modul zugänglich
+        window.appDb = {
             entries: {},
             templates: [
                 { id: 1, name: "Früh", begin: "06:00", end: "14:30", pause: 30 },
@@ -480,7 +642,6 @@
         let activePaintTemplate = null;
         let statMode = 'month'; 
 
-        // Hilfsfunktion: Garantiert IMMER das richtige lokale Datum als YYYY-MM-DD
         function getLocalDateString(d) {
             let year = d.getFullYear();
             let month = String(d.getMonth() + 1).padStart(2, '0');
@@ -492,18 +653,18 @@
             const saved = localStorage.getItem('zeiterfassung_db');
             if (saved) {
                 try { 
-                    db = { ...db, ...JSON.parse(saved) }; 
-                    if(!db.settings.model) db.settings.model = { hours: 40, days: [1,2,3,4,5], percentage: 100 };
-                    if(db.settings.model.percentage === undefined) db.settings.model.percentage = 100;
-                    if(db.settings.protectHolidays === undefined) db.settings.protectHolidays = true;
+                    window.appDb = { ...window.appDb, ...JSON.parse(saved) }; 
+                    if(!window.appDb.settings.model) window.appDb.settings.model = { hours: 40, days: [1,2,3,4,5], percentage: 100 };
+                    if(window.appDb.settings.model.percentage === undefined) window.appDb.settings.model.percentage = 100;
+                    if(window.appDb.settings.protectHolidays === undefined) window.appDb.settings.protectHolidays = true;
                 } catch(e) {}
             }
 
-            if (db.settings.protectHolidays) {
+            if (window.appDb.settings.protectHolidays) {
                 let changed = false;
-                for (let dStr in db.entries) {
-                    let entry = db.entries[dStr];
-                    if (db.holidays[dStr] && !db.holidays[dStr].isSchool) {
+                for (let dStr in window.appDb.entries) {
+                    let entry = window.appDb.entries[dStr];
+                    if (window.appDb.holidays[dStr] && !window.appDb.holidays[dStr].isSchool) {
                         if (!entry.begin && !entry.end && entry.soll > 0) {
                             entry.soll = 0;
                             changed = true;
@@ -519,7 +680,13 @@
             switchTab('heute');
         }
 
-        function saveData() { localStorage.setItem('zeiterfassung_db', JSON.stringify(db)); }
+        function saveData() { 
+            localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb)); 
+            // Ruft die Cloud-Speichern Funktion im Modul auf, falls vorhanden
+            if (window.saveDataToCloud) {
+                window.saveDataToCloud();
+            }
+        }
 
         function toggleKommenGehen() {
             let now = new Date();
@@ -531,9 +698,9 @@
             let endEl = document.getElementById('heute-end');
 
             if (!beginEl.value) {
-                beginEl.value = timeStr; // Kommen
+                beginEl.value = timeStr;
             } else {
-                endEl.value = timeStr;   // Gehen
+                endEl.value = timeStr;  
             }
             
             updateDisplays(); 
@@ -543,17 +710,17 @@
         }
 
         function togglePause() {
-            if (db.activePauseStart) {
-                let start = new Date(db.activePauseStart);
+            if (window.appDb.activePauseStart) {
+                let start = new Date(window.appDb.activePauseStart);
                 let diffMins = Math.round((new Date() - start) / 60000); 
                 
                 let pauseEl = document.getElementById('heute-pause');
                 let currentPause = parseInt(pauseEl.value) || 0;
                 pauseEl.value = currentPause + diffMins;
                 
-                db.activePauseStart = null;
+                window.appDb.activePauseStart = null;
             } else {
-                db.activePauseStart = new Date().toISOString();
+                window.appDb.activePauseStart = new Date().toISOString();
             }
             
             saveData();
@@ -586,12 +753,23 @@
             }
 
             let btnPause = document.getElementById('btn-pause-toggle');
-            if (db.activePauseStart) {
+            if (window.appDb.activePauseStart) {
                 btnPause.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-amber-500 text-white border-amber-600 active:bg-amber-600 animate-pulse";
                 btnPause.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path></svg><span class="text-[10px] uppercase tracking-wider">Pause beenden</span>`;
             } else {
                 btnPause.className = "py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 bg-amber-50 text-amber-700 border-amber-200 active:bg-amber-100";
                 btnPause.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-[10px] uppercase tracking-wider">Pause starten</span>`;
+            }
+        }
+
+        function openPicker(id) {
+            let el = document.getElementById(id);
+            if(el) {
+                try {
+                    el.showPicker();
+                } catch(e) {
+                    el.focus(); el.click();
+                }
             }
         }
 
@@ -614,16 +792,16 @@
         function getDailySoll(dateString) {
             let date = new Date(dateString);
             let day = date.getDay();
-            let isWorkDay = db.settings.model.days.includes(day);
+            let isWorkDay = window.appDb.settings.model.days.includes(day);
             if (!isWorkDay) return 0.0;
             
-            if (db.settings.protectHolidays && db.holidays[dateString] && !db.holidays[dateString].isSchool) {
+            if (window.appDb.settings.protectHolidays && window.appDb.holidays[dateString] && !window.appDb.holidays[dateString].isSchool) {
                 return 0.0;
             }
 
-            let percent = db.settings.model.percentage || 100;
-            let effWeekly = db.settings.model.hours * (percent / 100);
-            let hoursPerDay = effWeekly / db.settings.model.days.length;
+            let percent = window.appDb.settings.model.percentage || 100;
+            let effWeekly = window.appDb.settings.model.hours * (percent / 100);
+            let hoursPerDay = effWeekly / window.appDb.settings.model.days.length;
             
             return parseFloat(hoursPerDay.toFixed(2));
         }
@@ -681,8 +859,8 @@
         function loadDayData() {
             let dStr = document.getElementById('heute-date').value;
             selectedDate = new Date(dStr);
-            let entry = db.entries[dStr] || { begin: '', end: '', pause: '', soll: getDailySoll(dStr), remark: '' };
-            let hol = db.holidays[dStr];
+            let entry = window.appDb.entries[dStr] || { begin: '', end: '', pause: '', soll: getDailySoll(dStr), remark: '' };
+            let hol = window.appDb.holidays[dStr];
             
             let banner = document.getElementById('heute-holiday-banner');
             if (hol) {
@@ -756,21 +934,23 @@
             let remark = document.getElementById('heute-remark').value.trim();
 
             if (!begin && !end && soll === 0 && !remark) {
-                delete db.entries[dStr];
+                delete window.appDb.entries[dStr];
             } else {
-                db.entries[dStr] = { begin, end, pause, soll, remark };
+                window.appDb.entries[dStr] = { begin, end, pause, soll, remark };
             }
             saveData();
             
-            let btn = document.querySelector('#tab-heute button[onclick="saveDay()"]');
-            let oldHtml = btn.innerHTML;
-            btn.innerHTML = `<svg class="w-8 h-8 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[10px] font-bold uppercase tracking-wider">Safe!</span>`;
-            
-            btn.classList.add('bg-emerald-500'); btn.classList.remove('bg-blue-600');
-            setTimeout(() => {
-                btn.innerHTML = oldHtml;
-                btn.classList.remove('bg-emerald-500'); btn.classList.add('bg-blue-600');
-            }, 1000);
+            let btn = document.querySelector('#tab-heute button[onclick="window.saveDay()"]');
+            if (btn) {
+                let oldHtml = btn.innerHTML;
+                btn.innerHTML = `<svg class="w-8 h-8 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[10px] font-bold uppercase tracking-wider">Safe!</span>`;
+                
+                btn.classList.add('bg-emerald-500'); btn.classList.remove('bg-blue-600');
+                setTimeout(() => {
+                    btn.innerHTML = oldHtml;
+                    btn.classList.remove('bg-emerald-500'); btn.classList.add('bg-blue-600');
+                }, 1000);
+            }
         }
 
         function clearDay() {
@@ -783,7 +963,7 @@
 
         function renderHeuteTemplates() {
             let c = document.getElementById('heute-templates'); c.innerHTML = '';
-            db.templates.forEach(t => {
+            window.appDb.templates.forEach(t => {
                 let b = document.createElement('button');
                 b.className = "px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-bold text-sm shadow-sm whitespace-nowrap active:bg-indigo-100 border border-indigo-100";
                 b.innerText = t.name;
@@ -843,8 +1023,8 @@
                 let dateObj = new Date(dStr);
                 let dayOfWeek = dateObj.getDay();
                 let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-                let entry = db.entries[dStr];
-                let holiday = db.holidays[dStr];
+                let entry = window.appDb.entries[dStr];
+                let holiday = window.appDb.holidays[dStr];
                 
                 let netStd = 0;
                 let daySoll = entry && entry.soll !== undefined ? entry.soll : getDailySoll(dStr);
@@ -855,7 +1035,7 @@
                     netStd = (bMin - (entry.pause || 0)) / 60;
                     if(netStd < 0) netStd = 0;
                     
-                    tplMatch = db.templates.find(t => t.begin === entry.begin && t.end === entry.end && (t.pause||0) == (entry.pause||0));
+                    tplMatch = window.appDb.templates.find(t => t.begin === entry.begin && t.end === entry.end && (t.pause||0) == (entry.pause||0));
                 }
                 
                 let dayDiff = netStd - daySoll;
@@ -890,7 +1070,7 @@
                         <div class="text-[11px] font-black ${diffColor} mt-0.5 text-center">${netStd.toFixed(1)}h</div>
                     `;
                 } else if (target === 'planer' && tplMatch) {
-                    let tplIndex = db.templates.findIndex(t => t.id === tplMatch.id);
+                    let tplIndex = window.appDb.templates.findIndex(t => t.id === tplMatch.id);
                     let color = plannerColors[tplIndex % plannerColors.length];
                     
                     bgClass = `${color.bg} ${color.border}`;
@@ -904,7 +1084,7 @@
                 
                 let cellHtml = `
                     <div class="${cellClass} relative border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden" 
-                         onclick="handleCellClick('${dStr}', '${target}')">
+                         onclick="window.handleCellClick('${dStr}', '${target}')">
                         <div class="text-xs font-bold text-center ${isWeekend ? 'text-slate-400' : 'text-slate-800'}">${i}</div>
                         ${target === 'kalender' ? holidayNameHtml : ''}
                         <div class="mt-auto flex flex-col items-center justify-center w-full">
@@ -923,15 +1103,15 @@
             }
 
             if (target === 'kalender') {
-                let agSaldo = parseFloat(db.settings.agSaldo || 0);
+                let agSaldo = parseFloat(window.appDb.settings.agSaldo || 0);
                 let total = agSaldo + appTotalDiff;
                 document.getElementById('saldo-app').innerText = (appTotalDiff > 0 ? '+' : '') + appTotalDiff.toFixed(2) + " h";
                 document.getElementById('saldo-app').className = "text-xl font-bold " + (appTotalDiff >= 0 ? "text-emerald-500" : "text-red-500");
                 document.getElementById('saldo-ag').value = agSaldo;
                 document.getElementById('saldo-total').innerText = (total > 0 ? '+' : '') + total.toFixed(2) + " h";
                 
-                let percent = db.settings.model.percentage || 100;
-                let effWeekly = db.settings.model.hours * (percent / 100);
+                let percent = window.appDb.settings.model.percentage || 100;
+                let effWeekly = window.appDb.settings.model.hours * (percent / 100);
                 let hrMonthlySoll = effWeekly * 13 / 3;
                 document.getElementById('kalender-hr-soll').innerText = hrMonthlySoll.toFixed(1) + " h";
             }
@@ -990,7 +1170,7 @@
             let totalDaysInPeriod = 0;
             let tplDistribution = {};
 
-            db.templates.forEach(t => tplDistribution[t.name] = 0);
+            window.appDb.templates.forEach(t => tplDistribution[t.name] = 0);
             tplDistribution['Individuell / Sonstige'] = 0;
 
             for (let m = startMonth; m <= endMonth; m++) {
@@ -999,7 +1179,7 @@
 
                 for (let i = 1; i <= daysInMonth; i++) {
                     let dStr = `${year}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                    let entry = db.entries[dStr];
+                    let entry = window.appDb.entries[dStr];
 
                     if (entry && entry.begin && entry.end) {
                         let bMin = calculateMinutes(entry.begin, entry.end);
@@ -1008,7 +1188,7 @@
                             totalNet += netStd;
                             daysWorked++;
 
-                            let matchedTpl = db.templates.find(t => t.begin === entry.begin && t.end === entry.end && (t.pause || 0) == (entry.pause || 0));
+                            let matchedTpl = window.appDb.templates.find(t => t.begin === entry.begin && t.end === entry.end && (t.pause || 0) == (entry.pause || 0));
                             if (matchedTpl) {
                                 tplDistribution[matchedTpl.name] += netStd;
                             } else {
@@ -1022,8 +1202,8 @@
             let avgDay = daysWorked > 0 ? (totalNet / daysWorked) : 0;
             let avgWeek = totalNet / (totalDaysInPeriod / 7);
 
-            let percent = db.settings.model.percentage || 100;
-            let effWeekly = db.settings.model.hours * (percent / 100);
+            let percent = window.appDb.settings.model.percentage || 100;
+            let effWeekly = window.appDb.settings.model.hours * (percent / 100);
             let hrMonthlySoll = effWeekly * 13 / 3;
             let hrPeriodSoll = 0;
             
@@ -1094,7 +1274,7 @@
                 let dayName = dateObj.toLocaleDateString('de-DE', { weekday: 'short' });
                 let dateFormatted = `${String(i).padStart(2,'0')}.${String(month+1).padStart(2,'0')}.`;
 
-                let entry = db.entries[dStr];
+                let entry = window.appDb.entries[dStr];
                 let daySoll = entry && entry.soll !== undefined ? entry.soll : getDailySoll(dStr);
                 
                 let begin = entry && entry.begin ? entry.begin : '-';
@@ -1134,8 +1314,8 @@
                 ]);
             }
 
-            let percent = db.settings.model.percentage || 100;
-            let effWeekly = db.settings.model.hours * (percent / 100);
+            let percent = window.appDb.settings.model.percentage || 100;
+            let effWeekly = window.appDb.settings.model.hours * (percent / 100);
             let hrMonthlySoll = effWeekly * 13 / 3;
 
             doc.autoTable({
@@ -1173,20 +1353,19 @@
 
             doc.save(`Zeiterfassung_${monthName}_${year}.pdf`);
         }
-        // ====================================================
 
         function handleCellClick(dStr, source) {
             if (source === 'planer' && paintModeActive && activePaintTemplate) {
                 
-                if (db.settings.protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) return;
+                if (window.appDb.settings.protectHolidays && window.appDb.holidays[dStr] && !window.appDb.holidays[dStr].isSchool) return;
 
                 if (activePaintTemplate === "clear") {
-                    delete db.entries[dStr];
+                    delete window.appDb.entries[dStr];
                 } else {
-                    let t = db.templates.find(x => x.id == activePaintTemplate);
+                    let t = window.appDb.templates.find(x => x.id == activePaintTemplate);
                     if (t) {
-                        let e = db.entries[dStr] || {};
-                        db.entries[dStr] = {
+                        let e = window.appDb.entries[dStr] || {};
+                        window.appDb.entries[dStr] = {
                             begin: t.begin, end: t.end, pause: t.pause || 30,
                             soll: e.soll !== undefined ? e.soll : getDailySoll(dStr), remark: e.remark || ''
                         };
@@ -1202,7 +1381,7 @@
         }
 
         function saveAGSaldo() {
-            db.settings.agSaldo = parseFloat(document.getElementById('saldo-ag').value) || 0;
+            window.appDb.settings.agSaldo = parseFloat(document.getElementById('saldo-ag').value) || 0;
             saveData();
             renderCalendar('kalender');
         }
@@ -1234,7 +1413,7 @@
                 </button>
             `;
 
-            db.templates.forEach((t, index) => {
+            window.appDb.templates.forEach((t, index) => {
                 let isAct = activePaintTemplate == t.id;
                 let color = plannerColors[index % plannerColors.length];
                 
@@ -1256,7 +1435,7 @@
             c.innerHTML = '';
             const days = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
             let tplOptions = `<option value="">- Frei -</option>`;
-            db.templates.forEach(t => { tplOptions += `<option value="${t.id}">${t.name}</option>`; });
+            window.appDb.templates.forEach(t => { tplOptions += `<option value="${t.id}">${t.name}</option>`; });
 
             days.forEach((d, i) => {
                 let extraClass = i === 6 ? "col-span-2" : "";
@@ -1276,7 +1455,7 @@
             let month = currentViewDate.getMonth();
             let daysInMonth = new Date(year, month + 1, 0).getDate();
             let overwrite = document.getElementById('overwrite-pattern').checked;
-            let protectHolidays = db.settings.protectHolidays;
+            let protectHolidays = document.getElementById('protect-holidays').checked;
             let pattern = {};
             for(let i=1; i<=7; i++) {
                 let jsDay = i === 7 ? 0 : i; 
@@ -1290,14 +1469,14 @@
                 let dayOfWeek = dateObj.getDay();
                 let tplId = pattern[dayOfWeek];
 
-                if (protectHolidays && db.holidays[dStr] && !db.holidays[dStr].isSchool) continue; 
+                if (protectHolidays && window.appDb.holidays[dStr] && !window.appDb.holidays[dStr].isSchool) continue; 
 
                 if (tplId) {
-                    let existing = db.entries[dStr];
+                    let existing = window.appDb.entries[dStr];
                     if (!existing || overwrite) {
-                        let t = db.templates.find(x => x.id == tplId);
+                        let t = window.appDb.templates.find(x => x.id == tplId);
                         if (t) {
-                            db.entries[dStr] = {
+                            window.appDb.entries[dStr] = {
                                 begin: t.begin, end: t.end, pause: t.pause || 30,
                                 soll: existing && existing.soll !== undefined ? existing.soll : getDailySoll(dStr),
                                 remark: existing ? existing.remark : ''
@@ -1313,57 +1492,57 @@
         }
 
         function updateSetupUI() {
-            document.getElementById('set-weekly-hours').value = db.settings.model.hours;
-            document.getElementById('set-percentage').value = db.settings.model.percentage || 100;
-            document.getElementById('state-select').value = db.settings.state || "NW";
+            document.getElementById('set-weekly-hours').value = window.appDb.settings.model.hours;
+            document.getElementById('set-percentage').value = window.appDb.settings.model.percentage || 100;
+            document.getElementById('state-select').value = window.appDb.settings.state || "NW";
             
             document.querySelectorAll('.day-btn').forEach(btn => {
                 let d = parseInt(btn.getAttribute('data-day'));
-                if (db.settings.model.days.includes(d)) {
+                if (window.appDb.settings.model.days.includes(d)) {
                     btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-blue-100 text-blue-700 border-2 border-blue-500 transition-colors";
                 } else {
                     btn.className = "day-btn flex-1 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 border-2 border-transparent transition-colors";
                 }
             });
             
-            let percent = db.settings.model.percentage || 100;
-            let effWeekly = db.settings.model.hours * (percent / 100);
+            let percent = window.appDb.settings.model.percentage || 100;
+            let effWeekly = window.appDb.settings.model.hours * (percent / 100);
             
-            let daily = (effWeekly / Math.max(1, db.settings.model.days.length)).toFixed(2);
+            let daily = (effWeekly / Math.max(1, window.appDb.settings.model.days.length)).toFixed(2);
             document.getElementById('calc-daily-soll').innerText = daily + " h";
             
             let hrMonthly = (effWeekly * 13 / 3).toFixed(1);
             document.getElementById('calc-hr-monthly').innerText = hrMonthly + " h";
 
-            document.getElementById('protect-holidays').checked = db.settings.protectHolidays;
+            document.getElementById('protect-holidays').checked = window.appDb.settings.protectHolidays;
             updateToggleUI();
             renderSetupTemplates();
         }
 
         function toggleWorkDay(dayInt) {
-            let idx = db.settings.model.days.indexOf(dayInt);
-            if(idx > -1) db.settings.model.days.splice(idx, 1);
-            else db.settings.model.days.push(dayInt);
+            let idx = window.appDb.settings.model.days.indexOf(dayInt);
+            if(idx > -1) window.appDb.settings.model.days.splice(idx, 1);
+            else window.appDb.settings.model.days.push(dayInt);
             saveSettings();
         }
 
         function saveSettings() {
-            let oldPercent = db.settings.model.percentage || 100;
-            let alterSollWert = (db.settings.model.hours * (oldPercent / 100)) / Math.max(1, db.settings.model.days.length);
+            let oldPercent = window.appDb.settings.model.percentage || 100;
+            let alterSollWert = (window.appDb.settings.model.hours * (oldPercent / 100)) / Math.max(1, window.appDb.settings.model.days.length);
 
-            db.settings.model.hours = parseFloat(document.getElementById('set-weekly-hours').value) || 40;
-            db.settings.model.percentage = parseFloat(document.getElementById('set-percentage').value) || 100;
-            db.settings.state = document.getElementById('state-select').value;
-            db.settings.protectHolidays = document.getElementById('protect-holidays').checked;
+            window.appDb.settings.model.hours = parseFloat(document.getElementById('set-weekly-hours').value) || 40;
+            window.appDb.settings.model.percentage = parseFloat(document.getElementById('set-percentage').value) || 100;
+            window.appDb.settings.state = document.getElementById('state-select').value;
+            window.appDb.settings.protectHolidays = document.getElementById('protect-holidays').checked;
             
-            let newPercent = db.settings.model.percentage;
-            let neuerSollWert = (db.settings.model.hours * (newPercent / 100)) / Math.max(1, db.settings.model.days.length);
+            let newPercent = window.appDb.settings.model.percentage;
+            let neuerSollWert = (window.appDb.settings.model.hours * (newPercent / 100)) / Math.max(1, window.appDb.settings.model.days.length);
 
             if (alterSollWert !== neuerSollWert) {
-                for (let dateStr in db.entries) {
-                    let entry = db.entries[dateStr];
+                for (let dateStr in window.appDb.entries) {
+                    let entry = window.appDb.entries[dateStr];
                     let dateObj = new Date(dateStr);
-                    let isWorkDay = db.settings.model.days.includes(dateObj.getDay());
+                    let isWorkDay = window.appDb.settings.model.days.includes(dateObj.getDay());
                     
                     if (isWorkDay && Math.abs(entry.soll - alterSollWert) < 0.01) {
                         entry.soll = parseFloat(neuerSollWert.toFixed(2));
@@ -1396,7 +1575,7 @@
             let end = document.getElementById('tpl-end').value;
             let pause = document.getElementById('tpl-pause').value;
             if (name && begin && end) {
-                db.templates.push({ id: Date.now(), name, begin, end, pause: parseInt(pause)||0 });
+                window.appDb.templates.push({ id: Date.now(), name, begin, end, pause: parseInt(pause)||0 });
                 saveData();
                 renderSetupTemplates();
                 document.getElementById('tpl-name').value = '';
@@ -1407,7 +1586,7 @@
         }
 
         function deleteTemplate(id) {
-            db.templates = db.templates.filter(t => t.id !== id);
+            window.appDb.templates = window.appDb.templates.filter(t => t.id !== id);
             saveData();
             renderSetupTemplates();
         }
@@ -1415,7 +1594,7 @@
         function renderSetupTemplates() {
             let c = document.getElementById('setup-templates-list');
             c.innerHTML = '';
-            db.templates.forEach((t, index) => {
+            window.appDb.templates.forEach((t, index) => {
                 let color = plannerColors[index % plannerColors.length];
                 
                 c.innerHTML += `
@@ -1436,10 +1615,10 @@
         }
 
         function exportData() {
-            let dataStr = btoa(encodeURIComponent(JSON.stringify(db)));
+            let dataStr = btoa(encodeURIComponent(JSON.stringify(window.appDb)));
             if(navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(dataStr).then(() => {
-                    alert("✅ Backup-Code kopiert! (z.B. für WhatsApp)");
+                    alert("✅ Lokaler Backup-Code kopiert! (Nützlich als Fallback)");
                 });
             } else {
                 let ta = document.getElementById('import-data');
@@ -1456,8 +1635,8 @@
             try {
                 let parsed = JSON.parse(decodeURIComponent(atob(dataStr)));
                 if(parsed && parsed.entries) {
-                    if(confirm("Dies überschreibt alle aktuellen Daten. Fortfahren?")) {
-                        db = parsed;
+                    if(confirm("Dies überschreibt alle lokalen und Cloud-Daten. Fortfahren?")) {
+                        window.appDb = parsed;
                         saveData();
                         alert("Daten erfolgreich wiederhergestellt!");
                         location.reload();
@@ -1475,7 +1654,7 @@
             btn.innerText = "Lädt...";
             btn.classList.add("opacity-50");
             let year = new Date().getFullYear();
-            let state = db.settings.state;
+            let state = window.appDb.settings.state;
 
             try {
                 await loadAPIHolidays(year, state, false);
@@ -1506,14 +1685,43 @@
                 
                 for(let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
                     let dStr = dt.toISOString().split('T')[0];
-                    if (!db.holidays[dStr] || (!isSchool && db.holidays[dStr].isSchool)) {
-                        db.holidays[dStr] = { name: name, isSchool: isSchool };
+                    if (!window.appDb.holidays[dStr] || (!isSchool && window.appDb.holidays[dStr].isSchool)) {
+                        window.appDb.holidays[dStr] = { name: name, isSchool: isSchool };
                     }
                 }
             });
         }
 
-        // Start
+        // Window-Export für Inline-Onclick Funktionen
+        window.changeDate = changeDate;
+        window.openPicker = openPicker;
+        window.loadDayData = loadDayData;
+        window.saveDay = saveDay;
+        window.toggleKommenGehen = toggleKommenGehen;
+        window.togglePause = togglePause;
+        window.calculateNetto = calculateNetto;
+        window.updateDisplays = updateDisplays;
+        window.clearDay = clearDay;
+        window.autoSuggestBreak = autoSuggestBreak;
+        window.changeMonth = changeMonth;
+        window.saveAGSaldo = saveAGSaldo;
+        window.togglePaintMode = togglePaintMode;
+        window.applyPattern = applyPattern;
+        window.saveSettings = saveSettings;
+        window.toggleWorkDay = toggleWorkDay;
+        window.addTemplate = addTemplate;
+        window.deleteTemplate = deleteTemplate;
+        window.exportData = exportData;
+        window.importData = importData;
+        window.fetchHolidays = fetchHolidays;
+        window.switchTab = switchTab;
+        window.setStatMode = setStatMode;
+        window.changeStatPeriod = changeStatPeriod;
+        window.exportMonthPDF = exportMonthPDF;
+        window.setPaintTemplate = setPaintTemplate;
+        window.handleCellClick = handleCellClick;
+
+        // Start Local Setup first
         init();
     </script>
 </body>
