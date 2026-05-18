@@ -490,12 +490,12 @@
         // 🔥 HIER DEINE WERTE VON FIREBASE EINTRAGEN 🔥
         // ====================================================================
         const firebaseConfig = {
-  apiKey: "AIzaSyCmRGEkYQ3bpvA1tjtcZf7rDINCNh84QBw",
-  authDomain: "moes-aarbeitszeittracker.firebaseapp.com",
-  projectId: "moes-aarbeitszeittracker",
-  storageBucket: "moes-aarbeitszeittracker.firebasestorage.app",
-  messagingSenderId: "989062673925",
-  appId: "1:989062673925:web:0630beed889a8e985dce6c"
+            apiKey: "DEIN_API_KEY",
+            authDomain: "DEINE_AUTH_DOMAIN",
+            projectId: "DEINE_PROJEKT_ID",
+            storageBucket: "DEINE_STORAGE_BUCKET",
+            messagingSenderId: "DEINE_SENDER_ID",
+            appId: "DEINE_APP_ID"
         };
         // ====================================================================
 
@@ -932,7 +932,7 @@
             }
             saveData();
             
-            let btn = document.querySelector('#tab-heute button[onclick="window.saveDay()"]');
+            let btn = document.querySelector('#tab-heute button[onclick="saveDay()"]');
             if (btn) {
                 let oldHtml = btn.innerHTML;
                 btn.innerHTML = `<svg class="w-8 h-8 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-[10px] font-bold uppercase tracking-wider">Safe!</span>`;
@@ -1641,7 +1641,7 @@
         }
 
         async function fetchHolidays() {
-            let btn = document.querySelector('button[onclick="window.fetchHolidays()"]');
+            let btn = document.querySelector('button[onclick="fetchHolidays()"]');
             if(btn) {
                 btn.innerText = "Lädt...";
                 btn.classList.add("opacity-50");
