@@ -145,14 +145,12 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 shrink-0">
-                    <!-- Unsichtbares Overlay für Beginn -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Beginn</label>
                         <span id="display-heute-begin" class="text-3xl font-black text-slate-800 pointer-events-none z-10">--:--</span>
                         <input type="time" id="heute-begin" class="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" onchange="updateDisplays(); autoSuggestBreak(); calculateNetto()">
                     </div>
 
-                    <!-- Unsichtbares Overlay für Ende -->
                     <div class="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Ende</label>
                         <span id="display-heute-end" class="text-3xl font-black text-slate-800 pointer-events-none z-10">--:--</span>
@@ -1243,7 +1241,6 @@
             document.getElementById('stat-breakdown').innerHTML = breakdownHtml;
         }
 
-        // ================= PDF EXPORT LOGIK =================
         function exportMonthPDF() {
             if (!window.jspdf) {
                 alert("Die PDF-Erstellung wird noch geladen. Bitte einen Moment warten.");
@@ -1650,9 +1647,11 @@
         }
 
         async function fetchHolidays() {
-            let btn = document.querySelector('button[onclick="fetchHolidays()"]');
-            btn.innerText = "Lädt...";
-            btn.classList.add("opacity-50");
+            let btn = document.querySelector('button[onclick="window.fetchHolidays()"]');
+            if(btn) {
+                btn.innerText = "Lädt...";
+                btn.classList.add("opacity-50");
+            }
             let year = new Date().getFullYear();
             let state = window.appDb.settings.state;
 
@@ -1667,8 +1666,10 @@
             } catch (e) {
                 alert("Fehler beim Abrufen der Daten. Bitte prüfen Sie Ihre Internetverbindung.");
             }
-            btn.innerText = "Jahresdaten aktualisieren";
-            btn.classList.remove("opacity-50");
+            if(btn) {
+                btn.innerText = "Jahresdaten aktualisieren";
+                btn.classList.remove("opacity-50");
+            }
         }
 
         async function loadAPIHolidays(year, state, isSchool) {
