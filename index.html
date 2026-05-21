@@ -203,15 +203,21 @@
             </div>
 
             <div class="bg-white p-2 rounded-xl shadow-sm space-y-2 border border-blue-100 shrink-0">
-                <div class="grid grid-cols-2 gap-2 text-center">
+                <!-- Neue 3-Spalten Ansicht für Saldos -->
+                <div class="grid grid-cols-3 gap-2 text-center">
                     <div class="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
-                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide pointer-events-none">Übertrag (AG)</div>
-                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-lg font-bold bg-transparent text-center outline-none text-slate-700 p-0 m-0" value="0" onchange="saveAGSaldo()">
+                        <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wide pointer-events-none">Übertrag (AG)</div>
+                        <input type="number" step="0.01" id="saldo-ag" class="w-full text-base font-bold bg-transparent text-center outline-none text-slate-700 p-0 m-0" value="0" onchange="saveSaldos()">
                     </div>
                     
                     <div class="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
-                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">HR Soll (Monat)</div>
-                        <div class="text-lg font-bold text-slate-700" id="kalender-hr-soll">0.0 h</div>
+                        <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wide pointer-events-none">Übertrag (Eigen)</div>
+                        <input type="number" step="0.01" id="saldo-eigen" class="w-full text-base font-bold bg-transparent text-center outline-none text-indigo-600 p-0 m-0" value="0" onchange="saveSaldos()">
+                    </div>
+
+                    <div class="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
+                        <div class="text-[8px] font-bold text-slate-400 uppercase tracking-wide">HR Soll (Monat)</div>
+                        <div class="text-base font-bold text-slate-700" id="kalender-hr-soll">0.0 h</div>
                     </div>
                 </div>
                 
@@ -619,7 +625,7 @@
                 { id: 2, name: "Spät", begin: "14:00", end: "22:30", pause: 30 }
             ],
             settings: {
-                state: "NW", agSaldo: 0.0,
+                state: "NW", agSaldo: 0.0, eigenSaldo: 0.0,
                 model: { hours: 40, days: [1, 2, 3, 4, 5], percentage: 100 },
                 protectHolidays: true
             },
@@ -648,6 +654,7 @@
                     if(!window.appDb.settings.model) window.appDb.settings.model = { hours: 40, days: [1,2,3,4,5], percentage: 100 };
                     if(window.appDb.settings.model.percentage === undefined) window.appDb.settings.model.percentage = 100;
                     if(window.appDb.settings.protectHolidays === undefined) window.appDb.settings.protectHolidays = true;
+                    if(window.appDb.settings.eigenSaldo === undefined) window.appDb.settings.eigenSaldo = 0.0;
                 } catch(e) {}
             }
 
@@ -1096,11 +1103,18 @@
 
             if (target === 'kalender') {
                 let agSaldo = parseFloat(window.appDb.settings.agSaldo || 0);
-                let total = agSaldo + appTotalDiff;
+                let eigenSaldo = parseFloat(window.appDb.settings.eigenSaldo || 0);
+                
+                // Gesamtsaldo aus allen drei Werten berechnen
+                let total = agSaldo + eigenSaldo + appTotalDiff;
                 
                 // Element 'saldo-ag' aktualisieren
                 let saldoAgEl = document.getElementById('saldo-ag');
                 if (saldoAgEl) saldoAgEl.value = agSaldo;
+
+                // Element 'saldo-eigen' aktualisieren
+                let saldoEigenEl = document.getElementById('saldo-eigen');
+                if (saldoEigenEl) saldoEigenEl.value = eigenSaldo;
                 
                 // Element 'saldo-total' aktualisieren mit passender Farbe
                 let saldoTotalEl = document.getElementById('saldo-total');
@@ -1383,8 +1397,9 @@
             }
         }
 
-        function saveAGSaldo() {
+        function saveSaldos() {
             window.appDb.settings.agSaldo = parseFloat(document.getElementById('saldo-ag').value) || 0;
+            window.appDb.settings.eigenSaldo = parseFloat(document.getElementById('saldo-eigen').value) || 0;
             saveData();
             renderCalendar('kalender');
         }
