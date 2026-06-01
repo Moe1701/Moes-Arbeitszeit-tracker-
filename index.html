@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -242,7 +243,7 @@
             <div class="bg-white p-2 rounded-xl shadow-sm border-l-4 border-indigo-500 shrink-0 border-y border-r border-slate-100">
                 <div class="flex justify-between items-center mb-1.5">
                     <h2 class="font-bold text-indigo-700 flex items-center gap-1 text-[11px] uppercase tracking-wide">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
                         Aktiver Pinsel
                     </h2>
                     <button onclick="togglePaintMode(true)" class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full active:bg-slate-200">Deaktivieren</button>
@@ -412,6 +413,16 @@
                 </div>
             </div>
 
+            <!-- NEUER BEREICH: CLOUD SYNC CODE -->
+            <div class="bg-emerald-50 p-4 rounded-xl shadow-sm space-y-3 border border-emerald-100">
+                <h2 class="font-bold text-emerald-800 border-b border-emerald-200 pb-2 text-sm">Cloud Synchronisation</h2>
+                <p class="text-[10px] text-emerald-700 leading-tight">Um deine Daten auf mehreren Geräten zu synchronisieren, lege hier ein persönliches Sync-Passwort fest.</p>
+                <div class="flex gap-2">
+                    <input type="text" id="set-sync-key" class="flex-1 p-2 bg-white border border-emerald-200 rounded-lg text-sm font-bold outline-none text-emerald-900" placeholder="Z.B. MeinName2024">
+                    <button onclick="applySyncKey()" class="bg-emerald-600 text-white px-3 font-bold rounded-lg text-sm active:bg-emerald-700 shadow-sm">Verbinden</button>
+                </div>
+            </div>
+
             <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
                 <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Vorlagen anlegen</h2>
                 <div class="grid grid-cols-4 gap-2">
@@ -508,7 +519,7 @@
 
         let firebaseApp, auth, dbFirestore, currentUser = null;
         let isSyncingFromCloud = false;
-        const appId = 'zeiterfassung-app-1';
+        let currentSyncUnsubscribe = null;
 
         try {
             firebaseApp = initializeApp(firebaseConfig);
@@ -528,14 +539,20 @@
             }
         }
 
-        function setupCloudSync() {
+        window.setupCloudSync = function() {
             if (!currentUser || !dbFirestore) return;
             
-            updateSyncUI(true, "Verbunden");
+            // Verwende das gesetzte Passwort ODER greife notfalls auf das gerätespezifische Fallback zurück
+            let syncId = window.appDb.settings.syncKey || currentUser.uid;
             
-            const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'appState', 'main');
+            updateSyncUI(true, "Verbinde...");
             
-            onSnapshot(docRef, (snapshot) => {
+            const docRef = doc(dbFirestore, 'app_sync_data', syncId);
+            
+            // Vorherigen Listener abbrechen, falls sich der Code ändert
+            if(currentSyncUnsubscribe) currentSyncUnsubscribe();
+            
+            currentSyncUnsubscribe = onSnapshot(docRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.data();
                     if (data.appData) {
@@ -543,6 +560,7 @@
                             isSyncingFromCloud = true;
                             let cloudDb = JSON.parse(data.appData);
                             
+                            // Lade Daten komplett aus der Cloud
                             window.appDb = { ...window.appDb, ...cloudDb };
                             localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb));
                             
@@ -559,12 +577,13 @@
                         }
                     }
                 } else {
+                    // Wenn die Cloud komplett leer ist unter diesem Code, laden wir die lokalen Daten hoch
                     window.saveDataToCloud();
                 }
             }, (error) => {
                 updateSyncUI(false, "Fehler");
             });
-        }
+        };
 
         function updateSyncUI(isActive, text) {
             const statusEl = document.getElementById('sync-status');
@@ -579,7 +598,9 @@
             if (!currentUser || !dbFirestore || isSyncingFromCloud) return;
             try {
                 updateSyncUI(true, "Speichern...");
-                const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'appState', 'main');
+                let syncId = window.appDb.settings.syncKey || currentUser.uid;
+                const docRef = doc(dbFirestore, 'app_sync_data', syncId);
+                
                 await setDoc(docRef, { 
                     appData: JSON.stringify(window.appDb), 
                     updatedAt: Date.now() 
@@ -594,7 +615,7 @@
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     currentUser = user;
-                    setupCloudSync();
+                    window.setupCloudSync();
                 } else {
                     updateSyncUI(false, "Getrennt");
                 }
@@ -628,7 +649,7 @@
                 { id: 2, name: "Spät", begin: "14:00", end: "22:30", pause: 30 }
             ],
             settings: {
-                state: "NW", agSaldo: 0.0,
+                state: "NW", agSaldo: 0.0, syncKey: "",
                 model: { hours: 40, days: [1, 2, 3, 4, 5], percentage: 100 },
                 protectHolidays: true
             },
@@ -679,6 +700,22 @@
             loadDayData();
             switchTab('heute');
         }
+
+        // ====================================
+        // NEUE FUNKTION: CODE ANWENDEN
+        // ====================================
+        window.applySyncKey = function() {
+            let key = document.getElementById('set-sync-key').value.trim();
+            if(key) {
+                window.appDb.settings.syncKey = key;
+                // Nur lokal speichern, NICHT direkt in die Cloud pushen! Die Cloud soll die Master-Datei sein.
+                localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb)); 
+                if(window.setupCloudSync) window.setupCloudSync(); 
+                alert("Cloud Sync-Code gesetzt! Daten werden nun geladen...");
+            } else {
+                alert("Bitte einen Code eingeben!");
+            }
+        };
 
         function saveData() { 
             localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb)); 
@@ -985,12 +1022,10 @@
             }
         }
 
-        // BERECHNET DEN ALL-TIME APP SALDO
         function calculateAllTimeAppDiff(viewYear, viewMonth) {
             let entries = Object.keys(window.appDb.entries);
             if (entries.length === 0) return 0;
             
-            // Finde das allererste Datum
             entries.sort();
             let firstDateStr = entries[0];
             let firstDate = new Date(firstDateStr);
@@ -1000,13 +1035,12 @@
             let today = new Date();
             today.setHours(0,0,0,0);
             
-            // Wir berechnen bis zum Ende des aktuellen Ansichtsmonats
             let endDate = lastDayOfViewMonth; 
             
             let totalDiff = 0;
             let d = new Date(firstDate);
             
-            let iterations = 0; // Schutz gegen Endlosschleifen
+            let iterations = 0; 
             while (d <= endDate && iterations < 3000) {
                 let dStr = getLocalDateString(d);
                 let entry = window.appDb.entries[dStr];
@@ -1023,9 +1057,9 @@
                 let isFuture = d > today;
                 
                 if (!entry && isFuture) {
-                    dayDiff = 0; // Keine Minusstunden in der Zukunft ohne Eintrag
+                    dayDiff = 0;
                 } else if (!entry && !isFuture && daySoll > 0) {
-                    dayDiff = -daySoll; // Verpasste reguläre Tage zählen als Minus
+                    dayDiff = -daySoll;
                 }
                 
                 totalDiff += dayDiff;
@@ -1154,18 +1188,15 @@
             if (target === 'kalender') {
                 let agSaldo = parseFloat(window.appDb.settings.agSaldo || 0);
                 
-                // 1. Manuelles Element 'saldo-ag' aktualisieren
                 let saldoAgEl = document.getElementById('saldo-ag');
                 if (saldoAgEl) saldoAgEl.value = agSaldo;
                 
-                // 2. Monats-Differenz aktualisieren
                 let monatsDiffEl = document.getElementById('kalender-monats-diff');
                 if (monatsDiffEl) {
                     monatsDiffEl.innerText = (appTotalDiff > 0 ? '+' : '') + appTotalDiff.toFixed(2) + " h";
                     monatsDiffEl.className = "text-sm font-bold " + (appTotalDiff >= 0 ? "text-emerald-600" : "text-red-600");
                 }
                 
-                // 3. HR Monatssoll aktualisieren
                 let percent = window.appDb.settings.model.percentage || 100;
                 let effWeekly = window.appDb.settings.model.hours * (percent / 100);
                 let hrMonthlySoll = effWeekly * 13 / 3;
@@ -1174,11 +1205,6 @@
                     hrSollEl.innerText = hrMonthlySoll.toFixed(1) + " h";
                 }
 
-                // ==========================================
-                // BERECHNUNG DER BEIDEN GESAMTSALDOS
-                // ==========================================
-
-                // Saldo 1: Inklusive manuellem AG-Übertrag + Monat
                 let totalAG = agSaldo + appTotalDiff;
                 let saldoTotalAgEl = document.getElementById('saldo-total-ag');
                 if (saldoTotalAgEl) {
@@ -1186,7 +1212,6 @@
                     saldoTotalAgEl.className = "text-xl font-black tracking-tight " + (totalAG >= 0 ? "text-emerald-600" : "text-red-600");
                 }
                 
-                // Saldo 2: Nur die App-Daten (Automatisch seit Tag 1)
                 let allTimeAppDiff = calculateAllTimeAppDiff(year, month);
                 let saldoTotalAppEl = document.getElementById('saldo-total-app');
                 if (saldoTotalAppEl) {
@@ -1574,6 +1599,9 @@
             document.getElementById('set-percentage').value = window.appDb.settings.model.percentage || 100;
             document.getElementById('state-select').value = window.appDb.settings.state || "NW";
             
+            // Füllt das Sync-Key Input Feld aus (falls schon gesetzt)
+            document.getElementById('set-sync-key').value = window.appDb.settings.syncKey || '';
+            
             document.querySelectorAll('.day-btn').forEach(btn => {
                 let d = parseInt(btn.getAttribute('data-day'));
                 if (window.appDb.settings.model.days.includes(d)) {
@@ -1779,3 +1807,5 @@
     </script>
 </body>
 </html>
+
+
