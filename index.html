@@ -369,11 +369,7 @@
         <div id="tab-setup" class="space-y-4 hidden pb-4">
             
             <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100 relative">
-                <!-- CLOUD SYNC STATUS -->
-                <div class="absolute top-4 right-4 flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
-                    <div id="sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></div>
-                    <span id="sync-status" class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Lokal</span>
-                </div>
+                
 
                 <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Arbeitszeit-Modell</h2>
                 
@@ -413,16 +409,7 @@
                 </div>
             </div>
 
-            <!-- NEUER BEREICH: CLOUD SYNC CODE -->
-            <div class="bg-emerald-50 p-4 rounded-xl shadow-sm space-y-3 border border-emerald-100">
-                <h2 class="font-bold text-emerald-800 border-b border-emerald-200 pb-2 text-sm">Cloud Synchronisation</h2>
-                <p class="text-[10px] text-emerald-700 leading-tight">Um deine Daten auf mehreren Geräten zu synchronisieren, lege hier ein persönliches Sync-Passwort fest.</p>
-                <div class="flex gap-2">
-                    <input type="text" id="set-sync-key" class="flex-1 p-2 bg-white border border-emerald-200 rounded-lg text-sm font-bold outline-none text-emerald-900" placeholder="Z.B. MeinName2024">
-                    <button onclick="applySyncKey()" class="bg-emerald-600 text-white px-3 font-bold rounded-lg text-sm active:bg-emerald-700 shadow-sm">Verbinden</button>
-                </div>
-            </div>
-
+           
             <div class="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
                 <h2 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Vorlagen anlegen</h2>
                 <div class="grid grid-cols-4 gap-2">
@@ -498,133 +485,6 @@
         </button>
     </nav>
 
-    <!-- FIREBASE CLOUD SYNC MODULE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // ====================================================================
-        // 🔥 HIER DEINE WERTE VON FIREBASE EINTRAGEN 🔥
-        // ====================================================================
-        const firebaseConfig = {
-          apiKey: "AIzaSyCmRGEkYQ3bpvA1tjtcZf7rDINCNh84QBw",
-          authDomain: "moes-aarbeitszeittracker.firebaseapp.com",
-          projectId: "moes-aarbeitszeittracker",
-          storageBucket: "moes-aarbeitszeittracker.firebasestorage.app",
-          messagingSenderId: "989062673925",
-          appId: "1:989062673925:web:0630beed889a8e985dce6c"
-        };
-        // ====================================================================
-
-        let firebaseApp, auth, dbFirestore, currentUser = null;
-        let isSyncingFromCloud = false;
-        let currentSyncUnsubscribe = null;
-
-        try {
-            firebaseApp = initializeApp(firebaseConfig);
-            auth = getAuth(firebaseApp);
-            dbFirestore = getFirestore(firebaseApp);
-        } catch(e) {
-            console.error("Firebase Fehler:", e);
-        }
-
-        async function initAuth() {
-            if(!auth) return;
-            try {
-                await signInAnonymously(auth);
-            } catch(e) {
-                console.error("Anmeldung fehlgeschlagen:", e);
-                updateSyncUI(false, "Offline");
-            }
-        }
-
-        window.setupCloudSync = function() {
-            if (!currentUser || !dbFirestore) return;
-            
-            // Verwende das gesetzte Passwort ODER greife notfalls auf das gerätespezifische Fallback zurück
-            let syncId = window.appDb.settings.syncKey || currentUser.uid;
-            
-            updateSyncUI(true, "Verbinde...");
-            
-            const docRef = doc(dbFirestore, 'app_sync_data', syncId);
-            
-            // Vorherigen Listener abbrechen, falls sich der Code ändert
-            if(currentSyncUnsubscribe) currentSyncUnsubscribe();
-            
-            currentSyncUnsubscribe = onSnapshot(docRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.data();
-                    if (data.appData) {
-                        try {
-                            isSyncingFromCloud = true;
-                            let cloudDb = JSON.parse(data.appData);
-                            
-                            // Lade Daten komplett aus der Cloud
-                            window.appDb = { ...window.appDb, ...cloudDb };
-                            localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb));
-                            
-                            updateSetupUI();
-                            loadDayData();
-                            if (document.getElementById('tab-kalender').style.display !== 'none') renderCalendar('kalender');
-                            if (document.getElementById('tab-planer').style.display !== 'none') renderCalendar('planer');
-                            if (document.getElementById('tab-statistik').style.display !== 'none') renderStatistik();
-                            
-                            isSyncingFromCloud = false;
-                            updateSyncUI(true, "Synchron");
-                        } catch(e) {
-                            isSyncingFromCloud = false;
-                        }
-                    }
-                } else {
-                    // Wenn die Cloud komplett leer ist unter diesem Code, laden wir die lokalen Daten hoch
-                    window.saveDataToCloud();
-                }
-            }, (error) => {
-                updateSyncUI(false, "Fehler");
-            });
-        };
-
-        function updateSyncUI(isActive, text) {
-            const statusEl = document.getElementById('sync-status');
-            const dotEl = document.getElementById('sync-dot');
-            if(statusEl && dotEl) {
-                statusEl.innerText = text;
-                dotEl.className = isActive ? "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]" : "w-2 h-2 rounded-full bg-slate-400";
-            }
-        }
-
-        window.saveDataToCloud = async function() {
-            if (!currentUser || !dbFirestore || isSyncingFromCloud) return;
-            try {
-                updateSyncUI(true, "Speichern...");
-                let syncId = window.appDb.settings.syncKey || currentUser.uid;
-                const docRef = doc(dbFirestore, 'app_sync_data', syncId);
-                
-                await setDoc(docRef, { 
-                    appData: JSON.stringify(window.appDb), 
-                    updatedAt: Date.now() 
-                });
-                updateSyncUI(true, "Synchron");
-            } catch(e) {
-                updateSyncUI(false, "Fehler beim Speichern");
-            }
-        };
-
-        if (auth) {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    currentUser = user;
-                    window.setupCloudSync();
-                } else {
-                    updateSyncUI(false, "Getrennt");
-                }
-            });
-            initAuth();
-        } else {
-            updateSyncUI(false, "Lokal Modus");
-        }
-    </script>
 
     <!-- MAIN APP LOGIC -->
     <script>
@@ -649,7 +509,7 @@
                 { id: 2, name: "Spät", begin: "14:00", end: "22:30", pause: 30 }
             ],
             settings: {
-                state: "NW", agSaldo: 0.0, syncKey: "",
+                state: "NW", agSaldo: 0.0,
                 model: { hours: 40, days: [1, 2, 3, 4, 5], percentage: 100 },
                 protectHolidays: true
             },
@@ -670,15 +530,84 @@
             return `${year}-${month}-${day}`;
         }
 
-        function init() {
-            const saved = localStorage.getItem('zeiterfassung_db');
-            if (saved) {
-                try { 
-                    window.appDb = { ...window.appDb, ...JSON.parse(saved) }; 
-                    if(!window.appDb.settings.model) window.appDb.settings.model = { hours: 40, days: [1,2,3,4,5], percentage: 100 };
-                    if(window.appDb.settings.model.percentage === undefined) window.appDb.settings.model.percentage = 100;
-                    if(window.appDb.settings.protectHolidays === undefined) window.appDb.settings.protectHolidays = true;
-                } catch(e) {}
+        // ====================================
+        // LOKALE DATENBANK (IndexedDB)
+        // ====================================
+        const DB_NAME = 'ZeiterfassungDB';
+        const STORE_NAME = 'appState';
+
+        async function requestPersistence() {
+            if (navigator.storage && navigator.storage.persist) {
+                const isPersisted = await navigator.storage.persist();
+                console.log(`Persistenter Speicher: ${isPersisted ? 'Aktiv' : 'Nicht garantiert'}`);
+            }
+        }
+
+        function getDB() {
+            return new Promise((resolve, reject) => {
+                let request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = e => e.target.result.createObjectStore(STORE_NAME);
+                request.onsuccess = e => resolve(e.target.result);
+                request.onerror = e => reject(e.error);
+            });
+        }
+
+        async function saveToDB(data) {
+            const db = await getDB();
+            return new Promise((resolve, reject) => {
+                let tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put(data, 'main');
+                tx.oncomplete = () => resolve();
+                tx.onerror = e => reject(e.error);
+            });
+        }
+
+        async function loadFromDB() {
+            const db = await getDB();
+            return new Promise((resolve, reject) => {
+                let tx = db.transaction(STORE_NAME, 'readonly');
+                let request = tx.objectStore(STORE_NAME).get('main');
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = e => reject(e.error);
+            });
+        }
+
+        // Überschreibt deine alte saveData()
+        async function saveData() { 
+            // Fallback für alte Logik, falls irgendwo noch synchron gelesen wird
+            localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb)); 
+            try {
+                await saveToDB(window.appDb);
+            } catch (e) {
+                console.error("Fehler beim Speichern in IndexedDB:", e);
+            }
+        }
+
+        // Überschreibt deine alte init()
+        async function init() {
+            await requestPersistence();
+            
+            let savedState = null;
+            try {
+                savedState = await loadFromDB();
+            } catch(e) {}
+
+            // Daten-Migration: Falls IndexedDB leer ist, aber der LocalStorage noch Daten hat
+            if (!savedState) {
+                const lsData = localStorage.getItem('zeiterfassung_db');
+                if (lsData) {
+                    try { savedState = JSON.parse(lsData); } catch(e) {}
+                }
+            }
+
+            if (savedState) {
+                window.appDb = { ...window.appDb, ...savedState }; 
+                if(!window.appDb.settings.model) window.appDb.settings.model = { hours: 40, days: [1,2,3,4,5], percentage: 100 };
+                if(window.appDb.settings.model.percentage === undefined) window.appDb.settings.model.percentage = 100;
+                if(window.appDb.settings.protectHolidays === undefined) window.appDb.settings.protectHolidays = true;
+                
+                // Migrierte Daten sofort sicher in die neue DB schreiben
+                await saveToDB(window.appDb);
             }
 
             if (window.appDb.settings.protectHolidays) {
@@ -699,29 +628,6 @@
             updateSetupUI();
             loadDayData();
             switchTab('heute');
-        }
-
-        // ====================================
-        // NEUE FUNKTION: CODE ANWENDEN
-        // ====================================
-        window.applySyncKey = function() {
-            let key = document.getElementById('set-sync-key').value.trim();
-            if(key) {
-                window.appDb.settings.syncKey = key;
-                // Nur lokal speichern, NICHT direkt in die Cloud pushen! Die Cloud soll die Master-Datei sein.
-                localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb)); 
-                if(window.setupCloudSync) window.setupCloudSync(); 
-                alert("Cloud Sync-Code gesetzt! Daten werden nun geladen...");
-            } else {
-                alert("Bitte einen Code eingeben!");
-            }
-        };
-
-        function saveData() { 
-            localStorage.setItem('zeiterfassung_db', JSON.stringify(window.appDb)); 
-            if (window.saveDataToCloud) {
-                window.saveDataToCloud();
-            }
         }
 
         function toggleKommenGehen() {
@@ -1599,8 +1505,7 @@
             document.getElementById('set-percentage').value = window.appDb.settings.model.percentage || 100;
             document.getElementById('state-select').value = window.appDb.settings.state || "NW";
             
-            // Füllt das Sync-Key Input Feld aus (falls schon gesetzt)
-            document.getElementById('set-sync-key').value = window.appDb.settings.syncKey || '';
+            
             
             document.querySelectorAll('.day-btn').forEach(btn => {
                 let d = parseInt(btn.getAttribute('data-day'));
