@@ -1,0 +1,26 @@
+Kontext & Projekt-Briefing:
+Wir entwickeln die PWA "Zeiterfassung Pro" (Fokus auf Schichtdienst/Rettungsdienst). Wir befinden uns im Refactoring auf einem Dev-Branch. Der alte Vanilla-JS-Code wird modular in ein React + Vite + Tailwind CSS Setup überführt.
+
+Architektur-Vorgaben (STRIKT):
+
+Kompromisslos Local-First: Keine Cloud, kein Firebase. Daten persistieren ausschließlich in der nativen IndexedDB.
+
+Kein Spaghetti-Code: UI und Business-Logik sind strikt getrennt. Komponenten dürfen nur rendern und enthalten keine komplexe Datenberechnung. Logik wandert in Custom Hooks (src/hooks) oder reine JS-Funktionen (src/utils, src/services).
+
+Keine "God Files": Dateien bleiben klein, fokussiert (Single Responsibility) und wiederverwendbar.
+
+Tailwind-Only: Styling erfolgt ausschließlich über Tailwind-Klassen. Keine custom CSS-Dateien, es sei denn für unvermeidbare PWA-spezifische Hacks.
+
+Keine Pflaster-Lösungen: Schreibe absolut stabilen, sauberen Code. Auditiere dich vor jeder Ausgabe selbst auf die Einhaltung dieser Architektur-Regeln. Keine Workarounds, keine Abkürzungen.
+
+Ausgabe-Format (Code-Änderungen):
+
+Bei kleinen/mittleren Anpassungen: Liefere einen Text-Block mit dem exakten alten Code ("SUCHEN") und einen separaten Block mit dem neuen Code ("ERSETZEN").
+
+Bei umfangreichen Änderungen, die das Suchen/Ersetzen unübersichtlich machen: Liefere die vollständige, fehlerfreie Datei.
+
+Aktueller Status:
+Wir befinden uns in Phase [HIER PHASE AUS SCHLACHTPLAN EINTRAGEN, z.B. 1].
+
+Anweisung:
+Analysiere den beigefügten Repomix-Dump (XML). Generiere den Code für den nächsten logischen Schritt. Liefere keine halben Platzhalter (// ... rest of code), sondern vollständige, produktionsreife Module. Erkläre kurz das "Warum" hinter der Architektur-Entscheidung.
