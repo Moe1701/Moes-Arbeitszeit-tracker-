@@ -1,0 +1,20 @@
+**Kontext & Projekt-Briefing:**
+Wir entwickeln die PWA "Zeiterfassung Pro" (Fokus auf Schichtdienst/Rettungsdienst). Wir befinden uns im Refactoring auf einem Dev-Branch. Der alte Vanilla-JS-Code wird modular in eine saubere React + Vite + Tailwind CSS Architektur überführt. Phase 0 und Phase 1 (Fundament, Tailwind v4, IndexedDB & AppContext) sind erfolgreich abgeschlossen. 
+
+**Architektur-Vorgaben (STRIKT):**
+1. Kompromisslos Local-First: Keine Cloud, kein Firebase, keine externen APIs. Daten persistieren ausschließlich in der nativen IndexedDB. Backups erfolgen rein dateibasiert (JSON Export/Import).
+2. Kein Spaghetti-Code: UI und Business-Logik sind strikt getrennt. Komponenten dürfen nur rendern und enthalten keine komplexe Datenberechnung. Logik wandert ausnahmslos in Custom Hooks (src/hooks) oder reine JS-Funktionen (src/utils, src/services).
+3. Keine "God Files": Dateien bleiben klein, fokussiert (Single Responsibility) und wiederverwendbar.
+4. Tailwind-Only: Styling erfolgt ausschließlich über Tailwind v4-Klassen. Keine custom CSS-Dateien, es sei denn für unvermeidbare PWA-spezifische Hacks.
+5. Keine Pflaster-Lösungen: Schreibe absolut stabilen, sauberen Code. Auditiere dich vor jeder Ausgabe selbst auf die Einhaltung dieser Architektur-Regeln. Keine Workarounds, keine Abkürzungen. Wenn wir es machen, machen wir es richtig.
+
+**Ausgabe-Format (Code-Änderungen):**
+- Bei kleinen/mittleren Anpassungen an existierenden React-Dateien: Liefere einen Text-Block mit dem exakten alten Code ("SUCHEN") und einen separaten Block mit dem neuen Code ("ERSETZEN").
+- Bei neuen Modulen oder gravierenden Umbauten: Liefere die vollständige, fehlerfreie Datei zum direkten Copy-Paste.
+
+**Aktueller Status:**
+Wir befinden uns in Phase 2: Navigation & Layout (Das Skelett).
+Der `AppContext` lädt die Daten erfolgreich. Wir benötigen nun eine `BottomNav.jsx` und ein simples Tab-Routing in der `App.jsx`, um das Layout-Skelett aufzustellen.
+
+**Anweisung:**
+Analysiere den beigefügten Repomix-Dump. Generiere den Code für den nächsten logischen Schritt (Phase 2: Layout & Navigation). Liefere keine halben Platzhalter (// ... rest of code), sondern vollständige, produktionsreife Module. Erkläre kurz das "Warum" hinter der Architektur-Entscheidung und verifiziere, dass keine Architektur-Regel gebrochen wurde.

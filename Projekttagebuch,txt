@@ -1,0 +1,42 @@
+Projekttagebuch: Zeiterfassung Pro (React Refactoring)
+Phase 0: Blutung stoppen (✅ ERLEDIGT)
+
+Firebase restlos entfernt, IndexedDB integriert, JSON-Datei-Backup eingebaut. Stand im main-Branch gesichert.
+
+Phase 1: Das Fundament (✅ ERLEDIGT)
+
+Vite + React + Tailwind CSS v4 im dev-Branch initialisiert.
+
+Strikte Ordnerstruktur (components, hooks, services, utils, context) generiert.
+
+src/services/db.js (IndexedDB Wrapper) implementiert.
+
+Globaler State/Provider (AppContext.jsx) aufgebaut, der die IndexedDB beim App-Start lädt.
+
+Phase 2: Navigation & Layout (Das Skelett) (🚀 AKTUELL)
+
+Baue components/layout/BottomNav.jsx und den generellen App-Container.
+
+Implementiere das Tab-Routing (simpel und PWA-freundlich, ohne fetten React-Router).
+
+Phase 3: Core-Logik & Custom Hooks (Die "Gehirn"-Schicht)
+
+Entwickle src/utils/timeCalculations.js (Netto, Brutto, Differenz zum Soll – 100 % getrennt vom UI, testbar).
+
+Erstelle den Hook useTimeTracker.js für alle Interaktionen mit den Schicht-Daten.
+
+Phase 4: Komponenten-Migration (Die Views)
+
+4.1: HeuteView.jsx (Zeiterfassung, Quick-Actions).
+
+4.2: KalenderView.jsx (Gitter generieren, Saldo anzeigen).
+
+4.3: PlanerView.jsx (Pinsel-Logik, Schicht-Muster).
+
+4.4: StatistikView.jsx & SetupView.jsx (inkl. JSON-Backup-Logik in React).
+
+Phase 5: PWA & Exporte (Der Feinschliff)
+
+Integriere vite-plugin-pwa für sauberes Caching und absolute Offline-Fähigkeit.
+
+Baue den PDF-Export (jsPDF) in einen asynchronen Service um (src/services/pdfExport.js).
