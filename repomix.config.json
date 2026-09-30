@@ -1,0 +1,22 @@
+{ 
+  "output": { 
+    "filePath": "repomix-dev.txt", 
+    "style": "markdown" 
+  }, 
+  "include": [ 
+    "src/**/*", 
+    "index.html", 
+    "package.json", 
+    "vite.config.js" 
+  ], 
+  "ignore": { 
+    "useGitignore": true, 
+    "customPatterns": [ 
+      "node_modules/**", 
+      "dist/**", 
+      ".git/**", 
+      "public/**", 
+      "package-lock.json" 
+    ] 
+  } 
+} 
