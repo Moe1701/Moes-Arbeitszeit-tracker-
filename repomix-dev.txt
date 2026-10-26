@@ -41,6 +41,15 @@ src/
     hero.png
     react.svg
     vite.svg
+  components/
+    layout/
+      BottomNav.jsx
+    views/
+      HeuteView.jsx
+      KalenderView.jsx
+      PlanerView.jsx
+      SetupView.jsx
+      StatistikView.jsx
   context/
     AppContext.jsx
   services/
@@ -64,6 +73,168 @@ vite.config.js
 ## File: src/assets/vite.svg
 ```xml
 <svg xmlns="http://www.w3.org/2000/svg" width="77" height="47" fill="none" aria-labelledby="vite-logo-title" viewBox="0 0 77 47"><title id="vite-logo-title">Vite</title><style>.parenthesis{fill:#000}@media (prefers-color-scheme:dark){.parenthesis{fill:#fff}}</style><path fill="#9135ff" d="M40.151 45.71c-.663.844-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.493c-.92 0-1.457-1.04-.92-1.788l7.479-10.471c1.07-1.498 0-3.578-1.842-3.578H15.443c-.92 0-1.456-1.04-.92-1.788l9.696-13.576c.213-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.472c-1.07 1.497 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.087.89 1.83L40.153 45.712z"/><mask id="a" width="48" height="47" x="14" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M40.047 45.71c-.663.843-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.389c-.92 0-1.457-1.04-.92-1.788l7.479-10.472c1.07-1.497 0-3.578-1.842-3.578H15.34c-.92 0-1.456-1.04-.92-1.788l9.696-13.575c.213-.297.556-.474.92-.474H53.93c.92 0 1.456 1.04.92 1.788L47.37 13.03c-1.07 1.498 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.088.89 1.831L40.049 45.712z"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#eee6ff" rx="5.508" ry="14.704" transform="rotate(269.814 20.96 11.29)scale(-1 1)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#eee6ff" rx="10.399" ry="29.851" transform="rotate(89.814 -16.902 -8.275)scale(1 -1)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#8900ff" rx="5.508" ry="30.487" transform="rotate(89.814 -19.197 -7.127)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.928 4.177)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.738 5.52)scale(1 -1)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#eee6ff" rx="14.072" ry="22.078" transform="rotate(93.35 31.245 55.578)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx="14.592" cy="9.743" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(39.51 14.592 9.743)"/></g><g filter="url(#k)"><ellipse cx="61.728" cy="-5.321" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 61.728 -5.32)"/></g><g filter="url(#l)"><ellipse cx="55.618" cy="7.104" fill="#00c2ff" rx="5.971" ry="9.665" transform="rotate(37.892 55.618 7.104)"/></g><g filter="url(#m)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#n)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#o)"><ellipse cx="49.857" cy="30.678" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 49.857 30.678)"/></g><g filter="url(#p)"><ellipse cx="52.623" cy="33.171" fill="#00c2ff" rx="5.971" ry="15.297" transform="rotate(37.892 52.623 33.17)"/></g></g><path d="M6.919 0c-9.198 13.166-9.252 33.575 0 46.789h6.215c-9.25-13.214-9.196-33.623 0-46.789zm62.424 0h-6.215c9.198 13.166 9.252 33.575 0 46.789h6.215c9.25-13.214 9.196-33.623 0-46.789" class="parenthesis"/><defs><filter id="b" width="60.045" height="41.654" x="-5.564" y="16.92" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-40.407" y="-6.762" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-35.435" y="2.801" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-30.84" y="20.8" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-29.307" y="21.949" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="29.961" y="-17.13" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-13.43" y="-22.082" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="34.321" y="-37.644" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="38.847" y="-10.552" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="22.45" y="-1.645" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="32.919" y="11.36" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter></defs></svg>
+```
+
+## File: src/components/layout/BottomNav.jsx
+```javascript
+import React from 'react';
+
+const navItems = [
+    {
+        id: 'heute',
+        label: 'Heute',
+        icon: (
+            <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        )
+    },
+    {
+        id: 'kalender',
+        label: 'Kalender',
+        icon: (
+            <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        )
+    },
+    {
+        id: 'planer',
+        label: 'Planer',
+        icon: (
+            <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+        )
+    },
+    {
+        id: 'statistik',
+        label: 'Statistik',
+        icon: (
+            <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+            </svg>
+        )
+    },
+    {
+        id: 'setup',
+        label: 'Setup',
+        icon: (
+            <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        )
+    }
+];
+
+export default function BottomNav({ activeTab, setActiveTab }) {
+    return (
+        <nav className="bg-white border-t border-slate-200 flex justify-around p-0.5 pb-1 shrink-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] relative">
+            {navItems.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                    <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={`flex flex-col items-center p-1.5 w-1/5 rounded-lg transition-colors active:bg-slate-50 ${
+                            isActive ? 'text-blue-600' : 'text-slate-400'
+                        }`}
+                    >
+                        {item.icon}
+                        <span className="text-[9px] font-bold">{item.label}</span>
+                    </button>
+                );
+            })}
+        </nav>
+    );
+}
+```
+
+## File: src/components/views/HeuteView.jsx
+```javascript
+import React from 'react';
+
+export default function HeuteView() {
+    return (
+        <div className="flex flex-col h-full">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <h1 className="text-lg font-black text-blue-600 mb-1">Heute</h1>
+                <p className="text-sm text-slate-500">Zeiterfassung und Quick-Actions werden hier in Phase 4.1 implementiert.</p>
+            </div>
+        </div>
+    );
+}
+```
+
+## File: src/components/views/KalenderView.jsx
+```javascript
+import React from 'react';
+
+export default function KalenderView() {
+    return (
+        <div className="flex flex-col h-full gap-2">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <h1 className="text-lg font-black text-blue-600 mb-1">Kalender</h1>
+                <p className="text-sm text-slate-500">Übersicht und Überstunden-Gitter folgen in Phase 4.2.</p>
+            </div>
+        </div>
+    );
+}
+```
+
+## File: src/components/views/PlanerView.jsx
+```javascript
+import React from 'react';
+
+export default function PlanerView() {
+    return (
+        <div className="flex flex-col h-full gap-2">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <h1 className="text-lg font-black text-blue-600 mb-1">Planer</h1>
+                <p className="text-sm text-slate-500">Die Pinsel- und Dienstplan-Logik folgt in Phase 4.3.</p>
+            </div>
+        </div>
+    );
+}
+```
+
+## File: src/components/views/SetupView.jsx
+```javascript
+import React from 'react';
+import { useApp } from '../../context/AppContext';
+
+export default function SetupView() {
+    const { appData } = useApp();
+
+    return (
+        <div className="flex flex-col gap-4 pb-4">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <h1 className="text-lg font-black text-blue-600 mb-2">Einstellungen</h1>
+                <div className="p-3 bg-slate-50 rounded-lg text-xs font-mono">
+                    Aktuelles Bundesland: <span className="font-bold text-blue-600">{appData.settings.state}</span>
+                </div>
+            </div>
+        </div>
+    );
+}
+```
+
+## File: src/components/views/StatistikView.jsx
+```javascript
+import React from 'react';
+
+export default function StatistikView() {
+    return (
+        <div className="flex flex-col h-full gap-3">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <h1 className="text-lg font-black text-blue-600 mb-1">Statistik</h1>
+                <p className="text-sm text-slate-500">Dashboards und PDF-Export-Buttons kommen in Phase 4.4.</p>
+            </div>
+        </div>
+    );
+}
 ```
 
 ## File: src/context/AppContext.jsx
@@ -378,30 +549,6 @@ export async function loadFromDB() {
 }
 ```
 
-## File: src/App.jsx
-```javascript
-// src/App.jsx
-import { useApp } from './context/AppContext.jsx';
-
-export default function App() {
-    const { appData } = useApp();
-
-    return (
-        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative pt-3 pb-2 px-3 flex flex-col">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mt-10">
-                <h1 className="text-xl font-black text-rose-600 mb-2">Zeiterfassung DEV</h1>
-                <p className="text-sm text-slate-500">
-                    Die React-Infrastruktur steht. IndexedDB ist verbunden.
-                </p>
-                <div className="mt-4 p-3 bg-slate-50 rounded-lg text-xs font-mono">
-                    Gespeichertes Bundesland: <span className="font-bold text-blue-600">{appData.settings.state}</span>
-                </div>
-            </div>
-        </main>
-    );
-}
-```
-
 ## File: src/index.css
 ```css
 /* src/index.css */
@@ -528,6 +675,51 @@ export default defineConfig({
     })
   ],
 });
+```
+
+## File: src/App.jsx
+```javascript
+// src/App.jsx
+import { useState } from 'react';
+import { useApp } from './context/AppContext.jsx';
+import BottomNav from './components/layout/BottomNav.jsx';
+
+import HeuteView from './components/views/HeuteView.jsx';
+import KalenderView from './components/views/KalenderView.jsx';
+import PlanerView from './components/views/PlanerView.jsx';
+import StatistikView from './components/views/StatistikView.jsx';
+import SetupView from './components/views/SetupView.jsx';
+
+export default function App() {
+    // appData wird hier aufgerufen, um sicherzustellen, dass der Context funktioniert.
+    const { appData } = useApp();
+    const [activeTab, setActiveTab] = useState('heute');
+
+    const renderView = () => {
+        switch (activeTab) {
+            case 'heute': return <HeuteView />;
+            case 'kalender': return <KalenderView />;
+            case 'planer': return <PlanerView />;
+            case 'statistik': return <StatistikView />;
+            case 'setup': return <SetupView />;
+            default: return <HeuteView />;
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-dvh overflow-hidden">
+            {/* Main Content Area: Scrollbar, flex-1 füllt den Platz bis zur Nav */}
+            <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative pt-3 pb-2 px-3 flex flex-col">
+                {renderView()}
+            </main>
+            
+            {/* Navigation Area: Fixiert am unteren Rand, selbe max-width wie Content für Desktop-Ansichten */}
+            <div className="w-full max-w-lg mx-auto shrink-0 z-20">
+                <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+            </div>
+        </div>
+    );
+}
 ```
 
 ## File: index.html
