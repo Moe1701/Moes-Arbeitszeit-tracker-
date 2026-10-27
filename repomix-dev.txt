@@ -45,6 +45,15 @@ src/
     layout/
       BottomNav.jsx
     views/
+      planer/
+        AutoFillMenu.jsx
+        PaintPalette.jsx
+        PlanerGrid.jsx
+      setup/
+        BackupManager.jsx
+        HolidaySettings.jsx
+        ModelSettings.jsx
+        TemplateManager.jsx
       HeuteView.jsx
       KalenderView.jsx
       PlanerView.jsx
@@ -52,8 +61,13 @@ src/
       StatistikView.jsx
   context/
     AppContext.jsx
+  hooks/
+    useTimeTracker.js
   services/
     db.js
+    pdfExport.js
+  utils/
+    timeCalculations.js
   App.css
   App.jsx
   index.css
@@ -152,68 +166,383 @@ export default function BottomNav({ activeTab, setActiveTab }) {
 }
 ```
 
-## File: src/components/views/HeuteView.jsx
+## File: src/components/views/planer/AutoFillMenu.jsx
 ```javascript
 import React from 'react';
 
-export default function HeuteView() {
+export default function AutoFillMenu({ 
+    templates, protectHolidays, toggleProtectHolidays, 
+    pattern, setPattern, overwritePattern, setOverwritePattern, applyPattern 
+}) {
     return (
-        <div className="flex flex-col h-full">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <h1 className="text-lg font-black text-blue-600 mb-1">Heute</h1>
-                <p className="text-sm text-slate-500">Zeiterfassung und Quick-Actions werden hier in Phase 4.1 implementiert.</p>
+        <details className="bg-white rounded-xl shadow-sm shrink-0 border border-slate-100 group">
+            <summary className="p-2.5 font-bold text-blue-700 flex items-center justify-between text-xs cursor-pointer list-none outline-none">
+                <span className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Ganzen Monat automatisch füllen
+                </span>
+                <svg className="w-4 h-4 transition-transform group-open:rotate-180 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+            </summary>
+            
+            <div className="p-2 border-t border-slate-100">
+                <div className="flex justify-between items-center mb-2">
+                    <span className="text-[10px] font-bold text-slate-500">Wochenmuster</span>
+                    <label className="flex items-center gap-1.5 cursor-pointer" onClick={toggleProtectHolidays}>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Feiertage frei</span>
+                        <div className={`w-7 h-3.5 rounded-full relative transition-colors ${protectHolidays ? 'bg-blue-500' : 'bg-slate-300'}`}>
+                            <div className={`w-2.5 h-2.5 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform ${protectHolidays ? 'translate-x-[12px]' : 'translate-x-0'}`}></div>
+                        </div>
+                    </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5 mb-2">
+                    {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day, idx) => {
+                        const jsDay = idx === 6 ? 0 : idx + 1;
+                        return (
+                            <div key={day} className={`flex items-center gap-1.5 p-1 bg-slate-50 border border-slate-100 rounded flex-1 ${idx === 6 ? 'col-span-2' : ''}`}>
+                                <span className="text-[9px] font-bold w-4 text-slate-500">{day}</span>
+                                <select 
+                                    value={pattern[jsDay]} 
+                                    onChange={(e) => setPattern({...pattern, [jsDay]: e.target.value})}
+                                    className="flex-1 p-1 border border-slate-200 rounded text-[9px] font-bold bg-white outline-none"
+                                >
+                                    <option value="">- Frei -</option>
+                                    {templates.map(t => (
+                                        <option key={t.id} value={t.id}>{t.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                    <label className="flex items-center gap-1.5 cursor-pointer p-1">
+                        <input 
+                            type="checkbox" 
+                            checked={overwritePattern}
+                            onChange={(e) => setOverwritePattern(e.target.checked)}
+                            className="w-3.5 h-3.5 text-blue-600 rounded" 
+                        />
+                        <span className="text-[9px] font-bold text-slate-500">Überschreiben</span>
+                    </label>
+                    <button onClick={applyPattern} className="px-3 py-1.5 rounded-md font-bold bg-blue-600 text-white shadow-sm active:bg-blue-700 text-[10px]">
+                        Eintragen
+                    </button>
+                </div>
+            </div>
+        </details>
+    );
+}
+```
+
+## File: src/components/views/planer/PaintPalette.jsx
+```javascript
+import React from 'react';
+
+export default function PaintPalette({ templates, activePaintTemplate, setActivePaintTemplate, colors }) {
+    return (
+        <div className="bg-white p-2 rounded-xl shadow-sm border-l-4 border-indigo-500 shrink-0 border-y border-r border-slate-100">
+            <div className="flex justify-between items-center mb-1.5">
+                <h2 className="font-bold text-indigo-700 flex items-center gap-1 text-[11px] uppercase tracking-wide">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+                    Aktiver Pinsel
+                </h2>
+                <button onClick={() => setActivePaintTemplate(null)} className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full active:bg-slate-200">
+                    Deaktivieren
+                </button>
+            </div>
+            
+            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                <button 
+                    onClick={() => setActivePaintTemplate('clear')} 
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-lg font-bold text-xs border transition-all ${activePaintTemplate === 'clear' ? 'bg-red-500 text-white shadow-inner scale-95 border-red-600' : 'bg-red-50 text-red-600 border-red-200 active:bg-red-100'}`}
+                >
+                    ❌ Löschen
+                </button>
+                
+                {templates.map((t, index) => {
+                    const isActive = activePaintTemplate === t.id;
+                    const color = colors[index % colors.length];
+                    const btnClass = isActive 
+                        ? `${color.bg.replace('100', '600')} text-white shadow-inner scale-95 ${color.border.replace('200', '700')}` 
+                        : `${color.bg} ${color.text} ${color.border} active:brightness-95 shadow-sm`;
+                    
+                    return (
+                        <button key={t.id} onClick={() => setActivePaintTemplate(t.id)} className={`flex-shrink-0 px-3 py-1.5 rounded-lg font-bold text-xs border transition-all ${btnClass}`}>
+                            🖌️ {t.name}
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );
 }
 ```
 
-## File: src/components/views/KalenderView.jsx
+## File: src/components/views/planer/PlanerGrid.jsx
 ```javascript
 import React from 'react';
 
-export default function KalenderView() {
+export default function PlanerGrid({ cells, monthName, changeMonth, handleCellClick, activePaintTemplate, templates, colors }) {
     return (
-        <div className="flex flex-col h-full gap-2">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <h1 className="text-lg font-black text-blue-600 mb-1">Kalender</h1>
-                <p className="text-sm text-slate-500">Übersicht und Überstunden-Gitter folgen in Phase 4.2.</p>
+        <div className="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
+            <div className="flex justify-between items-center mb-2 shrink-0">
+                <button onClick={() => changeMonth(-1)} className="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <div className="text-sm font-bold text-slate-700">{monthName}</div>
+                <button onClick={() => changeMonth(1)} className="p-1 bg-slate-100 text-slate-600 rounded active:bg-slate-200">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 mb-1 text-center text-[9px] font-bold text-slate-400 uppercase shrink-0">
+                <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1 grid-rows-6 flex-1 min-h-0">
+                {cells.map(cell => {
+                    if (cell.type === 'empty') return <div key={cell.id} className="bg-transparent"></div>;
+
+                    let bgClass = cell.isWeekend ? "bg-slate-100 border-slate-200" : "bg-slate-50 border-slate-200";
+                    let textHtml = null;
+
+                    if (cell.tplMatch) {
+                        const tplIndex = templates.findIndex(t => t.id === cell.tplMatch.id);
+                        const color = colors[tplIndex % colors.length];
+                        bgClass = `${color.bg} ${color.border}`;
+                        textHtml = <div className={`text-[9px] font-bold ${color.text} mt-0.5 truncate w-full text-center`}>{cell.tplMatch.name.substring(0,6)}</div>;
+                    } else if (cell.entry && cell.entry.begin) {
+                        bgClass = "bg-slate-200 border-slate-300";
+                        textHtml = <div className="text-[9px] font-bold text-slate-700 mt-0.5 truncate w-full text-center">{cell.netStd.toFixed(1)}h</div>;
+                    }
+
+                    return (
+                        <div 
+                            key={cell.id} 
+                            onClick={() => handleCellClick(cell.id)}
+                            className={`flex flex-col items-center justify-center p-1 relative border rounded-lg shadow-sm ${bgClass} ${activePaintTemplate ? 'cursor-pointer active:scale-95 transition-transform' : ''} overflow-hidden`}
+                        >
+                            <div className={`text-xs font-bold text-center ${cell.isWeekend ? 'text-slate-400' : 'text-slate-800'}`}>{cell.dayNum}</div>
+                            {textHtml}
+                        </div>
+                    );
+                })}
+            </div>
+            
+            <div className="mt-2 text-center text-[9px] text-slate-400 shrink-0 font-medium">
+                Tippe auf einen Tag, um die farbige Vorlage einzutragen.
             </div>
         </div>
     );
 }
 ```
 
-## File: src/components/views/PlanerView.jsx
+## File: src/components/views/setup/BackupManager.jsx
 ```javascript
-import React from 'react';
+import React, { useRef } from 'react';
 
-export default function PlanerView() {
+export default function BackupManager({ appData, updateAppData }) {
+    const fileInputRef = useRef(null);
+
+    const exportData = () => {
+        try {
+            const dataStr = JSON.stringify(appData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Zeiterfassung_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            alert("Fehler beim Erstellen der Backup-Datei.");
+        }
+    };
+
+    const handleFileImport = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                if (parsed && parsed.entries && parsed.settings) {
+                    if (window.confirm("⚠️ Warnung: Dies überschreibt alle aktuellen Daten in der App mit dem Backup. Fortfahren?")) {
+                        await updateAppData(parsed);
+                        localStorage.setItem('zeiterfassung_db', JSON.stringify(parsed));
+                        alert("✅ Backup erfolgreich wiederhergestellt!");
+                        window.location.reload();
+                    }
+                } else {
+                    alert("❌ Ungültige Backup-Datei. (Falsches Format)");
+                }
+            } catch(error) {
+                alert("❌ Fehler beim Lesen der Datei. Sie scheint beschädigt zu sein.");
+            }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    };
+
     return (
-        <div className="flex flex-col h-full gap-2">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <h1 className="text-lg font-black text-blue-600 mb-1">Planer</h1>
-                <p className="text-sm text-slate-500">Die Pinsel- und Dienstplan-Logik folgt in Phase 4.3.</p>
+        <div className="bg-indigo-50 p-4 rounded-xl shadow-sm space-y-3 border border-indigo-100">
+            <h2 className="font-bold text-indigo-800 border-b border-indigo-200 pb-2 text-sm">Datensicherung (Backup)</h2>
+            <p className="text-[10px] text-indigo-700 leading-tight">Lade deine Daten regelmäßig als Backup-Datei herunter. Speichere sie am besten in einem Cloud-Ordner (iCloud/Drive).</p>
+            
+            <button onClick={exportData} className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 active:bg-indigo-700 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Backup-Datei speichern
+            </button>
+            
+            <div className="pt-1">
+                <input type="file" ref={fileInputRef} accept=".json" className="hidden" onChange={handleFileImport} />
+                <button onClick={() => fileInputRef.current?.click()} className="w-full py-3 bg-white text-indigo-700 border border-indigo-200 font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 active:bg-indigo-50 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    Backup wiederherstellen
+                </button>
             </div>
         </div>
     );
 }
 ```
 
-## File: src/components/views/SetupView.jsx
+## File: src/components/views/setup/HolidaySettings.jsx
 ```javascript
-import React from 'react';
-import { useApp } from '../../context/AppContext';
+import React, { useState } from 'react';
 
-export default function SetupView() {
-    const { appData } = useApp();
+export default function HolidaySettings({ appData, updateAppData }) {
+    const [isFetchingHolidays, setIsFetchingHolidays] = useState(false);
+    const bundesland = appData.settings.state;
+
+    const updateState = async (val) => {
+        await updateAppData(prev => ({ ...prev, settings: { ...prev.settings, state: val } }));
+    };
+
+    const fetchHolidays = async () => {
+        setIsFetchingHolidays(true);
+        const year = new Date().getFullYear();
+        
+        try {
+            const fetchedHolidays = { ...appData.holidays };
+
+            const loadAPI = async (y, isSchool) => {
+                const typeUrl = isSchool ? "SchoolHolidays" : "PublicHolidays";
+                const url = `https://openholidaysapi.org/${typeUrl}?countryIsoCode=DE&languageIsoCode=DE&validFrom=${y}-01-01&validTo=${y}-12-31&subdivisionCode=DE-${bundesland}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                data.forEach(item => {
+                    const name = item.name[0].text;
+                    const start = new Date(item.startDate);
+                    const end = new Date(item.endDate);
+                    for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+                        const dStr = dt.toISOString().split('T')[0];
+                        if (!fetchedHolidays[dStr] || (!isSchool && fetchedHolidays[dStr].isSchool)) {
+                            fetchedHolidays[dStr] = { name: name, isSchool: isSchool };
+                        }
+                    }
+                });
+            };
+
+            await loadAPI(year, false); await loadAPI(year + 1, false);
+            await loadAPI(year, true); await loadAPI(year + 1, true);
+
+            await updateAppData(prev => ({ ...prev, holidays: fetchedHolidays }));
+            alert("Feiertage und Ferien wurden erfolgreich aktualisiert!");
+        } catch (e) {
+            alert("Fehler beim Abrufen der Daten. Bitte prüfen Sie Ihre Internetverbindung.");
+        }
+        setIsFetchingHolidays(false);
+    };
 
     return (
-        <div className="flex flex-col gap-4 pb-4">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <h1 className="text-lg font-black text-blue-600 mb-2">Einstellungen</h1>
-                <div className="p-3 bg-slate-50 rounded-lg text-xs font-mono">
-                    Aktuelles Bundesland: <span className="font-bold text-blue-600">{appData.settings.state}</span>
+        <div className="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
+            <h2 className="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Bundesland</h2>
+            <select value={bundesland} onChange={e => updateState(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none">
+                <option value="BW">Baden-Württemberg</option><option value="BY">Bayern</option><option value="BE">Berlin</option>
+                <option value="BB">Brandenburg</option><option value="HB">Bremen</option><option value="HH">Hamburg</option>
+                <option value="HE">Hessen</option><option value="MV">Mecklenburg-Vorpommern</option><option value="NI">Niedersachsen</option>
+                <option value="NW">Nordrhein-Westfalen</option><option value="RP">Rheinland-Pfalz</option><option value="SL">Saarland</option>
+                <option value="SN">Sachsen</option><option value="ST">Sachsen-Anhalt</option><option value="SH">Schleswig-Holstein</option>
+                <option value="TH">Thüringen</option>
+            </select>
+            <button 
+                onClick={fetchHolidays} disabled={isFetchingHolidays}
+                className={`w-full py-3 text-white font-bold rounded-xl shadow-sm text-sm transition-colors ${isFetchingHolidays ? 'bg-emerald-400 cursor-not-allowed' : 'bg-emerald-500 active:bg-emerald-600'}`}
+            >
+                {isFetchingHolidays ? 'Lädt...' : 'Jahresdaten aktualisieren'}
+            </button>
+        </div>
+    );
+}
+```
+
+## File: src/components/views/setup/ModelSettings.jsx
+```javascript
+import React from 'react';
+
+export default function ModelSettings({ appData, updateAppData }) {
+    const { model } = appData.settings;
+    const percent = model.percentage || 100;
+    const effWeekly = model.hours * (percent / 100);
+    const dailySoll = (effWeekly / Math.max(1, model.days.length)).toFixed(2);
+    const hrMonthly = (effWeekly * 13 / 3).toFixed(1);
+
+    const updateModel = async (key, value) => {
+        await updateAppData(prev => ({
+            ...prev, settings: { ...prev.settings, model: { ...prev.settings.model, [key]: value } }
+        }));
+    };
+
+    const toggleWorkDay = async (dayInt) => {
+        const currentDays = [...model.days];
+        const idx = currentDays.indexOf(dayInt);
+        if (idx > -1) currentDays.splice(idx, 1);
+        else currentDays.push(dayInt);
+        await updateModel('days', currentDays);
+    };
+
+    return (
+        <div className="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100 relative">
+            <h2 className="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Arbeitszeit-Modell</h2>
+            
+            <div className="grid grid-cols-2 gap-3 mb-3 pt-2">
+                <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Basis-Woche (h)</label>
+                    <input type="number" value={model.hours} onChange={e => updateModel('hours', parseFloat(e.target.value) || 40)} className="w-full bg-transparent font-bold text-lg text-center outline-none p-0 m-0" />
+                </div>
+                <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Stellenanteil (%)</label>
+                    <input type="number" value={model.percentage} onChange={e => updateModel('percentage', parseFloat(e.target.value) || 100)} className="w-full bg-transparent font-bold text-lg text-center outline-none p-0 m-0" />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-50 p-2 rounded-lg border border-blue-100">
+                    <label className="block text-[10px] font-bold text-blue-400 mb-1 uppercase text-center">Tages-Soll (Ist)</label>
+                    <div className="font-bold text-lg text-blue-600 text-center">{dailySoll} h</div>
+                </div>
+                <div className="bg-blue-50 p-2 rounded-lg border border-blue-100">
+                    <label className="block text-[10px] font-bold text-blue-400 mb-1 uppercase text-center">HR Monats-Soll</label>
+                    <div className="font-bold text-lg text-blue-600 text-center">{hrMonthly} h</div>
+                </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-50">
+                <label className="block text-[10px] font-bold text-slate-400 mb-2.5 uppercase">Reguläre Arbeitstage</label>
+                <div className="flex justify-between gap-1">
+                    {[{ id: 1, label: 'Mo' }, { id: 2, label: 'Di' }, { id: 3, label: 'Mi' }, { id: 4, label: 'Do' }, { id: 5, label: 'Fr' }, { id: 6, label: 'Sa' }, { id: 0, label: 'So' }].map(day => (
+                        <button 
+                            key={day.id} onClick={() => toggleWorkDay(day.id)}
+                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${model.days.includes(day.id) ? 'bg-blue-100 text-blue-700 border-2 border-blue-500' : 'bg-slate-100 text-slate-400 border-2 border-transparent'}`}
+                        >
+                            {day.label}
+                        </button>
+                    ))}
                 </div>
             </div>
         </div>
@@ -221,16 +550,65 @@ export default function SetupView() {
 }
 ```
 
-## File: src/components/views/StatistikView.jsx
+## File: src/components/views/setup/TemplateManager.jsx
 ```javascript
-import React from 'react';
+import React, { useState } from 'react';
 
-export default function StatistikView() {
+const plannerColors = [
+    { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
+    { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-200' },
+    { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200' },
+    { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
+    { bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-200' }
+];
+
+export default function TemplateManager({ appData, updateAppData }) {
+    const [tplName, setTplName] = useState('');
+    const [tplBegin, setTplBegin] = useState('');
+    const [tplEnd, setTplEnd] = useState('');
+    const [tplPause, setTplPause] = useState('');
+
+    const addTemplate = async () => {
+        if (tplName && tplBegin && tplEnd) {
+            const newTpl = { id: Date.now(), name: tplName, begin: tplBegin, end: tplEnd, pause: parseInt(tplPause) || 0 };
+            await updateAppData(prev => ({ ...prev, templates: [...prev.templates, newTpl] }));
+            setTplName(''); setTplBegin(''); setTplEnd(''); setTplPause('');
+        }
+    };
+
+    const deleteTemplate = async (id) => {
+        await updateAppData(prev => ({ ...prev, templates: prev.templates.filter(t => t.id !== id) }));
+    };
+
     return (
-        <div className="flex flex-col h-full gap-3">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <h1 className="text-lg font-black text-blue-600 mb-1">Statistik</h1>
-                <p className="text-sm text-slate-500">Dashboards und PDF-Export-Buttons kommen in Phase 4.4.</p>
+        <div className="bg-white p-4 rounded-xl shadow-sm space-y-3 border border-slate-100">
+            <h2 className="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Vorlagen anlegen</h2>
+            <div className="grid grid-cols-4 gap-2">
+                <input type="text" value={tplName} onChange={e => setTplName(e.target.value)} placeholder="Name (z.B. Früh)" className="col-span-4 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold outline-none" />
+                <input type="time" value={tplBegin} onChange={e => setTplBegin(e.target.value)} className="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" />
+                <input type="time" value={tplEnd} onChange={e => setTplEnd(e.target.value)} className="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" />
+                <input type="number" value={tplPause} onChange={e => setTplPause(e.target.value)} placeholder="Pause (Min)" className="col-span-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" />
+                <button onClick={addTemplate} className="col-span-2 bg-indigo-600 text-white font-bold rounded-lg text-sm active:bg-indigo-700">Speichern</button>
+            </div>
+            
+            <div className="space-y-2 mt-2">
+                {appData.templates.map((t, index) => {
+                    const color = plannerColors[index % plannerColors.length];
+                    return (
+                        <div key={t.id} className="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-3 h-3 rounded-full ${color.bg.replace('100', '500')}`}></div>
+                                <div>
+                                    <div className="font-bold text-sm text-slate-800">{t.name}</div>
+                                    <div className="text-xs text-slate-500">{t.begin} - {t.end} ({t.pause || 0}m Pause)</div>
+                                </div>
+                            </div>
+                            <button onClick={() => deleteTemplate(t.id)} className="text-red-400 p-2 active:bg-red-50 rounded-lg">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
@@ -312,6 +690,146 @@ export function AppProvider({ children }) {
 export const useApp = () => useContext(AppContext);
 ```
 
+## File: src/hooks/useTimeTracker.js
+```javascript
+/**
+ * src/hooks/useTimeTracker.js
+ * Custom Hook für die Interaktion mit dem täglichen Zeiterfassungs-State.
+ * Nutzt den globalen AppContext und die isolierten Zeit-Utilities.
+ */
+import { useApp } from '../context/AppContext';
+import { 
+    getLocalDateString, 
+    calculateDailySoll, 
+    calculateNettoHours,
+    suggestBreak,
+    calculateMinutes
+} from '../utils/timeCalculations';
+
+export function useTimeTracker(selectedDateString) {
+    const { appData, updateAppData } = useApp();
+
+    // Lade den Eintrag für den ausgewählten Tag oder generiere einen leeren Dummy-Eintrag
+    const entry = appData.entries[selectedDateString] || {
+        begin: '',
+        end: '',
+        pause: '',
+        soll: calculateDailySoll(selectedDateString, appData.settings, appData.holidays),
+        remark: ''
+    };
+
+    // Helfer für Feiertage an diesem Tag
+    const holiday = appData.holidays[selectedDateString];
+
+    /**
+     * Speichert oder aktualisiert den Eintrag für den ausgewählten Tag in der Datenbank.
+     * Wenn alle Felder (außer Soll) leer sind und das Soll 0 ist, wird der Eintrag gelöscht, um Platz zu sparen.
+     * 
+     * @param {object} updatedData - Partielle Daten (z.B. { begin: "08:00", pause: 30 })
+     */
+    const saveEntry = async (updatedData) => {
+        const mergedEntry = { ...entry, ...updatedData };
+        
+        // Berechne Netto und checke, ob wir eine leere Hülle löschen können
+        const isCompletelyEmpty = !mergedEntry.begin && !mergedEntry.end && !mergedEntry.remark && mergedEntry.soll === 0;
+
+        await updateAppData((prev) => {
+            const newEntries = { ...prev.entries };
+            
+            if (isCompletelyEmpty) {
+                delete newEntries[selectedDateString];
+            } else {
+                newEntries[selectedDateString] = mergedEntry;
+            }
+            
+            return { ...prev, entries: newEntries };
+        });
+    };
+
+    /**
+     * Setzt den aktuellen Eintrag komplett zurück (inklusive Soll-Neuberechnung).
+     */
+    const clearEntry = async () => {
+        const defaultSoll = calculateDailySoll(selectedDateString, appData.settings, appData.holidays);
+        
+        if (defaultSoll === 0) {
+            // Wenn Soll 0 ist, können wir den Eintrag direkt aus der DB putzen
+             await updateAppData((prev) => {
+                const newEntries = { ...prev.entries };
+                delete newEntries[selectedDateString];
+                return { ...prev, entries: newEntries };
+            });
+        } else {
+            // Andernfalls setzen wir ihn auf Standard-Werte zurück
+            await saveEntry({
+                begin: '',
+                end: '',
+                pause: '',
+                soll: defaultSoll,
+                remark: ''
+            });
+        }
+    };
+
+    /**
+     * Wendet eine Vorlage (Template) auf den aktuellen Tag an.
+     * @param {object} template - Z.B. { begin: "06:00", end: "14:30", pause: 30 }
+     */
+    const applyTemplate = async (template) => {
+        await saveEntry({
+            begin: template.begin,
+            end: template.end,
+            pause: template.pause || 30
+        });
+    };
+
+    /**
+     * "Kommen/Gehen" Toggle-Logik (Stempeln).
+     * Nimmt die aktuelle Uhrzeit und trägt sie in "begin" ein, falls leer.
+     * Andernfalls in "end". Berechnet optional automatisch eine Pausenempfehlung.
+     */
+    const handleQuickStamp = async () => {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const timeStr = `${hh}:${mm}`;
+
+        let newBegin = entry.begin;
+        let newEnd = entry.end;
+        let newPause = parseFloat(entry.pause) || 0;
+
+        if (!entry.begin) {
+            newBegin = timeStr;
+        } else {
+            newEnd = timeStr;
+            // Automatische Pause vorschlagen, falls noch keine gesetzt wurde
+            if (!entry.pause) {
+                const diffMin = calculateMinutes(newBegin, newEnd);
+                newPause = suggestBreak(diffMin);
+            }
+        }
+
+        await saveEntry({ begin: newBegin, end: newEnd, pause: newPause });
+    };
+
+    // Live-Berechnungen (abgeleiteter State) für die UI (View)
+    const nettoHours = calculateNettoHours(entry.begin, entry.end, parseFloat(entry.pause) || 0);
+    const currentSoll = parseFloat(entry.soll) || 0;
+    const diffHours = nettoHours - currentSoll;
+
+    return {
+        entry,          // Die Daten des aktuellen Tages (begin, end, pause, soll, remark)
+        holiday,        // Gibt es einen Feiertag / Schulferien an diesem Tag?
+        nettoHours,     // Berechnete Nettozeit in Stunden (float)
+        diffHours,      // Differenz zum Soll in Stunden (float, negativ bei Minusstunden)
+        saveEntry,      // Funktion zum Speichern (Teil-Updates erlaubt)
+        clearEntry,     // Setzt den Tag zurück
+        applyTemplate,  // Wendet Schicht-Muster an
+        handleQuickStamp// Kommen/Gehen Button-Logik
+    };
+}
+```
+
 ## File: src/services/db.js
 ```javascript
 // src/services/db.js
@@ -358,6 +876,219 @@ export async function loadFromDB() {
         request.onsuccess = () => resolve(request.result);
         request.onerror = (e) => reject(e.error);
     });
+}
+```
+
+## File: src/services/pdfExport.js
+```javascript
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { calculateDailySoll, calculateMinutes } from '../utils/timeCalculations';
+
+export function exportMonthPDF(appData, year, month, monthName) {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(`Arbeitszeitnachweis - ${monthName} ${year}`, 14, 20);
+
+    let tableData = [];
+    let daysInMonth = new Date(year, month + 1, 0).getDate();
+    let totalNet = 0;
+
+    let today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        let dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        let dateObj = new Date(dStr);
+        let dayName = dateObj.toLocaleDateString('de-DE', { weekday: 'short' });
+        let dateFormatted = `${String(i).padStart(2,'0')}.${String(month+1).padStart(2,'0')}.`;
+
+        let entry = appData.entries[dStr];
+        let daySoll = entry && entry.soll !== undefined ? entry.soll : calculateDailySoll(dStr, appData.settings, appData.holidays);
+        
+        let begin = entry && entry.begin ? entry.begin : '-';
+        let end = entry && entry.end ? entry.end : '-';
+        let pause = entry && entry.pause !== undefined ? entry.pause : '0';
+        let remark = entry && entry.remark ? entry.remark : '';
+        
+        let netStd = 0;
+        if (entry && entry.begin && entry.end) {
+            let bMin = calculateMinutes(entry.begin, entry.end);
+            netStd = Math.max(0, (bMin - (parseFloat(entry.pause) || 0)) / 60);
+        }
+        
+        let dayDiff = netStd - daySoll;
+        let isFuture = dateObj > today; 
+        
+        if(!entry && isFuture) dayDiff = 0;
+        else if (!entry && !isFuture && daySoll > 0) dayDiff = -daySoll;
+
+        totalNet += netStd;
+
+        let netStr = netStd > 0 ? netStd.toFixed(2) : '-';
+        let sollStr = daySoll > 0 ? daySoll.toFixed(2) : '0.00';
+        let diffStr = dayDiff !== 0 ? (dayDiff > 0 ? '+' : '') + dayDiff.toFixed(2) : '0.00';
+
+        tableData.push([
+            `${dayName}, ${dateFormatted}`,
+            begin,
+            end,
+            pause.toString(),
+            netStr,
+            sollStr,
+            diffStr,
+            remark
+        ]);
+    }
+
+    let percent = appData.settings.model.percentage || 100;
+    let effWeekly = appData.settings.model.hours * (percent / 100);
+    let hrMonthlySoll = effWeekly * 13 / 3;
+
+    doc.autoTable({
+        startY: 28,
+        head: [['Datum', 'Beginn', 'Ende', 'Pause (m)', 'Ist (h)', 'Soll (h)', '+/- (h)', 'Bemerkung']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [37, 99, 235] }, 
+        styles: { fontSize: 8 },
+        columnStyles: {
+            0: { cellWidth: 26 },
+            1: { cellWidth: 16, halign: 'center' },
+            2: { cellWidth: 16, halign: 'center' },
+            3: { cellWidth: 18, halign: 'center' },
+            4: { cellWidth: 15, halign: 'right' },
+            5: { cellWidth: 15, halign: 'right' },
+            6: { cellWidth: 15, halign: 'right' },
+            7: { cellWidth: 'auto' }
+        }
+    });
+
+    let finalY = doc.lastAutoTable.finalY + 12;
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text('Zusammenfassung:', 14, finalY);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Gesamt Ist-Arbeitszeit: ${totalNet.toFixed(2)} h`, 14, finalY + 8);
+    doc.text(`HR Monats-Soll (Formel): ${hrMonthlySoll.toFixed(2)} h`, 14, finalY + 14);
+    
+    let hrDiff = totalNet - hrMonthlySoll;
+    let hrDiffStr = (hrDiff > 0 ? '+' : '') + hrDiff.toFixed(2);
+    doc.text(`Monats-Differenz (Ist vs. Formel): ${hrDiffStr} h`, 14, finalY + 20);
+
+    doc.save(`Zeiterfassung_${monthName}_${year}.pdf`);
+}
+```
+
+## File: src/utils/timeCalculations.js
+```javascript
+/**
+ * src/utils/timeCalculations.js
+ * Reine Business-Logik für die Zeitberechnung (Local-First, keine React/UI-Abhängigkeiten)
+ */
+
+export function calculateMinutes(begin, end) {
+    if (!begin || !end) return 0;
+    const [h1, m1] = begin.split(':').map(str => parseInt(str, 10) || 0);
+    const [h2, m2] = end.split(':').map(str => parseInt(str, 10) || 0);
+    let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+    if (diff < 0) diff += 24 * 60; 
+    return diff;
+}
+
+export function calculateNettoHours(begin, end, pauseMin = 0) {
+    if (!begin || !end) return 0.0;
+    const bruttoMin = calculateMinutes(begin, end);
+    const nettoMin = bruttoMin - pauseMin;
+    return Math.max(0, nettoMin / 60);
+}
+
+export function isWeekend(date) {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const day = d.getDay();
+    return day === 0 || day === 6;
+}
+
+export function getLocalDateString(d) {
+    if (!d) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+export function calculateDailySoll(dateString, settings, holidays) {
+    if (!settings || !settings.model || !settings.model.days) return 0.0;
+    const date = new Date(dateString);
+    const dayOfWeek = date.getDay();
+    const isWorkDay = settings.model.days.includes(dayOfWeek);
+    
+    if (!isWorkDay) return 0.0;
+    
+    if (settings.protectHolidays && holidays && holidays[dateString] && !holidays[dateString].isSchool) {
+        return 0.0;
+    }
+    const percent = settings.model.percentage || 100;
+    const effWeekly = settings.model.hours * (percent / 100);
+    const hoursPerDay = effWeekly / Math.max(1, settings.model.days.length);
+    return parseFloat(hoursPerDay.toFixed(2));
+}
+
+export function suggestBreak(diffMin) {
+    if (diffMin > 9 * 60) return 45;
+    if (diffMin > 6 * 60) return 30;
+    return 0;
+}
+
+/**
+ * Berechnet den ewigen Gesamtsaldo (App-Gesamtsaldo) vom ersten Eintrag bis zum gewählten Monat.
+ */
+export function calculateAllTimeAppDiff(entries, settings, holidays, viewYear, viewMonth) {
+    const entryKeys = Object.keys(entries);
+    if (entryKeys.length === 0) return 0;
+    
+    entryKeys.sort();
+    const firstDateStr = entryKeys[0];
+    const firstDate = new Date(firstDateStr);
+    firstDate.setHours(0,0,0,0);
+    
+    const lastDayOfViewMonth = new Date(viewYear, viewMonth + 1, 0);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    
+    const endDate = lastDayOfViewMonth;
+    let totalDiff = 0;
+    let d = new Date(firstDate);
+    
+    let iterations = 0; 
+    // Max 3000 Iterationen als Endlosschleifen-Schutz (reicht für >8 Jahre Historie)
+    while (d <= endDate && iterations < 3000) {
+        const dStr = getLocalDateString(d);
+        const entry = entries[dStr];
+        const daySoll = entry && entry.soll !== undefined ? entry.soll : calculateDailySoll(dStr, settings, holidays);
+        
+        let netStd = 0;
+        if (entry && entry.begin && entry.end) {
+            const bMin = calculateMinutes(entry.begin, entry.end);
+            netStd = Math.max(0, (bMin - (parseFloat(entry.pause) || 0)) / 60);
+        }
+        
+        let dayDiff = netStd - daySoll;
+        const isFuture = d > today;
+        
+        if (!entry && isFuture) {
+            dayDiff = 0;
+        } else if (!entry && !isFuture && daySoll > 0) {
+            dayDiff = -daySoll;
+        }
+        
+        totalDiff += dayDiff;
+        d.setDate(d.getDate() + 1);
+        iterations++;
+    }
+    return totalDiff;
 }
 ```
 
@@ -600,12 +1331,25 @@ export async function loadFromDB() {
 
 ## File: src/main.jsx
 ```javascript
-// src/main.jsx
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import { AppProvider } from './context/AppContext.jsx';
 import './index.css';
+
+// PWA Service Worker Registration
+import { registerSW } from 'virtual:pwa-register';
+
+// Auto-Update: Der Browser lädt im Hintergrund leise die neue Version herunter
+const updateSW = registerSW({
+  onNeedRefresh() {
+    // Optional: Hier könnte man einen "Neue Version verfügbar. Neuladen?" Toast anzeigen.
+    // Bei registerType: 'autoUpdate' wird dies ohnehin meist automatisch beim nächsten App-Start angewandt.
+  },
+  onOfflineReady() {
+    console.log('App ist bereit für den Offline-Gebrauch.');
+  },
+});
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -650,7 +1394,6 @@ createRoot(document.getElementById('root')).render(
 
 ## File: vite.config.js
 ```javascript
-// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -662,14 +1405,38 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      workbox: {
+        // Cacht alle wichtigen Assets für den 100% Offline-Betrieb
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Verhindert Caching-Fehler bei externen API Calls (Feiertage)
+        navigateFallbackDenylist: [/^\/api/],
+      },
       manifest: {
-        name: 'Zeiterfassung DEV',
-        short_name: 'Zeit DEV',
-        theme_color: '#ef4444', // Rotes Theme zur Unterscheidung
+        name: 'Zeiterfassung Pro',
+        short_name: 'Zeit Pro',
+        description: 'Local-First Schichtdienst Zeiterfassung',
+        theme_color: '#f1f5f9',
         background_color: '#f1f5f9',
         display: 'standalone',
+        orientation: 'portrait',
         icons: [
-          // Hier später die 192x192 und 512x512 Icons einfügen
+          {
+            src: '/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
         ]
       }
     })
@@ -677,11 +1444,707 @@ export default defineConfig({
 });
 ```
 
+## File: src/components/views/HeuteView.jsx
+```javascript
+import React, { useState } from 'react';
+import { useApp } from '../../context/AppContext';
+import { useTimeTracker } from '../../hooks/useTimeTracker';
+import { getLocalDateString } from '../../utils/timeCalculations';
+
+export default function HeuteView({ selectedDate, setSelectedDate }) {
+    const { appData, updateAppData } = useApp();
+    const [isSavedIndicator, setIsSavedIndicator] = useState(false);
+    const tracker = useTimeTracker(selectedDate);
+
+    const displayDate = selectedDate.split('-').reverse().join('.');
+    const isToday = selectedDate === getLocalDateString(new Date());
+
+    const changeDate = (days) => {
+        const d = new Date(selectedDate);
+        d.setDate(d.getDate() + days);
+        setSelectedDate(getLocalDateString(d));
+    };
+
+    const handleTogglePause = async () => {
+        if (appData.activePauseStart) {
+            const start = new Date(appData.activePauseStart);
+            const diffMins = Math.round((new Date() - start) / 60000);
+            const currentPause = parseFloat(tracker.entry.pause) || 0;
+            await tracker.saveEntry({ pause: currentPause + diffMins });
+            await updateAppData(prev => ({ ...prev, activePauseStart: null }));
+        } else {
+            await updateAppData(prev => ({ ...prev, activePauseStart: new Date().toISOString() }));
+        }
+    };
+
+    const handleManualSave = async () => {
+        setIsSavedIndicator(true);
+        setTimeout(() => setIsSavedIndicator(false), 1000);
+    };
+
+    return (
+        <div className="flex flex-col h-full">
+            <div className="flex flex-col gap-3 shrink-0">
+                <div className="flex justify-between items-center bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+                    <button onClick={() => changeDate(-1)} className="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-30">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    
+                    <div className="flex-1 relative flex justify-center items-center h-10 overflow-hidden rounded-lg">
+                        <span className="text-xl font-black tracking-tight text-slate-800 pointer-events-none">{displayDate}</span>
+                        <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" />
+                    </div>
+
+                    <button onClick={() => changeDate(1)} className="p-3 bg-slate-50 text-slate-600 rounded-xl active:bg-slate-200 transition-colors z-30">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+
+                {tracker.holiday && (
+                    <div className={`text-center text-xs font-bold p-2 rounded-xl shadow-sm mb-1 ${tracker.holiday.isSchool ? "bg-blue-50 text-blue-600" : "bg-yellow-50 text-yellow-600"}`}>
+                        {tracker.holiday.isSchool ? "🎒 " : "🎉 "} {tracker.holiday.name}
+                    </div>
+                )}
+
+                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                    {appData.templates.map(t => (
+                        <button key={t.id} onClick={() => tracker.applyTemplate(t)} className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-bold text-sm shadow-sm whitespace-nowrap active:bg-indigo-100 border border-indigo-100">{t.name}</button>
+                    ))}
+                </div>
+
+                <div className="flex gap-3">
+                    <div className="bg-white py-4 px-2 rounded-2xl shadow-sm flex-1 flex flex-col items-center justify-center border border-slate-100">
+                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5">Netto-Arbeitszeit</div>
+                        <div className="text-[2.5rem] leading-none font-black text-blue-600 tracking-tight">{tracker.nettoHours.toFixed(2)}h</div>
+                        <div className={`text-[10px] font-bold mt-2 ${tracker.diffHours >= 0 ? "text-emerald-500" : "text-red-400"}`}>
+                            {tracker.diffHours !== 0 ? `${tracker.diffHours > 0 ? "+" : ""}${tracker.diffHours.toFixed(2)}h ${tracker.diffHours >= 0 ? "Überstunden" : "Minusstunden"}` : "0.00h zum Soll"}
+                        </div>
+                    </div>
+                    
+                    <button onClick={handleManualSave} className={`w-[85px] rounded-2xl shadow-md flex flex-col justify-center items-center transition-colors shrink-0 ${isSavedIndicator ? 'bg-emerald-500 text-white' : 'bg-blue-600 text-white active:bg-blue-700'}`}>
+                        <svg className="w-8 h-8 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">{isSavedIndicator ? 'Safe!' : 'Speichern'}</span>
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center gap-3 min-h-0 py-2">
+                {isToday && (
+                    <div className="grid grid-cols-2 gap-3 shrink-0 mb-1">
+                        <button onClick={tracker.handleQuickStamp} className={`py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 ${!tracker.entry.begin ? 'bg-emerald-50 text-emerald-700 border-emerald-200 active:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 active:bg-rose-100'}`}>
+                            {!tracker.entry.begin ? (
+                                <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg><span className="text-[10px] uppercase tracking-wider">Kommen</span></>
+                            ) : (
+                                <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span className="text-[10px] uppercase tracking-wider">Gehen</span></>
+                            )}
+                        </button>
+                        
+                        <button onClick={handleTogglePause} className={`py-2.5 px-2 rounded-xl font-bold shadow-sm border transition-colors flex flex-col items-center justify-center gap-0.5 ${appData.activePauseStart ? 'bg-amber-500 text-white border-amber-600 active:bg-amber-600 animate-pulse' : 'bg-amber-50 text-amber-700 border-amber-200 active:bg-amber-100'}`}>
+                            {appData.activePauseStart ? (
+                                <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path></svg><span className="text-[10px] uppercase tracking-wider">Pause beenden</span></>
+                            ) : (
+                                <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span className="text-[10px] uppercase tracking-wider">Pause starten</span></>
+                            )}
+                        </button>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 shrink-0">
+                    <div className="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Beginn</label>
+                        <span className="text-3xl font-black text-slate-800 pointer-events-none z-10">{tracker.entry.begin || '--:--'}</span>
+                        <input type="time" value={tracker.entry.begin || ''} onChange={e => tracker.saveEntry({ begin: e.target.value })} className="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" />
+                    </div>
+
+                    <div className="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center relative overflow-hidden active:bg-slate-50 transition-colors">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pointer-events-none z-10">Ende</label>
+                        <span className="text-3xl font-black text-slate-800 pointer-events-none z-10">{tracker.entry.end || '--:--'}</span>
+                        <input type="time" value={tracker.entry.end || ''} onChange={e => tracker.saveEntry({ end: e.target.value })} className="absolute top-0 left-0 w-full h-full opacity-0 z-20 cursor-pointer" />
+                    </div>
+
+                    <div className="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center focus-within:ring-2 ring-slate-200 transition-all">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pause (Min)</label>
+                        <input type="number" value={tracker.entry.pause !== undefined ? tracker.entry.pause : ''} onChange={e => tracker.saveEntry({ pause: e.target.value === '' ? '' : parseFloat(e.target.value) })} className="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-indigo-600" placeholder="0" />
+                    </div>
+                    
+                    <div className="bg-white py-3 px-2 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center focus-within:ring-2 ring-slate-200 transition-all">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Soll (Std)</label>
+                        <input type="number" step="0.1" value={tracker.entry.soll !== undefined ? tracker.entry.soll : ''} onChange={e => tracker.saveEntry({ soll: e.target.value === '' ? 0 : parseFloat(e.target.value) })} className="w-full text-3xl font-black bg-transparent border-none outline-none text-center text-slate-500" />
+                    </div>
+                </div>
+
+                <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 shrink-0">
+                    <input type="text" value={tracker.entry.remark || ''} onChange={e => tracker.saveEntry({ remark: e.target.value })} className="w-full text-base py-2 font-medium bg-transparent outline-none text-slate-700 placeholder-slate-400 text-center" placeholder="💬 Bemerkung (Krank, Urlaub, Notizen)" />
+                </div>
+            </div>
+
+            <div className="shrink-0 mt-auto">
+                <button onClick={tracker.clearEntry} className="w-full p-3 text-red-500 font-bold bg-red-50 rounded-xl active:bg-red-100 border border-red-100 transition-colors">Tageseintrag leeren</button>
+            </div>
+        </div>
+    );
+}
+```
+
+## File: src/components/views/KalenderView.jsx
+```javascript
+import React, { useState, useMemo } from 'react';
+import { useApp } from '../../context/AppContext';
+import { getLocalDateString, calculateDailySoll, calculateMinutes, calculateAllTimeAppDiff } from '../../utils/timeCalculations';
+
+export default function KalenderView({ goToHeute }) {
+    const { appData, updateAppData } = useApp();
+    const [viewDate, setViewDate] = useState(new Date());
+
+    const changeMonth = (dir) => {
+        const newDate = new Date(viewDate);
+        newDate.setMonth(newDate.getMonth() + dir);
+        setViewDate(newDate);
+    };
+
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const monthName = viewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
+
+    // useMemo verhindert, dass der Kalender bei jedem Tastendruck im Input-Feld neu berechnet wird
+    const calendarData = useMemo(() => {
+        let firstDay = new Date(year, month, 1).getDay();
+        firstDay = firstDay === 0 ? 7 : firstDay; 
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        const cells = [];
+        let monthDiff = 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let i = 1; i < firstDay; i++) {
+            cells.push({ type: 'empty', id: `empty-${i}` });
+        }
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            const dateObj = new Date(dStr);
+            const dayOfWeek = dateObj.getDay();
+            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+            
+            const entry = appData.entries[dStr];
+            const holiday = appData.holidays[dStr];
+            
+            const daySoll = entry && entry.soll !== undefined ? entry.soll : calculateDailySoll(dStr, appData.settings, appData.holidays);
+            let netStd = 0;
+            
+            if (entry && entry.begin && entry.end) {
+                const bMin = calculateMinutes(entry.begin, entry.end);
+                netStd = Math.max(0, (bMin - (parseFloat(entry.pause) || 0)) / 60);
+            }
+            
+            let dayDiff = netStd - daySoll;
+            const isFuture = dateObj > today;
+            
+            if (!entry && isFuture) dayDiff = 0;
+            else if (!entry && !isFuture && daySoll > 0) dayDiff = -daySoll;
+            
+            monthDiff += dayDiff;
+            
+            cells.push({ type: 'day', id: dStr, dayStr: dStr, dayNum: i, isWeekend, holiday, entry, netStd, dayDiff });
+        }
+
+        const totalRendered = cells.length;
+        for(let i = 0; i < 42 - totalRendered; i++) {
+             cells.push({ type: 'empty', id: `empty-end-${i}` });
+        }
+
+        const allTimeDiff = calculateAllTimeAppDiff(appData.entries, appData.settings, appData.holidays, year, month);
+
+        return { cells, monthDiff, allTimeDiff };
+    }, [year, month, appData]);
+
+    const { cells, monthDiff, allTimeDiff } = calendarData;
+    const agSaldo = parseFloat(appData.settings.agSaldo || 0);
+    const totalAG = agSaldo + monthDiff;
+
+    const percent = appData.settings.model.percentage || 100;
+    const effWeekly = appData.settings.model.hours * (percent / 100);
+    const hrMonthlySoll = effWeekly * 13 / 3;
+
+    const handleAgSaldoChange = (e) => {
+        const val = parseFloat(e.target.value) || 0;
+        updateAppData(prev => ({
+            ...prev,
+            settings: { ...prev.settings, agSaldo: val }
+        }));
+    };
+
+    return (
+        <div className="flex flex-col h-full gap-2">
+            
+            <div className="flex justify-between items-center bg-blue-600 text-white p-2 rounded-xl shadow-sm shrink-0">
+                <button onClick={() => changeMonth(-1)} className="p-2 bg-blue-500 rounded-lg active:bg-blue-700">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <div className="text-base font-bold">{monthName}</div>
+                <button onClick={() => changeMonth(1)} className="p-2 bg-blue-500 rounded-lg active:bg-blue-700">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+
+            <div className="bg-white p-2 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 border border-slate-100">
+                <div className="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-slate-400 uppercase shrink-0">
+                    <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
+                </div>
+                <div className="grid grid-cols-7 gap-1 grid-rows-6 flex-1 min-h-0">
+                    {cells.map(cell => {
+                        if (cell.type === 'empty') return <div key={cell.id} className="bg-transparent"></div>;
+
+                        let bgClass = cell.isWeekend ? "bg-slate-50 border-slate-200" : "bg-white border-slate-100";
+                        let holidayHtml = null;
+
+                        if (cell.holiday) {
+                            const shortName = cell.holiday.name.replace(" (regional)", "").replace(" (Feiertag)", "");
+                            if (cell.holiday.isSchool) {
+                                holidayHtml = <div className="text-[6.5px] leading-none font-bold text-green-600 w-full text-center truncate px-0.5 mt-0.5" title={cell.holiday.name}>{shortName}</div>;
+                            } else {
+                                bgClass = "bg-yellow-50 border-yellow-200";
+                                holidayHtml = <div className="text-[6.5px] leading-none font-bold text-yellow-600 w-full text-center truncate px-0.5 mt-0.5" title={cell.holiday.name}>{shortName}</div>;
+                            }
+                        }
+
+                        const hasEntry = cell.entry && cell.entry.begin && cell.entry.end;
+                        const diffColor = cell.dayDiff >= 0 ? 'text-emerald-500' : 'text-red-500';
+                        
+                        return (
+                            <div 
+                                key={cell.id}
+                                onClick={() => goToHeute(cell.dayStr)}
+                                className={`cal-cell p-1 justify-start relative border rounded-lg shadow-sm ${bgClass} cursor-pointer active:scale-95 transition-transform overflow-hidden`}
+                            >
+                                <div className={`text-xs font-bold text-center ${cell.isWeekend ? 'text-slate-400' : 'text-slate-800'}`}>
+                                    {cell.dayNum}
+                                </div>
+                                {holidayHtml}
+                                
+                                <div className="mt-auto flex flex-col items-center justify-center w-full">
+                                    {hasEntry && (
+                                        <>
+                                            <div className="text-[9px] text-slate-500 mt-0.5 leading-tight text-center">
+                                                {cell.entry.begin}<br/>{cell.entry.end}
+                                            </div>
+                                            <div className={`text-[11px] font-black ${diffColor} mt-0.5 text-center`}>
+                                                {cell.netStd.toFixed(1)}h
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                
+                                {cell.entry && cell.entry.remark && (
+                                    <div className="absolute bottom-1 right-1 text-[10px] opacity-70">💬</div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                
+                <div className="mt-2 flex justify-center gap-3 text-[9px] text-slate-500 font-medium shrink-0">
+                    <span className="flex items-center gap-1"><div className="w-2 h-2 bg-yellow-300 rounded-full"></div> Feiertag</span>
+                    <span className="flex items-center gap-1"><div className="w-2 h-2 bg-green-300 rounded-full"></div> Ferien</span>
+                    <span className="flex items-center gap-1"><div className="w-2 h-2 bg-slate-200 rounded-full"></div> Wochenende</span>
+                </div>
+            </div>
+
+            <div className="bg-white p-2 rounded-xl shadow-sm space-y-2 border border-blue-100 shrink-0">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
+                        <div className="text-[8px] font-bold text-slate-400 uppercase tracking-wide pointer-events-none">Übertrag (AG)</div>
+                        <input type="number" step="0.01" value={agSaldo || ''} onChange={handleAgSaldoChange} className="w-full text-sm font-bold bg-transparent text-center outline-none text-slate-700 p-0 m-0" />
+                    </div>
+                    
+                    <div className="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
+                        <div className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">Monats-Differenz</div>
+                        <div className={`text-sm font-bold ${monthDiff >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {monthDiff > 0 ? '+' : ''}{monthDiff.toFixed(2)} h
+                        </div>
+                    </div>
+
+                    <div className="p-1 bg-slate-50 rounded-lg border border-slate-100 flex flex-col items-center justify-center">
+                        <div className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">HR Soll (Monat)</div>
+                        <div className="text-sm font-bold text-slate-700">{hrMonthlySoll.toFixed(1)} h</div>
+                    </div>
+                </div>
+                
+                <div className="flex flex-col gap-1.5 mt-2">
+                    <div className="bg-blue-50 py-2 px-3 rounded-xl flex justify-between items-center shadow-sm border border-blue-100">
+                        <div className="text-xs font-bold text-blue-900 tracking-wide">1. Saldo (inkl. AG-Übertrag)</div>
+                        <div className={`text-xl font-black tracking-tight ${totalAG >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {totalAG > 0 ? '+' : ''}{totalAG.toFixed(2)} h
+                        </div>
+                    </div>
+                    <div className="bg-indigo-50 py-2 px-3 rounded-xl flex justify-between items-center shadow-sm border border-indigo-100">
+                        <div className="text-xs font-bold text-indigo-900 tracking-wide">2. App-Gesamtsaldo (Automatisch)</div>
+                        <div className={`text-xl font-black tracking-tight ${allTimeDiff >= 0 ? 'text-indigo-600' : 'text-rose-600'}`}>
+                            {allTimeDiff > 0 ? '+' : ''}{allTimeDiff.toFixed(2)} h
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+```
+
+## File: src/components/views/PlanerView.jsx
+```javascript
+import React, { useState, useMemo } from 'react';
+import { useApp } from '../../context/AppContext';
+import { calculateDailySoll, calculateMinutes } from '../../utils/timeCalculations';
+import PaintPalette from './planer/PaintPalette';
+import PlanerGrid from './planer/PlanerGrid';
+import AutoFillMenu from './planer/AutoFillMenu';
+
+const plannerColors = [
+    { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
+    { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-200' },
+    { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200' },
+    { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
+    { bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-200' }
+];
+
+export default function PlanerView() {
+    const { appData, updateAppData } = useApp();
+    
+    const [viewDate, setViewDate] = useState(new Date());
+    const [activePaintTemplate, setActivePaintTemplate] = useState(null);
+    const [pattern, setPattern] = useState({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '', 0: '' });
+    const [overwritePattern, setOverwritePattern] = useState(false);
+
+    const changeMonth = (dir) => {
+        const newDate = new Date(viewDate);
+        newDate.setMonth(newDate.getMonth() + dir);
+        setViewDate(newDate);
+    };
+
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const monthName = viewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
+
+    const handleCellClick = async (dStr) => {
+        if (!activePaintTemplate) return;
+        if (appData.settings.protectHolidays && appData.holidays[dStr] && !appData.holidays[dStr].isSchool) return;
+
+        await updateAppData(prev => {
+            const newEntries = { ...prev.entries };
+            const existing = newEntries[dStr] || {};
+
+            if (activePaintTemplate === 'clear') {
+                delete newEntries[dStr];
+            } else {
+                const t = prev.templates.find(x => x.id === activePaintTemplate);
+                if (t) {
+                    newEntries[dStr] = {
+                        begin: t.begin, end: t.end, pause: t.pause !== undefined ? t.pause : 30,
+                        soll: existing.soll !== undefined ? existing.soll : calculateDailySoll(dStr, prev.settings, prev.holidays),
+                        remark: existing.remark || ''
+                    };
+                }
+            }
+            return { ...prev, entries: newEntries };
+        });
+    };
+
+    const applyPattern = async () => {
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        let count = 0;
+
+        await updateAppData(prev => {
+            const newEntries = { ...prev.entries };
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const tplId = pattern[new Date(dStr).getDay()];
+
+                if (prev.settings.protectHolidays && prev.holidays[dStr] && !prev.holidays[dStr].isSchool) continue;
+
+                if (tplId) {
+                    const existing = newEntries[dStr];
+                    if (!existing || overwritePattern) {
+                        const t = prev.templates.find(x => x.id === Number(tplId));
+                        if (t) {
+                            newEntries[dStr] = {
+                                begin: t.begin, end: t.end, pause: t.pause !== undefined ? t.pause : 30,
+                                soll: existing && existing.soll !== undefined ? existing.soll : calculateDailySoll(dStr, prev.settings, prev.holidays),
+                                remark: existing ? existing.remark : ''
+                            };
+                            count++;
+                        }
+                    }
+                }
+            }
+            return { ...prev, entries: newEntries };
+        });
+        alert(`${count} Schichten in diesen Monat eingetragen!`);
+    };
+
+    const toggleProtectHolidays = async () => {
+        await updateAppData(prev => ({
+            ...prev, settings: { ...prev.settings, protectHolidays: !prev.settings.protectHolidays }
+        }));
+    };
+
+    const cells = useMemo(() => {
+        let firstDay = new Date(year, month, 1).getDay();
+        firstDay = firstDay === 0 ? 7 : firstDay;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const gridCells = [];
+
+        for (let i = 1; i < firstDay; i++) gridCells.push({ type: 'empty', id: `empty-${i}` });
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const isWeekend = (new Date(dStr).getDay() === 0 || new Date(dStr).getDay() === 6);
+            const entry = appData.entries[dStr];
+            let tplMatch = null, netStd = 0;
+
+            if (entry && entry.begin && entry.end) {
+                const bMin = calculateMinutes(entry.begin, entry.end);
+                netStd = Math.max(0, (bMin - (parseFloat(entry.pause) || 0)) / 60);
+                tplMatch = appData.templates.find(t => t.begin === entry.begin && t.end === entry.end && (t.pause || 0) === (entry.pause || 0));
+            }
+            gridCells.push({ type: 'day', id: dStr, dayNum: i, isWeekend, entry, tplMatch, netStd });
+        }
+        
+        while (gridCells.length < 42) gridCells.push({ type: 'empty', id: `empty-end-${gridCells.length}` });
+        return gridCells;
+    }, [year, month, appData.entries, appData.templates]);
+
+    return (
+        <div className="flex flex-col h-full gap-2">
+            <PaintPalette 
+                templates={appData.templates} activePaintTemplate={activePaintTemplate} 
+                setActivePaintTemplate={setActivePaintTemplate} colors={plannerColors} 
+            />
+            <PlanerGrid 
+                cells={cells} monthName={monthName} changeMonth={changeMonth} 
+                handleCellClick={handleCellClick} activePaintTemplate={activePaintTemplate} 
+                templates={appData.templates} colors={plannerColors} 
+            />
+            <AutoFillMenu 
+                templates={appData.templates} protectHolidays={appData.settings.protectHolidays} 
+                toggleProtectHolidays={toggleProtectHolidays} pattern={pattern} setPattern={setPattern} 
+                overwritePattern={overwritePattern} setOverwritePattern={setOverwritePattern} applyPattern={applyPattern} 
+            />
+        </div>
+    );
+}
+```
+
+## File: src/components/views/SetupView.jsx
+```javascript
+import React from 'react';
+import { useApp } from '../../context/AppContext';
+import ModelSettings from './setup/ModelSettings';
+import TemplateManager from './setup/TemplateManager';
+import HolidaySettings from './setup/HolidaySettings';
+import BackupManager from './setup/BackupManager';
+
+export default function SetupView() {
+    const { appData, updateAppData } = useApp();
+
+    return (
+        <div className="flex flex-col gap-4 pb-4">
+            <ModelSettings appData={appData} updateAppData={updateAppData} />
+            <TemplateManager appData={appData} updateAppData={updateAppData} />
+            <HolidaySettings appData={appData} updateAppData={updateAppData} />
+            <BackupManager appData={appData} updateAppData={updateAppData} />
+        </div>
+    );
+}
+```
+
+## File: src/components/views/StatistikView.jsx
+```javascript
+import React, { useState, useMemo } from 'react';
+import { useApp } from '../../context/AppContext';
+import { calculateMinutes } from '../../utils/timeCalculations';
+import { exportMonthPDF } from '../../services/pdfExport';
+
+export default function StatistikView() {
+    const { appData } = useApp();
+    const [viewDate, setViewDate] = useState(new Date());
+    const [statMode, setStatMode] = useState('month'); // 'month', 'quarter', 'year'
+
+    const changeStatPeriod = (dir) => {
+        const newDate = new Date(viewDate);
+        if (statMode === 'month') {
+            newDate.setMonth(newDate.getMonth() + dir);
+        } else if (statMode === 'quarter') {
+            newDate.setMonth(newDate.getMonth() + (dir * 3));
+        } else if (statMode === 'year') {
+            newDate.setFullYear(newDate.getFullYear() + dir);
+        }
+        setViewDate(newDate);
+    };
+
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+
+    // Dynamische Perioden-Titel
+    let startMonth, endMonth, titleStr;
+    if (statMode === 'month') {
+        startMonth = month;
+        endMonth = month;
+        titleStr = viewDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
+    } else if (statMode === 'quarter') {
+        const q = Math.floor(month / 3);
+        startMonth = q * 3;
+        endMonth = startMonth + 2;
+        titleStr = `Q${q + 1} ${year}`;
+    } else if (statMode === 'year') {
+        startMonth = 0;
+        endMonth = 11;
+        titleStr = `Jahr ${year}`;
+    }
+
+    // Statistik-Berechnungen durch useMemo gecached
+    const stats = useMemo(() => {
+        let totalNet = 0;
+        let daysWorked = 0;
+        let totalDaysInPeriod = 0;
+        let tplDistribution = {};
+
+        appData.templates.forEach(t => tplDistribution[t.name] = 0);
+        tplDistribution['Individuell / Sonstige'] = 0;
+
+        for (let m = startMonth; m <= endMonth; m++) {
+            const daysInMonth = new Date(year, m + 1, 0).getDate();
+            totalDaysInPeriod += daysInMonth;
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dStr = `${year}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                const entry = appData.entries[dStr];
+
+                if (entry && entry.begin && entry.end) {
+                    const bMin = calculateMinutes(entry.begin, entry.end);
+                    const netStd = Math.max(0, (bMin - (parseFloat(entry.pause) || 0)) / 60);
+                    if (netStd > 0) {
+                        totalNet += netStd;
+                        daysWorked++;
+
+                        const matchedTpl = appData.templates.find(t => t.begin === entry.begin && t.end === entry.end && (parseFloat(t.pause) || 0) === (parseFloat(entry.pause) || 0));
+                        if (matchedTpl) {
+                            tplDistribution[matchedTpl.name] += netStd;
+                        } else {
+                            tplDistribution['Individuell / Sonstige'] += netStd;
+                        }
+                    }
+                }
+            }
+        }
+
+        const avgDay = daysWorked > 0 ? (totalNet / daysWorked) : 0;
+        const avgWeek = totalNet / (totalDaysInPeriod / 7);
+
+        const percent = appData.settings.model.percentage || 100;
+        const effWeekly = appData.settings.model.hours * (percent / 100);
+        const hrMonthlySoll = effWeekly * 13 / 3;
+        
+        let hrPeriodSoll = 0;
+        if (statMode === 'month') hrPeriodSoll = hrMonthlySoll;
+        else if (statMode === 'quarter') hrPeriodSoll = hrMonthlySoll * 3;
+        else if (statMode === 'year') hrPeriodSoll = hrMonthlySoll * 12;
+
+        const sortedTpls = Object.keys(tplDistribution)
+            .map(k => ({name: k, hours: tplDistribution[k]}))
+            .filter(x => x.hours > 0)
+            .sort((a,b) => b.hours - a.hours);
+
+        return { totalNet, hrPeriodSoll, avgDay, avgWeek, sortedTpls };
+    }, [year, startMonth, endMonth, appData.entries, appData.templates, appData.settings, statMode]);
+
+    const handleExportPDF = () => {
+        const monthName = viewDate.toLocaleString('de-DE', { month: 'long' });
+        exportMonthPDF(appData, year, month, monthName);
+    };
+
+    return (
+        <div className="flex flex-col h-full gap-3">
+            <div className="bg-blue-600 p-2 rounded-xl shadow-sm shrink-0 flex flex-col gap-2">
+                <div className="flex justify-between items-center text-white">
+                    <button onClick={() => changeStatPeriod(-1)} className="p-2 bg-blue-500 rounded-lg active:bg-blue-700">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <div className="text-base font-bold">{titleStr}</div>
+                    <button onClick={() => changeStatPeriod(1)} className="p-2 bg-blue-500 rounded-lg active:bg-blue-700">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+                
+                <div className="flex bg-blue-700/50 p-1 rounded-lg">
+                    {['month', 'quarter', 'year'].map(mode => (
+                        <button 
+                            key={mode}
+                            onClick={() => setStatMode(mode)} 
+                            className={`flex-1 text-[10px] font-bold py-1.5 rounded-md transition-all ${statMode === mode ? 'bg-white text-blue-600 shadow-sm' : 'text-blue-100 hover:text-white'}`}
+                        >
+                            {mode === 'month' ? 'Monat' : mode === 'quarter' ? 'Quartal' : 'Jahr'}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 shrink-0">
+                {[
+                    { label: 'Gesamt (Ist)', value: stats.totalNet, color: 'text-blue-600' },
+                    { label: 'HR Soll (Formel)', value: stats.hrPeriodSoll, color: 'text-slate-700' },
+                    { label: 'Ø pro Tag', value: stats.avgDay, color: 'text-indigo-600' },
+                    { label: 'Ø pro Woche', value: stats.avgWeek, color: 'text-emerald-600' },
+                ].map((kpi, idx) => (
+                    <div key={idx} className="bg-white py-3 px-1 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{kpi.label}</div>
+                        <div className={`text-lg font-black ${kpi.color}`}>{kpi.value.toFixed(1)} h</div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex-1 flex flex-col min-h-0">
+                <h2 className="font-bold text-slate-800 text-xs mb-3 shrink-0 border-b border-slate-100 pb-2 uppercase tracking-wide">
+                    Verteilung der Arbeitszeit
+                </h2>
+                <div className="flex-1 overflow-y-auto space-y-4 pr-1 no-scrollbar">
+                    {stats.sortedTpls.length === 0 ? (
+                        <div className="text-xs font-medium text-slate-400 text-center py-6">Keine Arbeitszeiten in diesem Zeitraum erfasst.</div>
+                    ) : (
+                        stats.sortedTpls.map(item => {
+                            const percent = (item.hours / stats.totalNet) * 100;
+                            return (
+                                <div key={item.name} className="mb-3">
+                                    <div className="flex justify-between text-[11px] font-bold mb-1.5 px-1">
+                                        <span className="text-slate-700">{item.name}</span>
+                                        <span className="text-blue-600">{item.hours.toFixed(1)} h <span className="text-slate-400 font-normal ml-1">({percent.toFixed(0)}%)</span></span>
+                                    </div>
+                                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+                                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${percent}%` }}></div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+
+            <div className="shrink-0 mt-auto">
+                <button onClick={handleExportPDF} className="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 active:bg-indigo-700 text-sm transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Gewählten Monat als PDF exportieren
+                </button>
+            </div>
+        </div>
+    );
+}
+```
+
 ## File: src/App.jsx
 ```javascript
-// src/App.jsx
 import { useState } from 'react';
 import { useApp } from './context/AppContext.jsx';
+import { getLocalDateString } from './utils/timeCalculations.js';
 import BottomNav from './components/layout/BottomNav.jsx';
 
 import HeuteView from './components/views/HeuteView.jsx';
@@ -691,29 +2154,33 @@ import StatistikView from './components/views/StatistikView.jsx';
 import SetupView from './components/views/SetupView.jsx';
 
 export default function App() {
-    // appData wird hier aufgerufen, um sicherzustellen, dass der Context funktioniert.
     const { appData } = useApp();
     const [activeTab, setActiveTab] = useState('heute');
+    
+    // Globaler Datums-State, der von Kalender zu Heute gereicht wird
+    const [selectedDate, setSelectedDate] = useState(getLocalDateString(new Date()));
+
+    const goToHeute = (dateStr) => {
+        setSelectedDate(dateStr);
+        setActiveTab('heute');
+    };
 
     const renderView = () => {
         switch (activeTab) {
-            case 'heute': return <HeuteView />;
-            case 'kalender': return <KalenderView />;
+            case 'heute': return <HeuteView selectedDate={selectedDate} setSelectedDate={setSelectedDate} />;
+            case 'kalender': return <KalenderView goToHeute={goToHeute} />;
             case 'planer': return <PlanerView />;
             case 'statistik': return <StatistikView />;
             case 'setup': return <SetupView />;
-            default: return <HeuteView />;
+            default: return <HeuteView selectedDate={selectedDate} setSelectedDate={setSelectedDate} />;
         }
     };
 
     return (
         <div className="flex flex-col h-dvh overflow-hidden">
-            {/* Main Content Area: Scrollbar, flex-1 füllt den Platz bis zur Nav */}
             <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto relative pt-3 pb-2 px-3 flex flex-col">
                 {renderView()}
             </main>
-            
-            {/* Navigation Area: Fixiert am unteren Rand, selbe max-width wie Content für Desktop-Ansichten */}
             <div className="w-full max-w-lg mx-auto shrink-0 z-20">
                 <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
@@ -725,12 +2192,14 @@ export default function App() {
 ## File: index.html
 ```html
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>zeiterfassung-vite</title>
+    <!-- Verhindert das lästige Hineinzoomen auf iPhones bei Input-Feldern -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#f1f5f9">
+    <title>Zeiterfassung Pro</title>
   </head>
   <body>
     <div id="root"></div>

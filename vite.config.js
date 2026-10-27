@@ -1,4 +1,3 @@
-// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -10,14 +9,38 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      workbox: {
+        // Cacht alle wichtigen Assets für den 100% Offline-Betrieb
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Verhindert Caching-Fehler bei externen API Calls (Feiertage)
+        navigateFallbackDenylist: [/^\/api/],
+      },
       manifest: {
-        name: 'Zeiterfassung DEV',
-        short_name: 'Zeit DEV',
-        theme_color: '#ef4444', // Rotes Theme zur Unterscheidung
+        name: 'Zeiterfassung Pro',
+        short_name: 'Zeit Pro',
+        description: 'Local-First Schichtdienst Zeiterfassung',
+        theme_color: '#f1f5f9',
         background_color: '#f1f5f9',
         display: 'standalone',
+        orientation: 'portrait',
         icons: [
-          // Hier später die 192x192 und 512x512 Icons einfügen
+          {
+            src: '/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
         ]
       }
     })
