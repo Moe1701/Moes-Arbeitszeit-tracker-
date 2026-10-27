@@ -11,10 +11,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       workbox: {
-        // Cacht alle wichtigen Assets für den 100% Offline-Betrieb
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        // Verhindert Caching-Fehler bei externen API Calls (Feiertage)
         navigateFallbackDenylist: [/^\/api/],
+        // Erhöht das Limit auf 5 MB (5 * 1024 * 1024)
+        maximumFileSizeToCacheInBytes: 5242880,
       },
       manifest: {
         name: 'Zeiterfassung Pro',
